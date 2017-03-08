@@ -1,0 +1,19 @@
+Package: speciesRaster
+Type: Package
+Title: Generation of SpeciesRaster Object and Calculation of Morphological and Phylogenetic Metrics
+Version: 1.0
+Date: 2017-03-07
+Author: Pascal Title
+Maintainer: Pascal Title <ptitle@umich.edu>
+Depends: R (>= 2.10)
+Imports: raster, sp, ape, methods, Rcpp (>= 0.12.9)
+Suggests: parallel
+Description: An R package that facilitates the aggregation of species'
+	geographic ranges from vector or raster spatial data, and that enables
+	the calculation of various morphological and phylogenetic community metics
+	across geography.
+License: GPL (>= 2)
+NeedsCompilation: yes
+LinkingTo: Rcpp
+LazyData: true
+RoxygenNote: 6.0.1

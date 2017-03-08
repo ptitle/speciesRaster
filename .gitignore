@@ -1,0 +1,9 @@
+
+*.DS_Store
+exampleData.R
+speciesRaster.Rcheck/*
+*.tar.gz
+*.Rapp.history
+# compiled files
+*.o
+*.so
