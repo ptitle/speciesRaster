@@ -37,12 +37,7 @@ Univariate morphological metrics
 		\item{disparity} 
 		\item{range}
 		\item{rangePCA}
-		\item{Foote_pi}
-		\item{Foote_ri}
-		\item{Foote_di}
 		\item{Foote_meanDist}
-		\item{Foote_sdDist}
-		\item{Foote_maxDist}
 	}
 	Phylogenetic metrics
 	\itemize{

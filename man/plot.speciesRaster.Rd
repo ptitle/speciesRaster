@@ -4,15 +4,12 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-\method{plot}{speciesRaster}(x, log = FALSE, rasterNum = NULL, ...)
+\method{plot}{speciesRaster}(x, log = FALSE, ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
 
 \item{log}{boolean; should the cell values be logged?}
-
-\item{rasterNum}{If the speciesRaster contains a rasterStack, which 
-layer should be plotted? Specify as an integer.}
 
 \item{...}{additional parameters will be passed to the raster package plot function.}
 }

@@ -4,8 +4,6 @@
 ##'
 ##' @param x object of class \code{speciesRaster}
 ##' @param log boolean; should the cell values be logged?
-##' @param rasterNum If the speciesRaster contains a rasterStack, which 
-##' 	layer should be plotted? Specify as an integer. 
 ##' @param ... additional parameters will be passed to the raster package plot function.
 ##'
 ##' @return Nothing is returned. 
@@ -20,20 +18,12 @@
 ##' 
 ##' @export
 
-plot.speciesRaster <- function(x, log = FALSE, rasterNum = NULL, ...) {
+plot.speciesRaster <- function(x, log = FALSE, ...) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('Object must be of class speciesRaster')
 	}
-	
-	if (!is.null(rasterNum)) {
-		if (rasterNum <= raster::nlayers(x[[1]])) {
-			speciesRaster[[1]] <- x[[1]][[rasterNum]]
-		} else {
-			stop(paste('There are', raster::nlayers(x[[1]]), 'layers in speciesRaster. rasterNum must refer to one of those.'))
-		}
-	}
-	
+		
 	colramp <- grDevices::colorRampPalette(c('blue','yellow','red'))
 	if (!log) {
 		raster::plot(x[[1]], col=colramp(100), ...)

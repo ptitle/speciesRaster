@@ -28,12 +28,7 @@
 ##'			\item{disparity} 
 ##' 		\item{range}
 ##' 		\item{rangePCA}
-##' 		\item{Foote_pi}
-##' 		\item{Foote_ri}
-##' 		\item{Foote_di}
 ##' 		\item{Foote_meanDist}
-##' 		\item{Foote_sdDist}
-##' 		\item{Foote_maxDist}
 ##' 	}
 ##' 	Phylogenetic metrics
 ##' 	\itemize{
@@ -68,16 +63,16 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		stop('x must be of class speciesRaster.')
 	}
 	
-	metric <- sapply(metric, match.arg, choices = c('mean', 'median', 'range', 'rangePCA', 'disparity', 'Foote_pi', 'Foote_ri', 'Foote_di', 'Foote_meanDist', 'Foote_sdDist', 'Foote_maxDist', 'meanPatristic', 'patristicNN', 'phyloDisparity'), USE.NAMES = FALSE)
+	metric <- sapply(metric, match.arg, choices = c('mean', 'median', 'range', 'rangePCA', 'disparity', 'Foote_meanDist', 'meanPatristic', 'patristicNN', 'phyloDisparity'), USE.NAMES = FALSE)
 	
 	if (length(metric) > 1) {
 		if (any(metric %in% c('mean','median','meanPatristic','patristicNN','phyloDisparity','disparity', 'range', 'rangePCA'))) {
-			stop('You can only specify one metric, unless it is the Foote metrics.')
+			stop('You can only specify one metric.')
 		}
 	}
 	
 	# Prune species list according to metric of interest
-	if (all(metric %in% c('mean', 'median', 'disparity', 'range', 'rangePCA', 'Foote_pi', 'Foote_ri', 'Foote_di', 'Foote_meanDist', 'Foote_sdDist', 'Foote_maxDist'))) {
+	if (all(metric %in% c('mean', 'median', 'disparity', 'range', 'rangePCA', 'Foote_meanDist'))) {
 		
 		# check that there is data in speciesRaster object
 		if (is.null(x[['data']])) {
@@ -101,7 +96,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 	 	# prune speciesRaster object down to species shared with phylogeny
 		x[[2]] <- intersectList(x[[2]], x[['phylo']]$tip.label)
 	} else {
-		stop('Metric not recognized or bad combination!')
+		stop('Metric not recognized!')
 	}
 	
 	# create a mapping of which set of species are found in each cell
@@ -162,30 +157,17 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		})	
 	}
 	
-	if (all(metric %in% c('Foote_pi', 'Foote_ri', 'Foote_di', 'Foote_meanDist', 'Foote_sdDist', 'Foote_maxDist'))) {
-		
-		requestedMetrics <- c('pi','ri', 'di', 'mean_dist', 'sd_dist', 'max_dist')[c('Foote_pi', 'Foote_ri', 'Foote_di', 'Foote_meanDist', 'Foote_sdDist', 'Foote_maxDist') %in% metric]
-		
-		nnDistRes <- lapply(uniqueComm, function(y) nnDist(x[['data']][y, ], Nrep = nreps, requested = requestedMetrics))	
-		
-		resVal <- vector('list', length = length(requestedMetrics))
-		
-		for (i in 1:length(requestedMetrics)) {
-			resVal[[i]] <- sapply(nnDistRes, function(y) {
-				if (!anyNA(y)) {
-					return(mean(y[, requestedMetrics[i]]))
-				} else {
-					return(NA)
-				}
-			})	
-		}
-
-		if (length(resVal) == 1) {
-			resVal <- resVal[[1]]
-		} else {
-			names(resVal) <- requestedMetrics
-		}
-		
+	if (all(metric == 'Foote_meanDist')) {
+			
+		nnDistRes <- lapply(uniqueComm, function(y) nnDist(x[['data']][y, ], Nrep = nreps))	
+				
+		resVal <- sapply(nnDistRes, function(y) {
+			if (!anyNA(y)) {
+				return(mean(y[, 'mean_dist']))
+			} else {
+				return(NA)
+			}
+		})			
 	}
 	
 	## ----------------------------------

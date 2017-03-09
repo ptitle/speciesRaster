@@ -20,7 +20,7 @@ genRi <- function(Row, Mins, Maxs, Ntax, Nrep = 20) {
 }
 
 
-nnDist <- function(Mat, dMat = NULL, Nrep = 20, requested) {
+nnDist <- function(Mat, dMat = NULL, Nrep = 20) {
 	if (class(Mat) != "matrix") {
 		if (all(is.na(Mat))) {
 			return(NA)
@@ -40,11 +40,7 @@ nnDist <- function(Mat, dMat = NULL, Nrep = 20, requested) {
 		}
 		dMat <- as.matrix(dMat)
 		outList <- apply(dMat, 1, pullNeighbor, Names = colnames(dMat))
-		if (any(c('pi', 'ri', 'di') %in% requested)) {
-			Ris <- apply(Mat, 1, genRi, Mins = Mins, Maxs = Maxs, Ntax = Ntax, Nrep = Nrep)
-		} else {
-			Ris <- setNames(rep(NA, Ntax), rownames(Mat))
-		}
+		Ris <- apply(Mat, 1, genRi, Mins = Mins, Maxs = Maxs, Ntax = Ntax, Nrep = Nrep)
 		outMat <- do.call(rbind, outList)
 		outMat <- data.frame(pi = (outMat$di - Ris) / Ris, ri = Ris, outMat)
 	}
