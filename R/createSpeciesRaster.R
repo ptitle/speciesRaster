@@ -235,45 +235,104 @@ createSpeciesRaster <- function(ranges, resolution = 1, resUnits = 'degrees', ex
 		}
 		
 		# rasterstack calculations only
-		# convert all rasters to presence/absence: create matrix of cells (rows) x raster (cols)
-		# extract values for all cells, all species by presence coordinate
-		presCoords <- raster::rasterToPoints(ranges)
-		presCells <- raster::cellFromXY(ranges[[1]], presCoords[,1:2])
-		presCoords <- presCoords[,3:ncol(presCoords)]
+		# create matrix of cells (rows) x raster (cols)
+	
+		# prepare result objects
+		ras <- raster::raster(ranges[[1]])
+		raster::values(ras) <- 0
+		spByCell <- vector('list', length = raster::ncell(ranges))
 		
-		# place in full matrix of cell x species
-		fullmat <- matrix(nrow = raster::ncell(ranges), ncol = raster::nlayers(ranges))
-		fullmat[presCells, ] <- presCoords
-		colnames(fullmat) <- colnames(presCoords)
-				
-		# get count of species per cell
-		fullmat <- ifelse(is.na(fullmat), 0, 1)
-		if (identical(unique(as.numeric(fullmat)), c(0,1))) {
+		pBar <- FALSE
+		if (!raster::canProcessInMemory(ranges)) {
+			pBar <- TRUE
+			cat('\t...Reading in raster data...\n')
+			pb <- raster::pbCreate(raster::nlayers(ranges), progress = 'text')
+		}
+		mat <- as.data.table(matrix(nrow=raster::ncell(ranges), ncol=raster::nlayers(ranges)))
+		colnames(mat) <- names(ranges)
+		for (i in 1:raster::nlayers(ranges)) {
+			if (pBar) {
+				raster::pbStep(pb, step = i)
+			}
+			mat[, colnames(mat)[i] := ranges[[i]][]]
+		}
+		if (pBar) {
+			raster::pbClose(pb, timer = FALSE)
+			cat('\n')
+		}
+		
+		# set all NA to 0
+		for (i in names(mat)) {
+ 				mat[is.na(get(i)), (i) := 0]
+		}
+
+		# check if is binary
+		isBinary <- logical(ncol(mat))
+		for (j in 1:length(names(mat))) {
+			isBinary[j] <- all.equal(unique(mat[, colnames(mat)[j], with = FALSE]), as.data.table(c(0, 1)), check.attributes = FALSE)
+		}
+		
+		if (all(isBinary == 'TRUE')) {
 			probRanking <- FALSE
 		}
-		if (probRanking) {
-			cellSums <- round(rowSums(fullmat, na.rm = TRUE))
-		} else {
-			cellSums <- rowSums(fullmat)
+		
+		if (all(isBinary != 'TRUE') & !probRanking) {
+			# convert any non-zero values to 1
+			for (i in names(mat)) {
+ 				mat[get(i) != 0, (i) := 1]
+			}
 		}
-				
-		ras <- ranges[[1]]
+		
+		# get count of species per cell
+		Sum <- NULL
+		cellSums <- mat[, Sum := Reduce(`+`, .SD), .SDcols=colnames(mat)][][,Sum]
+		mat[, Sum := NULL]
+			
+		if (probRanking) {
+			cellSums <- round(cellSums)
+		}
+			
+		# assign values to result raster
 		raster::values(ras) <- cellSums
+		
+		# get list of which species are found in each cell
+		# because we can't pass the entire data.table to rcpp code, break into chunks
+		# of 100 records
+		chunks <- split(1:nrow(mat), ceiling(seq_along(1:nrow(mat))/1000))
+		
+		if (pBar) {
+			cat('\t...Extracting species lists by cell...\n')
+			pb <- raster::pbCreate(length(chunks), progress = 'text')
+		}
+
+		if (probRanking) {
+
+			for (i in 1:length(chunks)) {
+				if (pBar) { raster::pbStep(pb, step = i) }
+				spByCell[chunks[[i]]] <- returnTopIndices(as.matrix(mat[chunks[[i]],]), cellSums[chunks[[i]]])
+			}
+			
+			# convert indices to species names
+			spByCell <- lapply(spByCell, function(x) colnames(mat)[x])
+			
+		} else {
+			
+			for (i in 1:length(chunks)) {
+				if (pBar) { raster::pbStep(pb, step = i) }
+				spByCell[chunks[[i]]] <- spListPerCell(as.matrix(mat[chunks[[i]],]))		
+			}
+		}
+		if (pBar) {
+			raster::pbClose(pb, timer = FALSE)
+			cat('\n')
+		}
+
 		
 		#remove zero cells
 		ras[ras == 0] <- NA
 		names(ras) <- 'spRichness'
 		obj[[1]] <- ras		
-
-		# get list of which species are found in each cell
-		if (probRanking) {
-			# fullmat[which(is.na(fullmat), arr.ind = TRUE)] <- 0
-			spByCell <- returnTopIndices(fullmat, cellSums)
-			spByCell <- lapply(spByCell, function(x) colnames(fullmat)[x])
-		} else {
-			spByCell <- spListPerCell(fullmat)		
-		}
-			obj[[2]] <- spByCell
+		obj[[2]] <- spByCell
 	}
 	
 	# input ranges can be a binary presence/absence sp x cell matrix
