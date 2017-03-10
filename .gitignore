@@ -2,6 +2,8 @@
 *.DS_Store
 exampleData.R
 speciesRaster.Rcheck/*
+old/*
+profvis/*
 *.tar.gz
 *.Rapp.history
 # compiled files

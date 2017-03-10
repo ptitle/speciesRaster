@@ -6,7 +6,7 @@ Date: 2017-03-07
 Author: Pascal Title
 Maintainer: Pascal Title <ptitle@umich.edu>
 Depends: R (>= 2.10)
-Imports: raster, data.table (>= 1.10.4), sp, ape, methods, Rcpp (>= 0.12.9)
+Imports: raster, sp, ape, methods, Rcpp (>= 0.12.9)
 Suggests: maptools, rgeos, parallel
 Description: An R package that facilitates the aggregation of species'
 	geographic ranges from vector or raster spatial data, and that enables

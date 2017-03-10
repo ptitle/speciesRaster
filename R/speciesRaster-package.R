@@ -16,7 +16,6 @@
 ##'
 ##' @import sp
 ##' @import methods
-##' @import data.table
 ##' 
 ##' 
 ##' @importFrom graphics axis grconvertX grconvertY identify par rect
