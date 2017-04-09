@@ -106,7 +106,7 @@
 ##' @references
 ##' Guisan A., Rahbek C. 2011. SESAM - a new framework integrating macroecological and
 ##' species distribution models for predicting spatio-temporal patterns of species 
-##' assemblages predicting spatio-temporal patterns of species assemblages. J. Biogeog.
+##' assemblages. J. Biogeog.
 ##' 38:1433-1444.
 ##'
 ##' D'Amen M., Dubuis A., Fernandes R.F., Pottier J., Pellissier L., Guisan A. 2015. Using 
@@ -117,7 +117,7 @@
 
 
 
-createSpeciesRaster <- function(ranges, resolution = 1, resUnits = 'degrees', extent = 'auto', coverCutoff = 0.5, nthreads = 1, rasterTemplate = NULL, probRanking = TRUE) {
+createSpeciesRaster <- function(ranges, resolution = 1, resUnits = 'degrees', extent = 'auto', coverCutoff = 0.5, nthreads = 1, rasterTemplate = NULL, probRanking = FALSE) {
 	
 	resUnits <- match.arg(resUnits, c('degrees', 'meters'))
 	

@@ -4,14 +4,26 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-\method{plot}{speciesRaster}(x, log = FALSE, ...)
+\method{plot}{speciesRaster}(x, log = FALSE, includeLegend = TRUE,
+  colorvec = c("blue", "yellow", "red"), box = TRUE, axes = TRUE,
+  location = "right", ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
 
 \item{log}{boolean; should the cell values be logged?}
 
-\item{...}{additional parameters will be passed to the raster package plot function.}
+\item{includeLegend}{boolean; should legend be included?}
+
+\item{colorvec}{vector of color names that will be used for the color ramp}
+
+\item{box}{boolean; should box be drawn around plot?}
+
+\item{axes}{boolean; should axes be included?}
+
+\item{location}{location of legend, if included. See \code{\link{addRasterLegend}}.}
+
+\item{...}{additional parameters will be passed to the \code{\link{addRasterLegend}} function.}
 }
 \value{
 Nothing is returned.
@@ -23,7 +35,7 @@ Plot a speciesRaster object.
 plot(tamiasSpRas)
 
 plot(tamiasSpRas, legend=FALSE, axes=FALSE, box=FALSE)
-addRasterLegend(tamiasSpRas[[1]], location = 'top', ramp=c('blue','yellow','red'))
+addRasterLegend(tamiasSpRas, location = 'top', ramp=c('blue','yellow','red'))
 
 }
 \author{

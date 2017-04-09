@@ -21,3 +21,91 @@ intersectList <- function(input, vec) {
     .Call('speciesRaster_intersectList', PACKAGE = 'speciesRaster', input, vec)
 }
 
+flattenMatrix <- function(mat) {
+    .Call('speciesRaster_flattenMatrix', PACKAGE = 'speciesRaster', mat)
+}
+
+LegendreDiffIndex <- function(commA, commB) {
+    .Call('speciesRaster_LegendreDiffIndex', PACKAGE = 'speciesRaster', commA, commB)
+}
+
+jaccardDissimilarity <- function(commA, commB) {
+    .Call('speciesRaster_jaccardDissimilarity', PACKAGE = 'speciesRaster', commA, commB)
+}
+
+jaccardTurnover <- function(commA, commB) {
+    .Call('speciesRaster_jaccardTurnover', PACKAGE = 'speciesRaster', commA, commB)
+}
+
+jaccardNestedness <- function(commA, commB) {
+    .Call('speciesRaster_jaccardNestedness', PACKAGE = 'speciesRaster', commA, commB)
+}
+
+ListIsEmpty <- function(input) {
+    .Call('speciesRaster_ListIsEmpty', PACKAGE = 'speciesRaster', input)
+}
+
+ListIsEmptyR <- function(input) {
+    .Call('speciesRaster_ListIsEmptyR', PACKAGE = 'speciesRaster', input)
+}
+
+whichCpp <- function(x) {
+    .Call('speciesRaster_whichCpp', PACKAGE = 'speciesRaster', x)
+}
+
+characterUnlist <- function(list) {
+    .Call('speciesRaster_characterUnlist', PACKAGE = 'speciesRaster', list)
+}
+
+naomit <- function(x) {
+    .Call('speciesRaster_naomit', PACKAGE = 'speciesRaster', x)
+}
+
+dropNeg <- function(x) {
+    .Call('speciesRaster_dropNeg', PACKAGE = 'speciesRaster', x)
+}
+
+multiPrepCpp <- function(allComm) {
+    .Call('speciesRaster_multiPrepCpp', PACKAGE = 'speciesRaster', allComm)
+}
+
+multiPrep <- function(allComm) {
+    .Call('speciesRaster_multiPrep', PACKAGE = 'speciesRaster', allComm)
+}
+
+betaJAC <- function(vec) {
+    .Call('speciesRaster_betaJAC', PACKAGE = 'speciesRaster', vec)
+}
+
+betaJTU <- function(vec) {
+    .Call('speciesRaster_betaJTU', PACKAGE = 'speciesRaster', vec)
+}
+
+betaJNE <- function(vec) {
+    .Call('speciesRaster_betaJNE', PACKAGE = 'speciesRaster', vec)
+}
+
+betaSOR <- function(vec) {
+    .Call('speciesRaster_betaSOR', PACKAGE = 'speciesRaster', vec)
+}
+
+betaSIM <- function(vec) {
+    .Call('speciesRaster_betaSIM', PACKAGE = 'speciesRaster', vec)
+}
+
+betaSNE <- function(vec) {
+    .Call('speciesRaster_betaSNE', PACKAGE = 'speciesRaster', vec)
+}
+
+calcBetaPairwise <- function(spByCell, nbList, metric) {
+    .Call('speciesRaster_calcBetaPairwise', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+}
+
+calcBetaMultiSite <- function(spByCell, nbList, metric) {
+    .Call('speciesRaster_calcBetaMultiSite', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+}
+
+calcBetaMultiSiteBlock <- function(spByCell, nbList, metric) {
+    .Call('speciesRaster_calcBetaMultiSiteBlock', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+}
+

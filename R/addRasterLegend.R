@@ -87,6 +87,10 @@
 
 addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, shortFrac = 0.02, longFrac = 0.3, axisOffset = 0, border = TRUE, ramp = "terrain", isInteger = 'auto', ncolors = 64, breaks = NULL, minmax = NULL, locs = NULL, cex.axis = 0.8, labelDist = 0.7, digits = 2, ...) {
 		
+	if (class(r) == 'speciesRaster') {
+		r <- r[[1]]
+	}
+	
 	if (class(r) != 'RasterLayer') {
 		stop("r must be a RasterLayer.");
 	}
