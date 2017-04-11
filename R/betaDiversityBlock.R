@@ -3,9 +3,7 @@
 ##' @description Mean community dissimilarity is calculated for each cell within a moving window of neighboring cells. 
 ##' 
 ##' @param x object of class \code{speciesRaster}.
-##' @param radius Radius length in map units to define the moving window. 
-##' 	This will be converted by rounding up to a number of neighboring 
-##' 	cells in all directions. 
+##' @param dist resolution of window size, where the multisite metric will be calculated for all smaller cells found within these coarser cells
 ##' @param metric choice of metric, see details.
 ##'
 ##' @details Should put more information about the specific metric here, 
@@ -30,9 +28,7 @@
 ##' @export
 
 
-# create mapping of community turnover with the jaccard index.
-# first, apply a moving window, where for each cell, the mean of the jaccard index between that cell and each of its neighbors within the window is calculated. 
-# maybe other option: calculate all cell pairwise jaccard indices, to then run nmds on it.
+
 
 betaDiversityBlock <- function(x, dist = 50000, metric = 'betaSOR') {
 	# radius is distance in map units = meters, will round up to the nearest cell
@@ -51,19 +47,19 @@ betaDiversityBlock <- function(x, dist = 50000, metric = 'betaSOR') {
 	}
 
 	# define raster template at dist resolution
-	template <- raster(ext = extent(x[[1]]), res = c(dist, dist), crs = projection(x[[1]]))
+	template <- raster::raster(ext = raster::extent(x[[1]]), res = c(dist, dist), crs = raster::projection(x[[1]]))
 
-	eList <- lapply(1:ncell(template), function(y) extent(rasterFromCells(template, y, values = FALSE)))
-	eList <- lapply(eList, function(y) cellsFromExtent(x[[1]], y))
+	eList <- lapply(1:raster::ncell(template), function(y) raster::extent(raster::rasterFromCells(template, y, values = FALSE)))
+	eList <- lapply(eList, function(y) raster::cellsFromExtent(x[[1]], y))
 				
-	# calulate cell values
+	# calculate cell values
 	cellBeta <- calcBetaMultiSiteBlock(x[[2]], eList, metric)
 	
 	# get new species by cell
 
 	res <- x
 	res[[1]] <- template
-	values(res[[1]]) <- cellBeta[[1]]
+	raster::values(res[[1]]) <- cellBeta[[1]]
 	res[[2]] <- cellBeta[[2]]
 	names(res[[1]]) <- metric
 	return(res)	

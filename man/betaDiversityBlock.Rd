@@ -9,11 +9,9 @@ betaDiversityBlock(x, dist = 50000, metric = "betaSOR")
 \arguments{
 \item{x}{object of class \code{speciesRaster}.}
 
-\item{metric}{choice of metric, see details.}
+\item{dist}{resolution of window size, where the multisite metric will be calculated for all smaller cells found within these coarser cells}
 
-\item{radius}{Radius length in map units to define the moving window. 
-This will be converted by rounding up to a number of neighboring 
-cells in all directions.}
+\item{metric}{choice of metric, see details.}
 }
 \value{
 Returns a new \code{speciesRaster} object, with mean community dissimilarity for each cell.

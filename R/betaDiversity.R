@@ -52,7 +52,7 @@ betaDiversity <- function(x, radius = 50000, metric = 'betaSOR') {
 	
 	#Identify cells for moving window
 	#create neighbor matrix from window size
-	window <- ceiling(radius / res(x[[1]])[[1]])
+	window <- ceiling(radius / raster::res(x[[1]])[[1]])
 	side <- window * 2 + 1
 	counter <- window
 	nb <- vector()
@@ -71,7 +71,7 @@ betaDiversity <- function(x, radius = 50000, metric = 'betaSOR') {
 	cellBeta <- calcBetaMultiSite(x[[2]], nbList, metric)
 	
 	res <- x
-	values(res[[1]]) <- cellBeta
+	raster::values(res[[1]]) <- cellBeta
 	names(res[[1]]) <- metric
 	return(res)	
 }
