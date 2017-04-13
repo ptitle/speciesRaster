@@ -279,7 +279,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // calcBetaMultiSiteBlock
-List calcBetaMultiSiteBlock(List spByCell, List nbList, String metric);
+NumericVector calcBetaMultiSiteBlock(List spByCell, List nbList, String metric);
 RcppExport SEXP speciesRaster_calcBetaMultiSiteBlock(SEXP spByCellSEXP, SEXP nbListSEXP, SEXP metricSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

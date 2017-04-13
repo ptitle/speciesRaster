@@ -591,18 +591,18 @@ NumericVector calcBetaMultiSite(List spByCell, List nbList, String metric) {
 		throw std::range_error("Input lists of unequal length");
 	}
 
-	Rcout << "Starting indexing...\n";
+	Rcout << "\tIndexing cells...";
 	// drop all cells that are empty
 	std::vector<std::vector<int> > emptyInd = ListIsEmpty(spByCell);
-	Rcout << "...Finished indexing...\n";
+	Rcout << "done\n";
 
 	IntegerVector emptyCells = wrap( emptyInd[0] );
 	IntegerVector nonEmptyCells = wrap( emptyInd[1] );
-	Rcout << "...Converting done...\n";
+	//Rcout << "...Converting done...\n";
 
 	int n = nonEmptyCells.size();
 
-	Rcout << "Starting loop...\n";
+	Rcout << "\tStarting metric calculation...";
 
 	for (int i = 0; i < n; i++) {
 
@@ -646,6 +646,8 @@ NumericVector calcBetaMultiSite(List spByCell, List nbList, String metric) {
 	 	//out[nonEmptyCells[i]] = wrap(prepVec);
 	}
 
+	Rcout << "done\n";
+
 
 	out[emptyCells] = NA_REAL;
 	
@@ -657,11 +659,11 @@ NumericVector calcBetaMultiSite(List spByCell, List nbList, String metric) {
 
 // Calculate beta diversity distance for all cells, using multi-site metrics
 // [[Rcpp::export(name = calcBetaMultiSiteBlock, rng = false)]]
-List calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) {
+NumericVector calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) {
 	
-	List out(2);
+	//NumericVector out(2);
 	NumericVector cellVals(nbList.size());
-	List spVals(nbList.size());
+	//List spVals(nbList.size());
 
 	//Rcout << "\tStarting indexing...\n";
 	// drop all cells that are empty
@@ -674,7 +676,7 @@ List calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) {
 
 	int n = nbList.size();
 
-	Rcout << "\tStarting loop...\n";
+	Rcout << "\t...starting metric calculation...";
 
 	for (int i = 0; i < n; i++) {
 
@@ -693,9 +695,9 @@ List calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) {
 		if (goodCells.size() > 0) {
 
 		 	List subList = spByCell[goodCells];
-		 	CharacterVector allSp = characterUnlist(subList);
-			CharacterVector uniqueSp = unique(allSp);
-			spVals[i] = "hello";
+		 	//CharacterVector allSp = characterUnlist(subList);
+			//CharacterVector uniqueSp = unique(allSp);
+			//spVals[i] = "hello";
 
 		 	// calculate values that will be needed
 		 	std::vector<double> prepVec = multiPrepCpp(subList);
@@ -717,12 +719,13 @@ List calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) {
 			}
 	 	} else {
 	 		cellVals[i] = NA_REAL;
-	 		spVals[i] = "NA";
+	 		//spVals[i] = "NA";
 	 	}
 	}
+	Rcout << "done\n";
 
-	out[0] = cellVals;
-	out[1] = spVals;
+	//out[0] = cellVals;
+	//out[1] = spVals;
 
-	return out;
+	return cellVals;
 }

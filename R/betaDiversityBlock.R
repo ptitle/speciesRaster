@@ -45,22 +45,24 @@ betaDiversityBlock <- function(x, dist = 50000, metric = 'betaSOR') {
 	if (!metric %in% c('betaSOR', 'betaSIM', 'betaSNE', 'betaJAC', 'betaJTU', 'betaJNE')) {
 		stop('Invalid metric.')
 	}
-
+	
 	# define raster template at dist resolution
+	cat('\t...determining which cells belong to each window...\n')
 	template <- raster::raster(ext = raster::extent(x[[1]]), res = c(dist, dist), crs = raster::projection(x[[1]]))
-
-	eList <- lapply(1:raster::ncell(template), function(y) raster::extent(raster::rasterFromCells(template, y, values = FALSE)))
-	eList <- lapply(eList, function(y) raster::cellsFromExtent(x[[1]], y))
-				
+	
+	cellPoly <- raster::rasterToPolygons(template)
+	cellPoly <- lapply(1:length(cellPoly), function(y) raster::extent(cellPoly[y,]))
+	eList <- lapply(cellPoly, function(y) raster::cellsFromExtent(x[[1]], y))
+	
+	nbLengths <- vapply(eList, length, FUN.VALUE = 1L)
+	cat('\t...mean number of cells per window:', mean(nbLengths), '\n')
+					
 	# calculate cell values
 	cellBeta <- calcBetaMultiSiteBlock(x[[2]], eList, metric)
-	
-	# get new species by cell
 
 	res <- x
 	res[[1]] <- template
-	raster::values(res[[1]]) <- cellBeta[[1]]
-	res[[2]] <- cellBeta[[2]]
+	raster::values(res[[1]]) <- cellBeta
 	names(res[[1]]) <- metric
 	return(res)	
 }
