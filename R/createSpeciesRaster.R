@@ -1,56 +1,39 @@
 ##' @title Create speciesRaster
 ##' 
-##' @description This function takes a list of SpatialPolygons or a rasterStack and generates
-##' both a richness raster and an associated list of species per cell, creating an object of class \code{speciesRaster}.
+##' @description This function takes a rasterStack and generates both a richness 
+##' raster and an associated list of species per cell, creating an object of 
+##' class \code{speciesRaster}.
 ##' 
 ##' 
-
-##' @param ranges Either a list of SpatialPolygons, SpatialPolygonsDataFrames, a rasterstack,
-##' 	rasterbrick, or species by cell matrix. If raster objects, cell values can either be
-##'		binary presence/absence, or probabilities.
-
-##' @param resolution the size of the cells of the resulting raster (ignored if input is
-##' 	raster)
-
-##' @param resUnits if 'degrees', then raster will be unprojected, if 'meters' then raster
-##' 	will be projected to equal area Behrmann projection (ignored if input is raster)
-
-##' @param extent if 'auto', then the maximal extent of the polygons will be used, if 
-##' 	input is raster, this will be ignored as the extent of the RasterStack will 
-##' 	be used. If not auto, must be a numeric vector of length 4 with minLong, 
-##'		maxLong, minLat, maxLat. 
-
-##' @param coverCutoff only applies if input is SpatialPolygons. In rasterization of the
-##' 	polygons, the percent of a raster cell that must be covered by the polygon for it to
-##' 	count as a presence. 
-
-##' @param nthreads number of threads to use for parallelization of the function. The R
-##' 	package	\code{parallel} must be loaded for \code{nthreads > 1}.
-
+##' @param ranges Either a RasterStack, RasterBrick, or species by cell matrix. If 
+##' 	raster objects, cell values can either be binary presence/absence, or probabilities.
+##'
 ##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate must be
 ##' 	provided.
 ##' 
 ##' @param probRanking If \code{ranges} is a rasterStack of probabilities rather than
 ##' 	presence/absence, then apply a probability ranking filter to identify species.
 ##'		See details. 
+##'
+##' @param chunkSize number of raster rows to handle at one time. Inferred automatically 
+##' 	if null.
+##'
+##' @param force temporary parameter that forces the function to take the more memory-
+##' 	conservative approach, even if the dataset is small enough to handle otherwise.
 ##' 
-
 ##'	@details 
 ##' This function generates an object of class \code{speciesRaster}, which is a 
 ##'	list containing the following elements:
 ##'	\itemize{
-##'		\item{raster} {A raster representing counts of species per cell.}
-##'		\item{speciesList} {A list of species found in each cell.}
-##'		\item{geogSpecies} {a vector of unique species in all cells.}
-##'		\item{data} {An empty spot that morphological data can be added to.}
-##'		\item{phylo} {An empty spot that a phylogeny can be added to.}
+##'		\item{\code{raster:}} {A raster representing counts of species per cell.}
+##'		\item{\code{speciesList:}} {A list of species found in each cell.}
+##'		\item{\code{geogSpecies:}} {a vector of unique species in all cells.}
+##'		\item{\code{data:}} {An empty spot that morphological data can be added to.}
+##'		\item{\code{phylo:}} {An empty spot that a phylogeny can be added to.}
 ##'	}
-##'	If input is a list of SpatialPolygons, then resolution must be specified.
-##'	The extent will be inferred as the minimum extent required to encompass all 
-##'	polygons. All cells within a polygon are considered as a presence for that species.
 ##'	
-##'	If input is a rasterStack, then all parameters are taken from that, and resolution
-##'	and extent arguments are ignored. If \code{probRanking = FALSE}, then any non-NA
+##'	If input is a RasterStack, then all parameters are taken from that, such as resolution,
+##' extent and projection. If \code{probRanking = FALSE}, then any non-NA
 ##'	and non-zero cell is considered a presence. If \code{probRanking = TRUE}, then 
 ##'	cell values are evaluated as probabilities from 0 to 1, for example as output from 
 ##'	species distribution models (SDM). The probability ranking filter was described in 
@@ -75,27 +58,7 @@
 ##' head(tamiasPolyList)
 ##' 
 ##' # convert polygon ranges to raster
-##' # We will define our raster template where will specify extent, resolution and projection
-##' listExtent <- getExtentOfList(tamiasPolyList)
-##' template <- raster(ext = listExtent, res = c(20000, 20000), crs=proj4string(tamiasPolyList[[1]]))
-##' 
-##' # rasterize
-##' ranges <- list()
-##' for (i in 1:length(tamiasPolyList)) {
-##' 	cat(i, '\n')
-##' 	tmp <- rasterize(tamiasPolyList[[i]], template)
-##' 	if (is.na(minValue(tmp))) {
-##' 		# species' range is too small and gets dropped
-##' 		# add back in
-##' 		presenceCells <- unique(cellFromXY(tmp, spsample(tamiasPolyList[[i]], 10, type='random')))
-##' 		tmp[presenceCells] <- 1
-##' 	}
-##' 	values(tmp)[!is.na(values(tmp))] <- 1
-##' 	ranges[[i]] <- tmp
-##' }
-##' names(ranges) <- names(tamiasPolyList)
-##' 
-##' ranges <- stack(ranges)
+##' ranges <- rasterStackFromPolyList(tamiasPolyList, resolution = 20000)
 ##' 
 ##' spRas <- createSpeciesRaster(ranges = ranges)
 ##' 
@@ -117,108 +80,15 @@
 
 
 
-createSpeciesRaster <- function(ranges, resolution = 1, resUnits = 'degrees', extent = 'auto', coverCutoff = 0.5, nthreads = 1, rasterTemplate = NULL, probRanking = FALSE) {
+createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FALSE, chunkSize = NULL, force=FALSE) {
 	
-	resUnits <- match.arg(resUnits, c('degrees', 'meters'))
-	
-	if (nthreads > 1) {
-		if (!"package:parallel" %in% search()) {
-			stop("Please load package 'parallel' for using the multi-thread option\n");
-		}
+	if (!class(ranges) %in% c('RasterStack', 'RasterBrick', 'matrix')) {
+		stop('Input must be a list of SpatialPolygons or a RasterStack.')
 	}
-
-	if (class(ranges) == 'list') {
-		if (class(ranges[[1]]) != 'SpatialPolygons' & class(ranges[[1]]) != 'SpatialPolygonsDataFrame') {
-			stop('Input must be a list of SpatialPolygons or a RasterStack.')
-		}
-	}
-	
-	if (class(ranges) != 'matrix' & is.null(names(ranges))) {
-		stop('List must be named.')
-	}
-	
+		
 	# prepare output object
 	obj <- vector('list', length = 5)
 	names(obj) <- c('raster', 'speciesList', 'geogSpecies', 'data', 'phylo')
-	
-	# if spatialpolygons
-	if (class(ranges) == 'list') {
-		if (class(ranges[[1]]) == 'RasterLayer') {
-			stop('Rasters must be provided as a RasterStack.')
-		}
-		if (class(ranges[[1]]) == 'SpatialPolygons' | class(ranges[[1]]) == 'SpatialPolygonsDataFrame') {
-			
-			# test that all have same CRS
-			if (length(unique(sapply(ranges, sp::proj4string))) != 1) {
-				stop('proj4string of all polygons must match.')
-			}
-
-			if ('auto' %in% extent) {
-				#get overall extent
-				masterExtent <- getExtentOfList(ranges)
-				masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
-			} else if (is.numeric(extent) & length(extent) == 4) {
-				masterExtent <- list(minLong = extent[1], maxLong = extent[2], minLat = extent[3], maxLat = extent[4])
-			} else {
-				stop("extent must be 'auto' or a vector with minLong, maxLong, minLat, maxLat.")
-			}
-			
-			if (resUnits == 'degrees') {
-				proj <- '+proj=longlat +datum=WGS84'
-			} else {
-				#Behrmann equal area projection
-				proj <- '+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
-			}
-			
-			# if proj does not match CRS of polygons, transform
-			if (proj != sp::proj4string(ranges[[1]])) {
-				ranges <- lapply(ranges, function(x) sp::spTransform(x, sp::CRS(proj)))
-			}
-			
-			#create template raster
-			ras <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(resolution, 2), crs = proj)
-			
-			# get the percent cover for each polygon, for each cell
-			if (nthreads > 1) {
-				cl <- parallel::makePSOCKcluster(nthreads)
-				parallel::clusterExport(cl = cl, varlist = c('ranges', 'ras', 'rasterize'), envir = environment())
-				polycover <- parallel::parLapply(cl, ranges, function(x) raster::rasterize(x, ras, getCover = TRUE))
-				parallel::stopCluster(cl)
-			} else {
-				polycover <- lapply(ranges, function(x) raster::rasterize(x, ras, getCover = TRUE))
-			}
-			
-			polycover <- lapply(polycover, function(x) x / 100)
-			
-			#identify cells for each polygon that satisfy cutoff
-			cellInd <- lapply(polycover, function(x) which(raster::values(x) > coverCutoff))
-			
-			# create richness raster
-			raster::values(ras) <- 0
-			pb <- txtProgressBar(min = 0, max = length(cellInd), style = 3)
-			for (i in 1:length(cellInd)) {
-				setTxtProgressBar(pb, i)
-				raster::values(ras)[cellInd[[i]]] <- raster::values(ras)[cellInd[[i]]] + 1
-			}
-			ras[ras == 0] <- NA
-			names(ras) <- 'spRichness'
-			obj[[1]] <- ras
-
-			#create list of cells with species names
-			spByCell <- vector('list', length = raster::ncell(ras))
-			for (i in 1:length(cellInd)) {
-				if (length(cellInd[[i]]) > 0) {
-					for (j in 1:length(cellInd[[i]])) {
-						spByCell[[cellInd[[i]][j]]] <- c(spByCell[[cellInd[[i]][j]]], names(cellInd)[i])
-					}
-				}
-			}
-			ind <- which(sapply(spByCell, is.null) == TRUE)
-			spByCell[ind] <- lapply(spByCell[ind], function(x) vector('character', length = 0))
-			obj[[2]] <- spByCell
-
-		}
-	}
 	
 	
 	# if rasterstack as input
@@ -242,64 +112,146 @@ createSpeciesRaster <- function(ranges, resolution = 1, resUnits = 'degrees', ex
 		raster::values(ras) <- 0
 		spByCell <- vector('list', length = raster::ncell(ranges))
 		
-		pBar <- FALSE
-		if (!raster::canProcessInMemory(ranges)) {
+		if (raster::canProcessInMemory(ranges) & !force) {
+
+			pBar <- FALSE
+			mat <- matrix(nrow=raster::ncell(ranges), ncol=raster::nlayers(ranges))
+			colnames(mat) <- names(ranges)
+
+			for (i in 1:raster::nlayers(ranges)) {
+				mat[, i] <- ranges[[i]][]
+			}
+		
+			# set all NA to 0
+			mat[is.na(mat)] <- 0
+			
+			# check if is binary
+			if (identical(unique(as.numeric(mat)), c(0,1))) {
+	 			probRanking <- FALSE
+			} else {
+				if (!probRanking) {
+					# if not binary and probRanking is false, convert all to 0/1
+					mat[mat != 0] <- 1
+				}
+			}
+				
+			# get count of species per cell
+			cellSums <- rowSums(mat)
+				
+			if (probRanking) {
+				cellSums <- round(cellSums)
+			}
+				
+			# assign values to result raster
+			raster::values(ras) <- cellSums
+			
+			# get list of which species are found in each cell
+			# because we can't pass the entire data.table to rcpp code, break into chunks
+			# of 100 records
+			
+			if (probRanking) {
+				spByCell <- returnTopIndices(mat, cellSums)
+				
+				# convert indices to species names
+				spByCell <- lapply(spByCell, function(x) colnames(mat)[x])
+				
+			} else {
+				
+				spByCell <- spListPerCell(mat)		
+	
+			}
+			
+		} else {
+			
+			# data too big. Split into subsets of rows
+
+			if (is.null(chunkSize)) {			
+				# testing chunksize
+				# using code that is run for canProcessInMemory()
+				test <- seq(10, nrow(ranges), by=10)
+				n <- 4 + raster::nlayers(ranges) - 1
+				for (i in 1:length(test)) {
+					check <- round(1.1 * ncol(ranges) * test[i]) * n  < raster:::.maxmemory()
+					if (!check) {
+						chunkSize <- test[i - 1]
+						break
+					}
+	 			}
+	 		}		
+			
 			pBar <- TRUE
 			cat('\t...Reading in raster data...\n')
-			pb <- raster::pbCreate(raster::nlayers(ranges), progress = 'text')
-		}
-		mat <- matrix(nrow=raster::ncell(ranges), ncol=raster::nlayers(ranges))
-		colnames(mat) <- names(ranges)
-		for (i in 1:raster::nlayers(ranges)) {
-			if (pBar) {
+			
+			nChunks <- round(nrow(ranges) / chunkSize)
+			counter <- 1
+			cellCounter <- 1
+			
+			pb <- raster::pbCreate(nChunks, progress = 'text')
+
+			for (i in 1:nChunks) {
+
 				raster::pbStep(pb, step = i)
+				
+				start <- counter
+				if (i == nChunks) {
+					end <- nrow(ranges)
+				} else {
+					end <- start + chunkSize - 1
+				}
+				
+				cellInd <- raster::cellFromRow(ranges[[1]], seq(start, end))
+				
+				mat <- matrix(nrow = length(cellInd), ncol = raster::nlayers(ranges))
+				colnames(mat) <- names(ranges)
+				
+				for (j in 1:raster::nlayers(ranges)) {
+	
+					mat[, j] <- ranges[[j]][cellInd]
+				}
+							
+				# set all NA to 0
+				mat[is.na(mat)] <- 0
+				
+				if (!probRanking) {
+					# if not binary and probRanking is false, convert all to 0/1
+					mat[mat != 0] <- 1
+				}
+				
+				# get count of species per cell
+				cellSums <- rowSums(mat)
+					
+				if (probRanking) {
+					cellSums <- round(cellSums)
+				}
+					
+				# assign values to result raster
+				raster::values(ras)[cellCounter : (cellCounter + nrow(mat) - 1)] <- cellSums
+				
+				# get list of which species are found in each cell
+				# because we can't pass the entire data.table to rcpp code, break into chunks
+				# of 100 records
+				
+				if (probRanking) {
+					spByCell[cellCounter : (cellCounter + nrow(mat) - 1)] <- returnTopIndices(mat, cellSums)
+					
+					# convert indices to species names
+					spByCell[cellCounter : (cellCounter + nrow(mat) - 1)] <- lapply(spByCell[cellCounter : (cellCounter + nrow(mat) - 1)], function(x) colnames(mat)[x])
+					
+				} else {
+					
+					spByCell[cellCounter : (cellCounter + nrow(mat) - 1)] <- spListPerCell(mat)		
+		
+				}
+	
+				counter <- counter + chunkSize
+				cellCounter <- cellCounter + nrow(mat)
 			}
-			mat[, i] <- ranges[[i]][]
 		}
 		if (pBar) {
 			raster::pbClose(pb, timer = FALSE)
 			cat('\n')
 		}
-		
-		# set all NA to 0
-		mat[is.na(mat)] <- 0
-		
-		# check if is binary
-		if (identical(unique(as.numeric(mat)), c(0,1))) {
- 			probRanking <- FALSE
-		} else {
-			if (!probRanking) {
-				# if not binary and probRanking is false, convert all to 0/1
-				mat[mat != 0] <- 1
-			}
-		}
 			
-		# get count of species per cell
-		cellSums <- rowSums(mat)
-			
-		if (probRanking) {
-			cellSums <- round(cellSums)
-		}
-			
-		# assign values to result raster
-		raster::values(ras) <- cellSums
-		
-		# get list of which species are found in each cell
-		# because we can't pass the entire data.table to rcpp code, break into chunks
-		# of 100 records
-		
-		if (probRanking) {
-			spByCell <- returnTopIndices(mat, cellSums)
-			
-			# convert indices to species names
-			spByCell <- lapply(spByCell, function(x) colnames(mat)[x])
-			
-		} else {
-			
-			spByCell <- spListPerCell(mat)		
-
-		}
-		
 		#remove zero cells
 		ras[ras == 0] <- NA
 		names(ras) <- 'spRichness'

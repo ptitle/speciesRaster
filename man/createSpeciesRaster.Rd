@@ -4,32 +4,12 @@
 \alias{createSpeciesRaster}
 \title{Create speciesRaster}
 \usage{
-createSpeciesRaster(ranges, resolution = 1, resUnits = "degrees",
-  extent = "auto", coverCutoff = 0.5, nthreads = 1,
-  rasterTemplate = NULL, probRanking = FALSE)
+createSpeciesRaster(ranges, rasterTemplate = NULL, probRanking = FALSE,
+  chunkSize = NULL, force = FALSE)
 }
 \arguments{
-\item{ranges}{Either a list of SpatialPolygons, SpatialPolygonsDataFrames, a rasterstack,
-rasterbrick, or species by cell matrix. If raster objects, cell values can either be
-binary presence/absence, or probabilities.}
-
-\item{resolution}{the size of the cells of the resulting raster (ignored if input is
-raster)}
-
-\item{resUnits}{if 'degrees', then raster will be unprojected, if 'meters' then raster
-will be projected to equal area Behrmann projection (ignored if input is raster)}
-
-\item{extent}{if 'auto', then the maximal extent of the polygons will be used, if 
-input is raster, this will be ignored as the extent of the RasterStack will 
-be used. If not auto, must be a numeric vector of length 4 with minLong, 
-maxLong, minLat, maxLat.}
-
-\item{coverCutoff}{only applies if input is SpatialPolygons. In rasterization of the
-polygons, the percent of a raster cell that must be covered by the polygon for it to
-count as a presence.}
-
-\item{nthreads}{number of threads to use for parallelization of the function. The R
-package    \code{parallel} must be loaded for \code{nthreads > 1}.}
+\item{ranges}{Either a RasterStack, RasterBrick, or species by cell matrix. If 
+raster objects, cell values can either be binary presence/absence, or probabilities.}
 
 \item{rasterTemplate}{If input is a species x cell matrix, then a rasterTemplate must be
 provided.}
@@ -37,30 +17,34 @@ provided.}
 \item{probRanking}{If \code{ranges} is a rasterStack of probabilities rather than
 presence/absence, then apply a probability ranking filter to identify species.
 See details.}
+
+\item{chunkSize}{number of raster rows to handle at one time. Inferred automatically 
+if null.}
+
+\item{force}{temporary parameter that forces the function to take the more memory-
+conservative approach, even if the dataset is small enough to handle otherwise.}
 }
 \value{
 an object of class \code{speciesRaster}.
 }
 \description{
-This function takes a list of SpatialPolygons or a rasterStack and generates
-both a richness raster and an associated list of species per cell, creating an object of class \code{speciesRaster}.
+This function takes a rasterStack and generates both a richness 
+raster and an associated list of species per cell, creating an object of 
+class \code{speciesRaster}.
 }
 \details{
 This function generates an object of class \code{speciesRaster}, which is a 
 list containing the following elements:
 \itemize{
-	\item{raster} {A raster representing counts of species per cell.}
-	\item{speciesList} {A list of species found in each cell.}
-	\item{geogSpecies} {a vector of unique species in all cells.}
-	\item{data} {An empty spot that morphological data can be added to.}
-	\item{phylo} {An empty spot that a phylogeny can be added to.}
+	\item{\code{raster:}} {A raster representing counts of species per cell.}
+	\item{\code{speciesList:}} {A list of species found in each cell.}
+	\item{\code{geogSpecies:}} {a vector of unique species in all cells.}
+	\item{\code{data:}} {An empty spot that morphological data can be added to.}
+	\item{\code{phylo:}} {An empty spot that a phylogeny can be added to.}
 }
-If input is a list of SpatialPolygons, then resolution must be specified.
-The extent will be inferred as the minimum extent required to encompass all 
-polygons. All cells within a polygon are considered as a presence for that species.
 
-If input is a rasterStack, then all parameters are taken from that, and resolution
-and extent arguments are ignored. If \code{probRanking = FALSE}, then any non-NA
+If input is a RasterStack, then all parameters are taken from that, such as resolution,
+extent and projection. If \code{probRanking = FALSE}, then any non-NA
 and non-zero cell is considered a presence. If \code{probRanking = TRUE}, then 
 cell values are evaluated as probabilities from 0 to 1, for example as output from 
 species distribution models (SDM). The probability ranking filter was described in 
@@ -81,27 +65,7 @@ library(maptools)
 head(tamiasPolyList)
 
 # convert polygon ranges to raster
-# We will define our raster template where will specify extent, resolution and projection
-listExtent <- getExtentOfList(tamiasPolyList)
-template <- raster(ext = listExtent, res = c(20000, 20000), crs=proj4string(tamiasPolyList[[1]]))
-
-# rasterize
-ranges <- list()
-for (i in 1:length(tamiasPolyList)) {
-	cat(i, '\\n')
-	tmp <- rasterize(tamiasPolyList[[i]], template)
-	if (is.na(minValue(tmp))) {
-		# species' range is too small and gets dropped
-		# add back in
-		presenceCells <- unique(cellFromXY(tmp, spsample(tamiasPolyList[[i]], 10, type='random')))
-		tmp[presenceCells] <- 1
-	}
-	values(tmp)[!is.na(values(tmp))] <- 1
-	ranges[[i]] <- tmp
-}
-names(ranges) <- names(tamiasPolyList)
-
-ranges <- stack(ranges)
+ranges <- rasterStackFromPolyList(tamiasPolyList, resolution = 20000)
 
 spRas <- createSpeciesRaster(ranges = ranges)
 
