@@ -4,7 +4,7 @@
 \alias{cellMetrics_speciesRaster}
 \title{Cell Metrics}
 \usage{
-cellMetrics_speciesRaster(x, metric, var = NULL, nthreads = 1, nreps = 20)
+cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -13,8 +13,6 @@ cellMetrics_speciesRaster(x, metric, var = NULL, nthreads = 1, nreps = 20)
 
 \item{var}{If a univariate morphological metric is specified, and the 
 data in \code{x} are multivariate, which trait should be used?}
-
-\item{nthreads}{number of threads for parallel processing}
 
 \item{nreps}{Number of repetitions for Foote metric distribution.}
 }
@@ -31,13 +29,16 @@ Univariate morphological metrics
 	\itemize{
 		\item{mean}
 		\item{median}
+		\item{range}
+		\item{NN_dist:} {nearest neighbor}
+		\item{variance}
 	}
 	Multivariate morphological metrics
 	\itemize{
 		\item{disparity} 
 		\item{range}
 		\item{rangePCA}
-		\item{Foote_meanDist}
+		\item{NN_dist:} {nearest neighbor}
 	}
 	Phylogenetic metrics
 	\itemize{

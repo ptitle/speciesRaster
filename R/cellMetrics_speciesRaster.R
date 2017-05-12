@@ -10,8 +10,6 @@
 ##' @param var If a univariate morphological metric is specified, and the 
 ##' 	data in \code{x} are multivariate, which trait should be used?
 ##' 
-##' @param nthreads number of threads for parallel processing
-##' 
 ##' @param nreps Number of repetitions for Foote metric distribution.
 ##' 
 ##' @return object of class \code{speciesRaster} where the raster represents
@@ -22,13 +20,16 @@
 ##' 	\itemize{
 ##' 		\item{mean}
 ##' 		\item{median}
+##' 		\item{range}
+##'			\item{NN_dist:} {nearest neighbor}
+##' 		\item{variance}
 ##' 	}
 ##' 	Multivariate morphological metrics
 ##'		\itemize{
 ##'			\item{disparity} 
 ##' 		\item{range}
 ##' 		\item{rangePCA}
-##' 		\item{Foote_meanDist}
+##' 		\item{NN_dist:} {nearest neighbor}
 ##' 	}
 ##' 	Phylogenetic metrics
 ##' 	\itemize{
@@ -57,23 +58,33 @@
 
 
 
-cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps = 20) {
+cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose = FALSE) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('x must be of class speciesRaster.')
 	}
-	
-	metric <- sapply(metric, match.arg, choices = c('mean', 'median', 'range', 'rangePCA', 'disparity', 'Foote_meanDist', 'meanPatristic', 'patristicNN', 'phyloDisparity'), USE.NAMES = FALSE)
-	
+
 	if (length(metric) > 1) {
-		if (any(metric %in% c('mean','median','meanPatristic','patristicNN','phyloDisparity','disparity', 'range', 'rangePCA'))) {
-			stop('You can only specify one metric.')
+		stop('You can only specify one metric.')
+	}
+	
+	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'rangePCA', 'disparity', 'NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity'))
+	
+	if (metric %in% c('mean', 'median', 'variance') & class(x[['data']]) %in% c('matrix', 'data.frame') & is.null(var)) {
+		stop('If a univariate metric is requested from a multivariate dataset, a column name must be provided as var.')
+	}
+	
+	if (!is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
+		if (!var %in% colnames(x[['data']])) {
+			stop('var not a valid column name of the data.')
 		}
 	}
 	
+	
 	# Prune species list according to metric of interest
-	if (all(metric %in% c('mean', 'median', 'disparity', 'range', 'rangePCA', 'Foote_meanDist'))) {
+	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'rangePCA', 'NN_dist')) {
 		
+		if (verbose) cat('\t...dropping species that are not in trait data...\n')
 		# check that there is data in speciesRaster object
 		if (is.null(x[['data']])) {
 			stop('speciesRaster object does not contain trait data!')
@@ -92,7 +103,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		if (is.null(x[['phylo']])) {
 			stop('speciesRaster object does not contain a phylo object!')
 		}
-
+		
+		if (verbose) cat('\t...dropping species that are not in phylo data...\n')
 	 	# prune speciesRaster object down to species shared with phylogeny
 		x[[2]] <- intersectList(x[[2]], x[['phylo']]$tip.label)
 	} else {
@@ -100,6 +112,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 	}
 	
 	# create a mapping of which set of species are found in each cell
+	if (verbose) cat('\t...Creating mapping of species combinations to cells...\n')
 	uniqueComm <- unique(x[[2]])
 	allComm <- sapply(x[[2]], function(y) paste(y, collapse='|'))
 	uniqueCommLabels <- sapply(uniqueComm, function(y) paste(y, collapse='|'))
@@ -110,15 +123,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 	## ----------------------------------
 	## MORPHOLOGY-RELATED METRICS
 	
-	if (all(metric %in% c('mean', 'median'))) {
-		if (is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
-			stop(paste0("For metric ", metric, ", a variable must be specified."))
-		}
-		if (!is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
-			if (!var %in% colnames(x[['data']])) {
-				stop("'var' not in data.")
-			}
-		}
+	if (metric %in% c('mean', 'median', 'NN_dist', 'variance', 'range') & !is.null(var)) {
+		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
 		if (is.vector(x[[4]])) {
 			trait <- x[[4]]
 		} else {
@@ -127,7 +133,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
 	}
 	
-	if (all(metric == 'disparity')) {
+	if (metric == 'disparity') {
+		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		# sum of the diagonal of the covariance matrix
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
@@ -135,7 +142,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		resVal[ind] <- sapply(uniqueComm[ind], function(y) sum(diag(cov(x[['data']][y,]))))
 	}
 	
-	if (all(metric == 'range')) {
+	if (metric == 'range' & is.null(var)) {
+		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		# maximum of the distance matrix (0 if one sp)
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
@@ -143,7 +151,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		resVal[ind] <- sapply(uniqueComm[ind], function(y) max(dist(x[['data']][y, ])))
 	}
 	
-	if (all(metric == 'rangePCA')) {
+	if (metric == 'rangePCA') {
+		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		pc <- prcomp(x[['data']])
 		# retain 99% of the variation
 		keep <- 1:which(cumsum(((pc$sdev)^2) / sum(pc$sdev^2)) >= 0.99)[1]
@@ -157,7 +166,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		})	
 	}
 	
-	if (all(metric == 'Foote_meanDist')) {
+	if (metric == 'NN_dist' & is.null(var)) {
+		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 			
 		nnDistRes <- lapply(uniqueComm, function(y) nnDist(x[['data']][y, ], Nrep = nreps))	
 				
@@ -173,13 +183,14 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 	## ----------------------------------
 	## PHYLOGENY-RELATED METRICS
 	
-	if (all(metric %in% c('meanPatristic', 'patristicNN', 'phyloDisparity'))) {
+	if (metric %in% c('meanPatristic', 'patristicNN', 'phyloDisparity')) {
 		
 		# calculate pairwise patristic distance
 		patdist <- cophenetic(x[['phylo']])
 		diag(patdist) <- NA
 		
 		if (metric == 'meanPatristic') {
+			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
 			# meanPatristic is 0 if 1 species, NA if no species
 			patdist[upper.tri(patdist, diag = TRUE)] <- NA
 			resVal <- sapply(uniqueComm, function(y) mean(unlist(patdist[y, y]), na.rm = TRUE))
@@ -188,6 +199,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		}
 		
 		if (all(metric == 'patristicNN')) {
+			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
 			# the mean of the minimum patristic distance for each species present
 			resVal <- sapply(uniqueComm, function(y) {
 				if (!anyNA(y)) {
@@ -203,6 +215,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nthreads = 1, nreps
 		}
 
 		if (all(metric == 'phyloDisparity')) {
+			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
 			# the sum of the squared deviations from the mean
 			# value of 0 if 1 species, NA if no species
 			patdist[upper.tri(patdist, diag = TRUE)] <- NA

@@ -37,6 +37,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// NNdist
+double NNdist(NumericVector input);
+RcppExport SEXP speciesRaster_NNdist(SEXP inputSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type input(inputSEXP);
+    rcpp_result_gen = Rcpp::wrap(NNdist(input));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cellAvg
 NumericVector cellAvg(List input, NumericVector trait, String stat);
 RcppExport SEXP speciesRaster_cellAvg(SEXP inputSEXP, SEXP traitSEXP, SEXP statSEXP) {

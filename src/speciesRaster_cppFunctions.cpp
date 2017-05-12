@@ -71,6 +71,30 @@ List returnTopIndices(NumericMatrix input, IntegerVector cutoff) {
 
 }
 
+// from vector of values, create pairwise matrix and take minimum
+// [[Rcpp::export(name = NNdist, rng = false)]]
+double NNdist(NumericVector input) {
+
+	int n = input.size();
+	int counter = 0;
+	
+	// get all pairwise distances
+	std::vector<double> mat((n * n - n) / 2);
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			if (i < j) {
+				mat[counter] = std::abs(input[i] - input[j]);
+				counter = counter + 1;
+			}
+		}
+	}
+
+	NumericVector ret = wrap(mat);
+	return min(ret);
+}
+
+
+
 // return either mean or median value of trait per cell
 // [[Rcpp::export(name = cellAvg, rng = false)]]
 NumericVector cellAvg(List input, NumericVector trait, String stat) {
@@ -88,6 +112,12 @@ NumericVector cellAvg(List input, NumericVector trait, String stat) {
 				out[i] = double(mean(vals));
 			} else if (stat == "median") {
 				out[i] = double(median(vals));				
+			} else if (stat == "variance") {
+				out[i] = double(var(vals));
+			} else if (stat == "NN_dist") {
+				out[i] = double(NNdist(vals));
+			} else if (stat == "range") {
+				out[i] = double(max(vals) - min(vals));
 			}
 		} else {
 			out[i] = NA_REAL;

@@ -15,6 +15,8 @@
 ##' 	presence/absence, then apply a probability ranking filter to identify species.
 ##'		See details. 
 ##'
+##' @param verbose Primarily intended for debugging, print progress to the console.
+##'
 ##' @param chunkSize number of raster rows to handle at one time. Inferred automatically 
 ##' 	if null.
 ##'
@@ -80,7 +82,7 @@
 
 
 
-createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FALSE, chunkSize = NULL, force=FALSE) {
+createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FALSE, verbose = FALSE, chunkSize = NULL, force=FALSE) {
 	
 	if (!class(ranges) %in% c('RasterStack', 'RasterBrick', 'matrix')) {
 		stop('Input must be a list of SpatialPolygons or a RasterStack.')
@@ -95,6 +97,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FAL
 	if (class(ranges) %in% c('RasterStack', 'RasterBrick')) {
 		
 		#check that all rasters have values
+		if (verbose) cat('\t...Checking for empty rasters...\n')
 		valCheck <- raster::minValue(ranges)
 		badEntries <- which(is.na(valCheck))
 		badEntriesRet <- badEntries
@@ -112,8 +115,10 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FAL
 		raster::values(ras) <- 0
 		spByCell <- vector('list', length = raster::ncell(ranges))
 		
+		if (verbose) cat('\t...Determining if rasterstack can be processed in memory...')
 		if (raster::canProcessInMemory(ranges) & !force) {
 
+			if (verbose) cat('yes\n')
 			pBar <- FALSE
 			mat <- matrix(nrow=raster::ncell(ranges), ncol=raster::nlayers(ranges))
 			colnames(mat) <- names(ranges)
@@ -164,27 +169,33 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FAL
 		} else {
 			
 			# data too big. Split into subsets of rows
+			if (verbose) cat('no\n')
 
+			if (verbose) cat('\t...Determining appropriate chunk size...\n')
 			if (is.null(chunkSize)) {			
 				# testing chunksize
 				# using code that is run for canProcessInMemory()
-				test <- seq(10, nrow(ranges), by=10)
+				test <- seq(5, nrow(ranges), by = 5)
 				n <- 4 + raster::nlayers(ranges) - 1
 				for (i in 1:length(test)) {
-					check <- round(1.1 * ncol(ranges) * test[i]) * n  < raster:::.maxmemory()
+					check <- round(1.1 * ncol(ranges) * test[i]) * n  < 1e+06
 					if (!check) {
 						chunkSize <- test[i - 1]
 						break
 					}
 	 			}
+	 			if (length(chunkSize) < 1) {
+	 				chunkSize <- min(test)
+	 			}
 	 		}		
 			
 			pBar <- TRUE
-			cat('\t...Reading in raster data...\n')
-			
+						
 			nChunks <- round(nrow(ranges) / chunkSize)
 			counter <- 1
 			cellCounter <- 1
+			
+			if (verbose) cat('\t...Chunk size:', chunkSize, 'nChunks:', nChunks, '...\n')
 			
 			pb <- raster::pbCreate(nChunks, progress = 'text')
 
