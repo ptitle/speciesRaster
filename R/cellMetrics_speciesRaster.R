@@ -11,6 +11,8 @@
 ##' 	data in \code{x} are multivariate, which trait should be used?
 ##' 
 ##' @param nreps Number of repetitions for Foote metric distribution.
+##'
+##' @param verbose Intended primarily for debugging, prints progress to the console
 ##' 
 ##' @return object of class \code{speciesRaster} where the raster represents
 ##' 	calculations of the metric at every cell. 
@@ -21,7 +23,7 @@
 ##' 		\item{mean}
 ##' 		\item{median}
 ##' 		\item{range}
-##'			\item{NN_dist:} {nearest neighbor}
+##'			\item{NN_dist:} {mean nearest neighbor distance}
 ##' 		\item{variance}
 ##' 	}
 ##' 	Multivariate morphological metrics
@@ -29,13 +31,13 @@
 ##'			\item{disparity} 
 ##' 		\item{range}
 ##' 		\item{rangePCA}
-##' 		\item{NN_dist:} {nearest neighbor}
+##' 		\item{NN_dist:} {mean nearest neighbor distance}
 ##' 	}
 ##' 	Phylogenetic metrics
 ##' 	\itemize{
 ##'			\item{meanPatristic}
-##'			\item{patristicNN} {nearest neighbor in patristic distance}
-##'			\item{phyloDisparity} {sum of squared deviations in patristic distance}
+##'			\item{patristicNN:} {mean nearest neighbor in patristic distance}
+##'			\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 ##' 	}
 ##'
 ##' @examples

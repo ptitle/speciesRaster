@@ -5,7 +5,7 @@
 \title{Create speciesRaster}
 \usage{
 createSpeciesRaster(ranges, rasterTemplate = NULL, probRanking = FALSE,
-  chunkSize = NULL, force = FALSE)
+  verbose = FALSE, chunkSize = NULL, force = FALSE)
 }
 \arguments{
 \item{ranges}{Either a RasterStack, RasterBrick, or species by cell matrix. If 
@@ -17,6 +17,8 @@ provided.}
 \item{probRanking}{If \code{ranges} is a rasterStack of probabilities rather than
 presence/absence, then apply a probability ranking filter to identify species.
 See details.}
+
+\item{verbose}{Primarily intended for debugging, print progress to the console.}
 
 \item{chunkSize}{number of raster rows to handle at one time. Inferred automatically 
 if null.}

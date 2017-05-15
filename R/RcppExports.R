@@ -14,7 +14,7 @@ returnTopIndices <- function(input, cutoff) {
 }
 
 NNdist <- function(input) {
-    .Call('speciesRaster_NNdist', PACKAGE = 'speciesRaster', input)
+    .Call('speciesRaster_meanNNdist', PACKAGE = 'speciesRaster', input)
 }
 
 cellAvg <- function(input, trait, stat) {

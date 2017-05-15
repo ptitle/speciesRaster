@@ -4,7 +4,8 @@
 \alias{cellMetrics_speciesRaster}
 \title{Cell Metrics}
 \usage{
-cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20)
+cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20,
+  verbose = FALSE)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -15,6 +16,8 @@ cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20)
 data in \code{x} are multivariate, which trait should be used?}
 
 \item{nreps}{Number of repetitions for Foote metric distribution.}
+
+\item{verbose}{Intended primarily for debugging, prints progress to the console}
 }
 \value{
 object of class \code{speciesRaster} where the raster represents
@@ -30,7 +33,7 @@ Univariate morphological metrics
 		\item{mean}
 		\item{median}
 		\item{range}
-		\item{NN_dist:} {nearest neighbor}
+		\item{NN_dist:} {mean nearest neighbor distance}
 		\item{variance}
 	}
 	Multivariate morphological metrics
@@ -38,12 +41,12 @@ Univariate morphological metrics
 		\item{disparity} 
 		\item{range}
 		\item{rangePCA}
-		\item{NN_dist:} {nearest neighbor}
+		\item{NN_dist:} {mean nearest neighbor distance}
 	}
 	Phylogenetic metrics
 	\itemize{
 		\item{meanPatristic}
-		\item{patristicNN} {nearest neighbor in patristic distance}
+		\item{patristicNN} {mean nearest neighbor in patristic distance}
 		\item{phyloDisparity} {sum of squared deviations in patristic distance}
 	}
 }
