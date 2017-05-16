@@ -46,8 +46,8 @@ Univariate morphological metrics
 	Phylogenetic metrics
 	\itemize{
 		\item{meanPatristic}
-		\item{patristicNN} {mean nearest neighbor in patristic distance}
-		\item{phyloDisparity} {sum of squared deviations in patristic distance}
+		\item{patristicNN:} {mean nearest neighbor in patristic distance}
+		\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 	}
 }
 \examples{

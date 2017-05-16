@@ -2,7 +2,7 @@
 ##'
 ##' @description Adds a legend to an existing raster plot, with some additional manual
 
-##'	@param r the \code{rasterLayer} object that has been plotted
+##'	@param r the \code{rasterLayer} or \code{speciesRaster} object that has been plotted
 
 ##'	@param direction direction of color ramp. If omitted, then direction is automatically 
 ##'		inferred, otherwise can be specified as \code{horizontal} or \code{vertical}.

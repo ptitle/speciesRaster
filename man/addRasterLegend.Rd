@@ -11,7 +11,7 @@ addRasterLegend(r, direction, side, location = "right", nTicks = 2,
   digits = 2, ...)
 }
 \arguments{
-\item{r}{the \code{rasterLayer} object that has been plotted}
+\item{r}{the \code{rasterLayer} or \code{speciesRaster} object that has been plotted}
 
 \item{direction}{direction of color ramp. If omitted, then direction is automatically 
 inferred, otherwise can be specified as \code{horizontal} or \code{vertical}.}

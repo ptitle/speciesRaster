@@ -704,7 +704,7 @@ NumericVector calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) 
 
 	int n = nbList.size();
 
-	Rcout << "\t...starting metric calculation...";
+	//Rcout << "\t...starting metric calculation...";
 
 	for (int i = 0; i < n; i++) {
 
@@ -750,7 +750,7 @@ NumericVector calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) 
 	 		//spVals[i] = "NA";
 	 	}
 	}
-	Rcout << "done\n";
+	//Rcout << "done\n";
 
 	//out[0] = cellVals;
 	//out[1] = spVals;
