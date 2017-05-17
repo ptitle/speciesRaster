@@ -4,39 +4,100 @@
 \alias{betaDiversity}
 \title{Map turnover in beta diversity}
 \usage{
-betaDiversity(x, radius = 50000, metric = "betaSOR")
+betaDiversity(x, cellNum = 4, metric = "betaSOR", minNB = (cellNum^2)/2,
+  nthreads = 1, verbose = FALSE)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}.}
 
-\item{radius}{Radius length in map units to define the moving window. 
-This will be converted by rounding up to a number of neighboring 
-cells in all directions.}
+\item{cellNum}{resolution of neighborhood size (horizontal and vertical), where the multisite metric 
+will be calculated for all smaller cells found within these coarser cells}
 
 \item{metric}{choice of metric, see details.}
+
+\item{minNB}{the minimum number of communities to consider for calculation of the beta metric 
+metric. See Details.}
+
+\item{nthreads}{number of threads to use for parallelization of the function. 
+The R package \code{parallel} must be loaded for \code{nthreads > 1}.}
+
+\item{verbose}{Intended primarily for debugging, prints progress to the console}
 }
 \value{
-Returns a new \code{speciesRaster} object, with mean community dissimilarity for each cell.
+Returns a RasterObject, where the metric can range from 0 to 1.
 }
 \description{
-Mean community dissimilarity is calculated for each cell within a moving window of neighboring cells.
+Taxonomic and phylogenetic community dissimilarity is calculated for each cell 
+	within a moving window of neighboring cells.
 }
 \details{
-Should put more information about the specific metric here, 
-eventually implement a few complimentary ones.
-Currently: Multi-site metrics implemented for: Sorensen dissimilarity (betaSOR), Simpson
-dissimlarity / turnover component of Sorensen dissimilarity (betaSIM), nestedness-resultant
-component of Sorensen dissimilarity (betaSNE), jaccard dissimilarity (betaJAC), turnover component
-of jaccard dissimilarity (betaJTU), nestedness-resultant component of Jaccard dissimilarity
-(betaJNE).
+This function calculates taxonomic and phylogenetic turnover in species communities,
+	as defined in the \code{speciesRaster} object. A more coarse-grained raster, with cell size defined
+	by the parameter \code{cellNum}, is overlaid on top of the \code{speciesRaster}, and an indexing is done
+	to determine which cells fall within the larger coarse-grained cells. For every coarse-grained 
+	cell, a multi-site metric is calculated from the sites that fall within that cell. As differences
+	in the number of communities could bias the beta diversity metrics, only coarse-grained cells with 
+	the same number of communities are retained.
+	
+	Following Baselga (2010) and Leprieur et al. (2012), the overall beta diversity metric can be 
+	decomposed into two additive metrics: the turnover component and the nestedness component of
+	beta diversity. Equivalent metrics are available from two families: Sorensen and Jaccard.
+	See \code{\link{beta.multi}} and \code{\link{phylo.beta.multi}} from the betapart package for
+	more information.
+
+	\code{minNB:} Depending on the value of \code{cellNum} and the spatial distribution of non-empty
+	cells in the speciesRaster, the number of communities contributing to the calculation of the beta 
+	diversity metric might not always be the same. At the edges of the raster, or along coastlines, for
+	example, fewer cells may contribute to the metric calculation, which might lead to bias. If the user
+	would like to restrict calculations to a minimum number of communities, this can be specified with 
+	\code{minNB} (minimum neighborhood size). By default, this is set to half of the maximum number of
+	communities that are possible. To include all communities, set to 1.
+
+	Metric options include:
+
+	Sorensen:
+	\itemize{
+		\item{betaSOR:} {Sorensen dissimilarity}
+		\item{betaSIM:} {turnover component of Sorensen dissimilarity}
+		\item{betaSNE:} {nestedness-resultant component of Sorensen dissimilarity}
+		\item{phyloBetaSOR:} {phylogenetic Sorensen dissimilarity}
+		\item{phyloBetaSIM:} {phylogenetic turnover component of Sorensen dissimilarity}
+		\item{phyloBetaSNE:} {phylogenetic nestedness-resultant component of Sorensen dissimilarity}
+	}
+	Jaccard:
+	\itemize{
+		\item{betaJAC:} {Jaccard dissimilarity}
+		\item{betaJTU:} {turnover component of Jaccard dissimilarity}
+		\item{betaJNE:} {nestedness-resultant component of Jaccard dissimilarity}
+		\item{phyloBetaJAC:} {phylogenetic Jaccard dissimilarity}
+		\item{phyloBetaJTU:} {phylogenetic turnover component of Jaccard dissimilarity}
+		\item{phyloBetaJNE:} {phylogenetic nestedness-resultant component of Jaccard dissimilarity}
+	}
 }
 \examples{
+library(raster)
 tamiasSpRas
+tamiasTree
+tamiasSpRas <- addPhylo_speciesRaster(tamiasSpRas, tamiasTree)
 
-# using a moving window of roughly 50km radius
-beta <- betaDiversity(tamiasSpRas, radius = 50000, metric = 'betaSOR')
-plot(beta)
+# using a neighborhood size of 4 cells
+betaSOR <- betaDiversity(tamiasSpRas, cellNum = 4, metric = 'betaSOR')
 
+phyloBetaSOR <- betaDiversity(tamiasSpRas, cellNum = 4, metric = 'phyloBetaSOR')
+
+colramp <- colorRampPalette(c('blue','yellow','red'))
+par(mfrow=c(1,2))
+plot(betaSOR, col = colramp(100), breaks=seq(0, 1,length.out=99), legend = FALSE)
+plot(phyloBetaSOR, col = colramp(100), breaks=seq(0, 1,length.out=99), legend = FALSE)
+addRasterLegend(phyloBetaSOR, location = 'left', minmax = c(0, 1), ramp = c(c('blue','yellow','red')))
+}
+\references{
+Baselga, A. 2010. Partitioning the turnover and nestedness components of beta diversity. Global 
+Ecology and Biogeography 19:134-143
+
+Leprieur F, Albouy C, De Bortoli J, Cowman PF, Bellwood DR, et al. (2012) Quantifying Phylogenetic 
+Beta Diversity: Distinguishing between "True" Turnover of Lineages and Phylogenetic Diversity Gradients. 
+PLoS ONE 7(8): e42760. doi:10.1371/journal.pone.0042760
 }
 \author{
 Pascal Title
