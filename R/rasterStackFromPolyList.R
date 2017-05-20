@@ -42,12 +42,6 @@
 
 rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRanges = TRUE, extent = 'auto', nthreads = 1) {
 	
-	if (nthreads > 1) {
-		if (!"package:parallel" %in% search()) {
-			stop("Please load package 'parallel' for using the multi-thread option\n");
-		}
-	}
-
 	if (class(polyList) == 'list') {
 		if (!class(polyList[[1]]) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
 			stop('Input must be a list of SpatialPolygons or a RasterStack.')
@@ -80,10 +74,10 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	if (nthreads > 1) {
 		cl <- parallel::makePSOCKcluster(nthreads)
 		parallel::clusterExport(cl = cl, varlist = c('polyList', 'ras', 'rasterize'), envir = environment())
-		rasList <- parallel::parLapply(cl, polyList, function(x) raster::rasterize(x, ras))
+		rasList <- pbapply::pblapply(polyList, function(x) raster::rasterize(x, ras), cl = cl)
 		parallel::stopCluster(cl)
 	} else {
-		rasList <- lapply(polyList, function(x) raster::rasterize(x, ras))
+		rasList <- pbapply::pblapply(polyList, function(x) raster::rasterize(x, ras))
 	}
 	
 	# force non-NA values to be 1

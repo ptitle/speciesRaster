@@ -106,12 +106,6 @@ betaDiversity <- function(x, cellNum = 4, metric = 'betaSOR', minNB = (cellNum ^
 		stop('x must be of class speciesRaster.')
 	}
 	
-	if (nthreads > 1) {
-		if (!"package:parallel" %in% search()) {
-			stop("Please load package 'parallel' for using the multi-thread option\n");
-		}
-	}	
-
 	# check metric validity
 	if (length(metric) > 1) {
 		stop('Only one metric can be specified.')
@@ -173,15 +167,15 @@ betaDiversity <- function(x, cellNum = 4, metric = 'betaSOR', minNB = (cellNum ^
 			parallel::clusterExport(cl = cl, varlist = c('commList', 'tree', 'family', 'metric'), envir = environment())
 			cellBeta <- rep(NA, length(commList))
 			cellBeta[sapply(commList, ncol) == 1] <- 0
-			cellBeta[sapply(commList, ncol) > 1] <- parallel::parSapply(cl = cl, commList[sapply(commList, ncol) > 1], function(y) {
+			cellBeta[sapply(commList, ncol) > 1] <- pbapply::pbsapply(commList[sapply(commList, ncol) > 1], function(y) {
 				return(betapart::phylo.beta.multi(y, tree, index.family = family)[[metric]])
-			})
+			}, cl = cl)
 			parallel::stopCluster(cl)
 		} else {
 			commList <- lapply(eList, function(y) speciesRasterToPhyloComm(x, y))
 			cellBeta <- rep(NA, length(commList))
 			cellBeta[sapply(commList, ncol) == 1] <- 0
-			cellBeta[sapply(commList, ncol) > 1] <- sapply(commList[sapply(commList, ncol) > 1], function(y) {
+			cellBeta[sapply(commList, ncol) > 1] <- pbapply::pbsapply(commList[sapply(commList, ncol) > 1], function(y) {
 				betapart::phylo.beta.multi(y, tree, index.family = family)[[metric]]
 			})
 		}
