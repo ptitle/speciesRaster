@@ -41,14 +41,26 @@ addTraits_speciesRaster <- function(x, data, replace = FALSE) {
 	
 	# drop species from trait vector if missing from raster
 	if (is.vector(data)) {
+		if (is.null(names(data))) {
+			stop('Data must have names.')
+		}
 		traitSpecies <- intersect(x$geogSpecies, names(data))
 		inGeogNotData <- setdiff(x$geogSpecies, names(data))
 		inDataNotGeog <- setdiff(names(data), x$geogSpecies)
+		if (length(traitSpecies) == 0) {
+			stop('There are no common species in geographic and trait data.')
+		}
 		x[['data']] <- data[traitSpecies]
 	} else if (class(data) %in% c('matrix','data.frame')) {
+		if (is.null(rownames(data))) {
+			stop('Data must have rownames.')
+		}
 		traitSpecies <- intersect(x$geogSpecies, rownames(data))
 		inGeogNotData <- setdiff(x$geogSpecies, rownames(data))
 		inDataNotGeog <- setdiff(rownames(data), x$geogSpecies)
+		if (length(traitSpecies) == 0) {
+			stop('There are no common species in geographic and trait data.')
+		}
 		x[['data']] <- as.matrix(data[traitSpecies,])
 	}
 	
