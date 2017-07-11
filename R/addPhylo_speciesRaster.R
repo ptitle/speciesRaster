@@ -39,6 +39,9 @@ addPhylo_speciesRaster <- function(x, tree, replace = FALSE) {
 	}
 	
 	# if needed, prune species in phylogeny down to species with geog data
+	if (length(intersect(tree$tip.label, x[[3]])) == 0) {
+		stop('No matching taxa between geographic data and phylogeny.')
+	}
 	inPhyloNotGeog <- setdiff(tree$tip.label, x[[3]])
 	inGeogNotPhylo <- setdiff(x[[3]], tree$tip.label)
 	tree <- ape::drop.tip(tree, inPhyloNotGeog)
