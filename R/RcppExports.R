@@ -13,7 +13,7 @@ returnTopIndices <- function(input, cutoff) {
     .Call('speciesRaster_returnTopIndices', PACKAGE = 'speciesRaster', input, cutoff)
 }
 
-NNdist <- function(input) {
+meanNNdist <- function(input) {
     .Call('speciesRaster_meanNNdist', PACKAGE = 'speciesRaster', input)
 }
 
@@ -111,5 +111,9 @@ calcBetaMultiSite <- function(spByCell, nbList, metric) {
 
 calcBetaMultiSiteBlock <- function(spByCell, nbList, metric) {
     .Call('speciesRaster_calcBetaMultiSiteBlock', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+}
+
+mapComm <- function(uniqueCommLabels, allComm) {
+    .Call('speciesRaster_mapComm', PACKAGE = 'speciesRaster', uniqueCommLabels, allComm)
 }
 

@@ -300,3 +300,52 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mapComm
+List mapComm(CharacterVector uniqueCommLabels, CharacterVector allComm);
+RcppExport SEXP speciesRaster_mapComm(SEXP uniqueCommLabelsSEXP, SEXP allCommSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< CharacterVector >::type uniqueCommLabels(uniqueCommLabelsSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type allComm(allCommSEXP);
+    rcpp_result_gen = Rcpp::wrap(mapComm(uniqueCommLabels, allComm));
+    return rcpp_result_gen;
+END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"speciesRaster_spListPerCell", (DL_FUNC) &speciesRaster_spListPerCell, 1},
+    {"speciesRaster_sort_", (DL_FUNC) &speciesRaster_sort_, 2},
+    {"speciesRaster_returnTopIndices", (DL_FUNC) &speciesRaster_returnTopIndices, 2},
+    {"speciesRaster_meanNNdist", (DL_FUNC) &speciesRaster_meanNNdist, 1},
+    {"speciesRaster_cellAvg", (DL_FUNC) &speciesRaster_cellAvg, 3},
+    {"speciesRaster_intersectList", (DL_FUNC) &speciesRaster_intersectList, 2},
+    {"speciesRaster_flattenMatrix", (DL_FUNC) &speciesRaster_flattenMatrix, 1},
+    {"speciesRaster_LegendreDiffIndex", (DL_FUNC) &speciesRaster_LegendreDiffIndex, 2},
+    {"speciesRaster_jaccardDissimilarity", (DL_FUNC) &speciesRaster_jaccardDissimilarity, 2},
+    {"speciesRaster_jaccardTurnover", (DL_FUNC) &speciesRaster_jaccardTurnover, 2},
+    {"speciesRaster_jaccardNestedness", (DL_FUNC) &speciesRaster_jaccardNestedness, 2},
+    {"speciesRaster_ListIsEmpty", (DL_FUNC) &speciesRaster_ListIsEmpty, 1},
+    {"speciesRaster_ListIsEmptyR", (DL_FUNC) &speciesRaster_ListIsEmptyR, 1},
+    {"speciesRaster_whichCpp", (DL_FUNC) &speciesRaster_whichCpp, 1},
+    {"speciesRaster_characterUnlist", (DL_FUNC) &speciesRaster_characterUnlist, 1},
+    {"speciesRaster_naomit", (DL_FUNC) &speciesRaster_naomit, 1},
+    {"speciesRaster_dropNeg", (DL_FUNC) &speciesRaster_dropNeg, 1},
+    {"speciesRaster_multiPrepCpp", (DL_FUNC) &speciesRaster_multiPrepCpp, 1},
+    {"speciesRaster_multiPrep", (DL_FUNC) &speciesRaster_multiPrep, 1},
+    {"speciesRaster_betaJAC", (DL_FUNC) &speciesRaster_betaJAC, 1},
+    {"speciesRaster_betaJTU", (DL_FUNC) &speciesRaster_betaJTU, 1},
+    {"speciesRaster_betaJNE", (DL_FUNC) &speciesRaster_betaJNE, 1},
+    {"speciesRaster_betaSOR", (DL_FUNC) &speciesRaster_betaSOR, 1},
+    {"speciesRaster_betaSIM", (DL_FUNC) &speciesRaster_betaSIM, 1},
+    {"speciesRaster_betaSNE", (DL_FUNC) &speciesRaster_betaSNE, 1},
+    {"speciesRaster_calcBetaPairwise", (DL_FUNC) &speciesRaster_calcBetaPairwise, 3},
+    {"speciesRaster_calcBetaMultiSite", (DL_FUNC) &speciesRaster_calcBetaMultiSite, 3},
+    {"speciesRaster_calcBetaMultiSiteBlock", (DL_FUNC) &speciesRaster_calcBetaMultiSiteBlock, 3},
+    {"speciesRaster_mapComm", (DL_FUNC) &speciesRaster_mapComm, 2},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_speciesRaster(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}

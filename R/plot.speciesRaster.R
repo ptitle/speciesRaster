@@ -18,7 +18,7 @@
 ##' @examples
 ##' plot(tamiasSpRas)
 ##' 
-##' plot(tamiasSpRas, legend=FALSE, axes=FALSE, box=FALSE)
+##' plot(tamiasSpRas, includeLegend=FALSE, axes=FALSE, box=FALSE)
 ##' addRasterLegend(tamiasSpRas, location = 'top', ramp=c('blue','yellow','red'))
 ##' 
 ##' @export
@@ -31,12 +31,12 @@ plot.speciesRaster <- function(x, log = FALSE, includeLegend = TRUE, colorvec = 
 	
 	colramp <- grDevices::colorRampPalette(colorvec)
 	
-	if (grepl('beta', names(x[[1]]))) {
-		raster::plot(x[[1]], col = colramp(100), breaks = seq(from = 0, to = 1, length.out = (100)), legend = FALSE, box = box, axes = axes)
-		if (includeLegend) {
-			addRasterLegend(x[[1]], location = location, ramp = colorvec, ncolors=100, minmax = c(0, 1), ...)
-		}
-	} else {
+	# if (grepl('beta', names(x[[1]]))) {
+		# raster::plot(x[[1]], col = colramp(100), breaks = seq(from = 0, to = 1, length.out = (100)), legend = FALSE, box = box, axes = axes)
+		# if (includeLegend) {
+			# addRasterLegend(x[[1]], location = location, ramp = colorvec, ncolors=100, minmax = c(0, 1), ...)
+		# }
+	# } else {
 		if (!log) {
 			raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE)
 			addRasterLegend(x[[1]], location = location, ramp = colorvec, ncolors=100, ...)
@@ -44,5 +44,5 @@ plot.speciesRaster <- function(x, log = FALSE, includeLegend = TRUE, colorvec = 
 			raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE)
 			addRasterLegend(log(x[[1]]), location = location, ramp = colorvec, ncolors=100, ...)
 		}
-	}
+	# }
 }

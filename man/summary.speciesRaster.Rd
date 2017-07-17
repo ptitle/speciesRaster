@@ -4,7 +4,7 @@
 \alias{summary.speciesRaster}
 \title{speciesRaster summary}
 \usage{
-\method{summary}{speciesRaster}(object)
+summary.speciesRaster(object)
 }
 \arguments{
 \item{object}{object of class \code{speciesRaster}}

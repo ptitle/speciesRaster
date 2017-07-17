@@ -4,7 +4,7 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-\method{plot}{speciesRaster}(x, log = FALSE, includeLegend = TRUE,
+plot.speciesRaster(x, log = FALSE, includeLegend = TRUE,
   colorvec = c("blue", "yellow", "red"), box = TRUE, axes = TRUE,
   location = "right", ...)
 }
@@ -34,7 +34,7 @@ Plot a speciesRaster object.
 \examples{
 plot(tamiasSpRas)
 
-plot(tamiasSpRas, legend=FALSE, axes=FALSE, box=FALSE)
+plot(tamiasSpRas, includeLegend=FALSE, axes=FALSE, box=FALSE)
 addRasterLegend(tamiasSpRas, location = 'top', ramp=c('blue','yellow','red'))
 
 }

@@ -72,7 +72,7 @@ List returnTopIndices(NumericMatrix input, IntegerVector cutoff) {
 }
 
 // from vector of values, create pairwise matrix and take minimum
-// [[Rcpp::export(name = NNdist, rng = false)]]
+// [[Rcpp::export(name = meanNNdist, rng = false)]]
 double meanNNdist(NumericVector input) {
 
 	int n = input.size();
@@ -757,3 +757,34 @@ NumericVector calcBetaMultiSiteBlock(List spByCell, List nbList, String metric) 
 
 	return cellVals;
 }
+
+
+// Return index of cells that map to each unique community set
+// [[Rcpp::export(name = mapComm, rng = false)]]
+List mapComm(CharacterVector uniqueCommLabels, CharacterVector allComm) {
+
+	int n = uniqueCommLabels.size();
+	List out(n);
+	
+	std::vector<std::string> uniqueCommLabels2 = as< std::vector<std::string> >(uniqueCommLabels);
+	std::vector<std::string> allComm2 = as< std::vector<std::string> >(allComm);
+	for (int i = 0; i < n; i++) {
+
+		std::vector<int> tmp;
+		for (int j = 0; j < allComm.size(); j++) {
+			if (allComm2[j] == uniqueCommLabels2[i]) {
+				tmp.push_back(j + 1);
+			}
+		}
+
+		out[i] = wrap(tmp);
+	}
+
+	return out;
+
+}
+
+
+
+
+

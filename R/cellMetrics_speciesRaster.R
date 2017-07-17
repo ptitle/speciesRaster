@@ -119,7 +119,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	allComm <- sapply(x[[2]], function(y) paste(y, collapse='|'))
 	uniqueCommLabels <- sapply(uniqueComm, function(y) paste(y, collapse='|'))
 
-	cellMap <- lapply(uniqueCommLabels, function(x) which(allComm == x))
+	# cellMap <- lapply(uniqueCommLabels, function(x) which(allComm == x))
+	cellMap <- mapComm(uniqueCommLabels, allComm)
 	names(cellMap) <- uniqueCommLabels	
 
 	## ----------------------------------
