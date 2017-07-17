@@ -47,10 +47,10 @@ addPhylo_speciesRaster <- function(x, tree, replace = FALSE) {
 	tree <- ape::drop.tip(tree, inPhyloNotGeog)
 	x[['phylo']] <- tree
 	
-	if (length(inGeogNotPhylo) > 0) {
-		cat('Warning: The following species were were pruned from the phylogeny because they lack geographic data:\n')
-		for (i in 1:length(inGeogNotPhylo)) {
-			cat('\t', inGeogNotPhylo[i], '\n')
+	if (length(inPhyloNotGeog) > 0) {
+		cat('Warning: The following species were pruned from the phylogeny because they lack geographic data:\n')
+		for (i in 1:length(inPhyloNotGeog)) {
+			cat('\t', inPhyloNotGeog[i], '\n')
 		}
 	}
 	
