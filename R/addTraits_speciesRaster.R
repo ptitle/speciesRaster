@@ -61,7 +61,7 @@ addTraits_speciesRaster <- function(x, data, replace = FALSE) {
 		if (length(traitSpecies) == 0) {
 			stop('There are no common species in geographic and trait data.')
 		}
-		x[['data']] <- as.matrix(data[traitSpecies,])
+		x[['data']] <- as.data.frame(data[traitSpecies,], stringsAsFactors = FALSE)
 	}
 	
 	if (length(inDataNotGeog) > 0) {
