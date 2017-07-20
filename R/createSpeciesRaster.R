@@ -10,18 +10,9 @@
 ##'
 ##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate must be
 ##' 	provided.
-##' 
-##' @param probRanking If \code{ranges} is a rasterStack of probabilities rather than
-##' 	presence/absence, then apply a probability ranking filter to identify species.
-##'		See details. 
 ##'
 ##' @param verbose Primarily intended for debugging, print progress to the console.
 ##'
-##' @param chunkSize number of raster rows to handle at one time. Inferred automatically 
-##' 	if null.
-##'
-##' @param force temporary parameter that forces the function to take the more memory-
-##' 	conservative approach, even if the dataset is small enough to handle otherwise.
 ##' 
 ##'	@details 
 ##' This function generates an object of class \code{speciesRaster}, which is a 
@@ -35,15 +26,7 @@
 ##'	}
 ##'	
 ##'	If input is a RasterStack, then all parameters are taken from that, such as resolution,
-##' extent and projection. If \code{probRanking = FALSE}, then any non-NA
-##'	and non-zero cell is considered a presence. If \code{probRanking = TRUE}, then 
-##'	cell values are evaluated as probabilities from 0 to 1, for example as output from 
-##'	species distribution models (SDM). The probability ranking filter was described in 
-##'	the SESAM framework (Guisan and Rahbek 2011, D'Amen et al. 2015) as a way to prevent
-##'	overprediction of species richness from SDMs. If \code{probRanking = TRUE}, then the
-##'	richness of a cell is calculated as the rounded sum of the probabilities of that cell,
-##'	and then that number of species is preserved, selected via probability ranking. 
-##'	
+##' extent and projection. Any non-NA and non-zero cell is considered a presence.	
 ##'	This function expects that all input rasters in the rasterStack have presence values
 ##'	(i.e., at least 1 non-NA value). If any rasters have exclusively NA cells, then the 
 ##'	function will stop with a warning, and the output will be the index in the rasterStack
@@ -68,21 +51,12 @@
 ##' 
 ##' 
 ##'
-##' @references
-##' Guisan A., Rahbek C. 2011. SESAM - a new framework integrating macroecological and
-##' species distribution models for predicting spatio-temporal patterns of species 
-##' assemblages. J. Biogeog.
-##' 38:1433-1444.
-##'
-##' D'Amen M., Dubuis A., Fernandes R.F., Pottier J., Pellissier L., Guisan A. 2015. Using 
-##' species richness and functional traits predictions to constrain assemblage predictions
-##' from stacked species distribution models. J. Biogeog. 42:1255-1266.
 ##'
 ##' @export
 
 
 
-createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FALSE, verbose = FALSE, chunkSize = NULL, force=FALSE) {
+createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) {
 	
 	if (!class(ranges) %in% c('RasterStack', 'RasterBrick', 'matrix')) {
 		stop('Input must be a list of SpatialPolygons or a RasterStack.')
@@ -115,8 +89,9 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FAL
 		raster::values(ras) <- 0
 		spByCell <- vector('list', length = raster::ncell(ranges))
 		
+		# determine the size of rasterStack that can be processed in memory	
 		if (verbose) cat('\t...Determining if rasterstack can be processed in memory...')
-		if (raster::canProcessInMemory(ranges) & !force) {
+		if (raster::canProcessInMemory(ranges)) {
 
 			if (verbose) cat('yes\n')
 			pBar <- FALSE
@@ -132,137 +107,83 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, probRanking = FAL
 			
 			# check if is binary
 			if (identical(unique(as.numeric(mat)), c(0,1))) {
-	 			probRanking <- FALSE
-			} else {
-				if (!probRanking) {
-					# if not binary and probRanking is false, convert all to 0/1
-					mat[mat != 0] <- 1
-				}
+				# if not binary and probRanking is false, convert all to 0/1
+				mat[mat != 0] <- 1
 			}
 				
 			# get count of species per cell
 			cellSums <- rowSums(mat)
-				
-			if (probRanking) {
-				cellSums <- round(cellSums)
-			}
-				
+								
 			# assign values to result raster
 			raster::values(ras) <- cellSums
 			
 			# get list of which species are found in each cell
-			# because we can't pass the entire data.table to rcpp code, break into chunks
-			# of 100 records
-			
-			if (probRanking) {
-				spByCell <- returnTopIndices(mat, cellSums)
-				
-				# convert indices to species names
-				spByCell <- lapply(spByCell, function(x) colnames(mat)[x])
-				
-			} else {
-				
-				spByCell <- spListPerCell(mat)		
-	
-			}
+			spByCell <- spListPerCell(mat)		
 			
 		} else {
 			
 			# data too big. Split into subsets of rows
 			if (verbose) cat('no\n')
-
-			if (verbose) cat('\t...Determining appropriate chunk size...\n')
-			if (is.null(chunkSize)) {			
-				# testing chunksize
-				# using code that is run for canProcessInMemory()
-				test <- seq(5, nrow(ranges), by = 5)
-				n <- 4 + raster::nlayers(ranges) - 1
-				for (i in 1:length(test)) {
-					check <- round(1.1 * ncol(ranges) * test[i]) * n  < 1e+06
-					if (!check) {
-						chunkSize <- test[i - 1]
-						break
-					}
-	 			}
-	 			if (length(chunkSize) < 1) {
-	 				chunkSize <- min(test)
-	 			}
-	 		}		
+			if (verbose) cat('\t...Determining how many rasters can be processed in memory...')	
+			n <- 1
+			while (raster::canProcessInMemory(ranges[[1:n]])) {
+				n <- n + 1
+			}
 			
-			pBar <- TRUE
-						
-			nChunks <- round(nrow(ranges) / chunkSize)
-			counter <- 1
-			cellCounter <- 1
+			if (verbose) cat(n, '\n')
+					
+			indList <- split(1:raster::nlayers(ranges), ceiling(1:raster::nlayers(ranges)/n))
 			
-			if (verbose) cat('\t...Chunk size:', chunkSize, 'nChunks:', nChunks, '...\n')
-			
-			pb <- raster::pbCreate(nChunks, progress = 'text')
-
-			for (i in 1:nChunks) {
-
-				raster::pbStep(pb, step = i)
-				
-				start <- counter
-				if (i == nChunks) {
-					end <- nrow(ranges)
-				} else {
-					end <- start + chunkSize - 1
-				}
-				
-				cellInd <- raster::cellFromRow(ranges[[1]], seq(start, end))
-				
-				mat <- matrix(nrow = length(cellInd), ncol = raster::nlayers(ranges))
-				colnames(mat) <- names(ranges)
-				
-				for (j in 1:raster::nlayers(ranges)) {
+			pb <- raster::pbCreate(length(indList), progress = 'text')	
 	
-					mat[, j] <- ranges[[j]][cellInd]
+			cellVals <- vector('list', length = length(indList))
+			SpByCellList <- vector('list', length = length(indList))
+			
+			for (i in 1:length(indList)) {
+									
+				submat <- matrix(nrow=raster::ncell(ranges), ncol=length(indList[[i]]))
+				colnames(submat) <- names(ranges)[indList[[i]]]
+
+				for (j in 1:length(indList[[i]])) {
+					submat[, j] <- ranges[[indList[[i]][j]]][]
 				}
-							
+				
 				# set all NA to 0
-				mat[is.na(mat)] <- 0
+				submat[is.na(submat)] <- 0
 				
-				if (!probRanking) {
+				# check if is binary
+				if (identical(unique(as.numeric(submat)), c(0,1))) {
 					# if not binary and probRanking is false, convert all to 0/1
-					mat[mat != 0] <- 1
+					submat[submat != 0] <- 1
 				}
-				
+					
 				# get count of species per cell
-				cellSums <- rowSums(mat)
-					
-				if (probRanking) {
-					cellSums <- round(cellSums)
-				}
-					
+				cellSums <- rowSums(submat)
+									
 				# assign values to result raster
-				raster::values(ras)[cellCounter : (cellCounter + nrow(mat) - 1)] <- cellSums
+				cellVals[[i]] <- cellSums
 				
 				# get list of which species are found in each cell
-				# because we can't pass the entire data.table to rcpp code, break into chunks
-				# of 100 records
+				SpByCellList[[i]] <- spListPerCell(submat)	
 				
-				if (probRanking) {
-					spByCell[cellCounter : (cellCounter + nrow(mat) - 1)] <- returnTopIndices(mat, cellSums)
-					
-					# convert indices to species names
-					spByCell[cellCounter : (cellCounter + nrow(mat) - 1)] <- lapply(spByCell[cellCounter : (cellCounter + nrow(mat) - 1)], function(x) colnames(mat)[x])
-					
-				} else {
-					
-					spByCell[cellCounter : (cellCounter + nrow(mat) - 1)] <- spListPerCell(mat)		
+				raster::pbStep(pb, step = i)	
+			}
 		
-				}
-	
-				counter <- counter + chunkSize
-				cellCounter <- cellCounter + nrow(mat)
+			# combine pieces
+			if (verbose) cat('\t...Assembling speciesRaster...\n')	
+			raster::values(ras) <- rowSums(do.call(cbind, cellVals))
+			for (i in 1:length(SpByCellList[[1]])) {
+				tmp <- unlist(lapply(SpByCellList, function(x) x[[i]]))
+				tmp <- tmp[stats::complete.cases(tmp)]
+				spByCell[[i]] <- tmp
+			}
+					
+			if (pBar) {
+				raster::pbClose(pb, timer = FALSE)
+				cat('\n')
 			}
 		}
-		if (pBar) {
-			raster::pbClose(pb, timer = FALSE)
-			cat('\n')
-		}
-			
+				
 		#remove zero cells
 		ras[ras == 0] <- NA
 		names(ras) <- 'spRichness'

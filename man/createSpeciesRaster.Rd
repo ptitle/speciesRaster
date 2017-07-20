@@ -4,8 +4,7 @@
 \alias{createSpeciesRaster}
 \title{Create speciesRaster}
 \usage{
-createSpeciesRaster(ranges, rasterTemplate = NULL, probRanking = FALSE,
-  verbose = FALSE, chunkSize = NULL, force = FALSE)
+createSpeciesRaster(ranges, rasterTemplate = NULL, verbose = FALSE)
 }
 \arguments{
 \item{ranges}{Either a RasterStack, RasterBrick, or species by cell matrix. If 
@@ -14,17 +13,7 @@ raster objects, cell values can either be binary presence/absence, or probabilit
 \item{rasterTemplate}{If input is a species x cell matrix, then a rasterTemplate must be
 provided.}
 
-\item{probRanking}{If \code{ranges} is a rasterStack of probabilities rather than
-presence/absence, then apply a probability ranking filter to identify species.
-See details.}
-
 \item{verbose}{Primarily intended for debugging, print progress to the console.}
-
-\item{chunkSize}{number of raster rows to handle at one time. Inferred automatically 
-if null.}
-
-\item{force}{temporary parameter that forces the function to take the more memory-
-conservative approach, even if the dataset is small enough to handle otherwise.}
 }
 \value{
 an object of class \code{speciesRaster}.
@@ -46,15 +35,7 @@ list containing the following elements:
 }
 
 If input is a RasterStack, then all parameters are taken from that, such as resolution,
-extent and projection. If \code{probRanking = FALSE}, then any non-NA
-and non-zero cell is considered a presence. If \code{probRanking = TRUE}, then 
-cell values are evaluated as probabilities from 0 to 1, for example as output from 
-species distribution models (SDM). The probability ranking filter was described in 
-the SESAM framework (Guisan and Rahbek 2011, D'Amen et al. 2015) as a way to prevent
-overprediction of species richness from SDMs. If \code{probRanking = TRUE}, then the
-richness of a cell is calculated as the rounded sum of the probabilities of that cell,
-and then that number of species is preserved, selected via probability ranking. 
-
+extent and projection. Any non-NA and non-zero cell is considered a presence.	
 This function expects that all input rasters in the rasterStack have presence values
 (i.e., at least 1 non-NA value). If any rasters have exclusively NA cells, then the 
 function will stop with a warning, and the output will be the index in the rasterStack
@@ -75,16 +56,7 @@ spRas
 
 
 
-}
-\references{
-Guisan A., Rahbek C. 2011. SESAM - a new framework integrating macroecological and
-species distribution models for predicting spatio-temporal patterns of species 
-assemblages. J. Biogeog.
-38:1433-1444.
 
-D'Amen M., Dubuis A., Fernandes R.F., Pottier J., Pellissier L., Guisan A. 2015. Using 
-species richness and functional traits predictions to constrain assemblage predictions
-from stacked species distribution models. J. Biogeog. 42:1255-1266.
 }
 \author{
 Pascal Title
