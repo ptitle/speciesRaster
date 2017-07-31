@@ -21,6 +21,7 @@
 ##'		\item{\code{raster:}} {A raster representing counts of species per cell.}
 ##'		\item{\code{speciesList:}} {A list of species found in each cell.}
 ##'		\item{\code{geogSpecies:}} {a vector of unique species in all cells.}
+##' 	\item{\code{cellCount:}} {a vector of counts of presence cells for each species.}
 ##'		\item{\code{data:}} {An empty spot that morphological data can be added to.}
 ##'		\item{\code{phylo:}} {An empty spot that a phylogeny can be added to.}
 ##'	}
@@ -63,8 +64,8 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 	}
 		
 	# prepare output object
-	obj <- vector('list', length = 5)
-	names(obj) <- c('raster', 'speciesList', 'geogSpecies', 'data', 'phylo')
+	obj <- vector('list', length = 6)
+	names(obj) <- c('raster', 'speciesList', 'geogSpecies', 'cellCount', 'data', 'phylo')
 	
 	
 	# if rasterstack as input
@@ -94,7 +95,6 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		if (raster::canProcessInMemory(ranges)) {
 
 			if (verbose) cat('yes\n')
-			pBar <- FALSE
 			mat <- matrix(nrow=raster::ncell(ranges), ncol=raster::nlayers(ranges))
 			colnames(mat) <- names(ranges)
 
@@ -168,6 +168,8 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 				
 				raster::pbStep(pb, step = i)	
 			}
+
+			raster::pbClose(pb, timer = FALSE)
 		
 			# combine pieces
 			if (verbose) cat('\t...Assembling speciesRaster...\n')	
@@ -177,11 +179,6 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 				tmp <- tmp[stats::complete.cases(tmp)]
 				spByCell[[i]] <- tmp
 			}
-					
-			if (pBar) {
-				raster::pbClose(pb, timer = FALSE)
-				cat('\n')
-			}
 		}
 				
 		#remove zero cells
@@ -190,6 +187,9 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		obj[[1]] <- ras		
 		obj[[2]] <- spByCell
 	}
+	
+	# calculate range area for each species ( = number of cells)
+	obj[['cellCount']] <- raster::cellStats(ranges, stat = sum)
 	
 	# input ranges can be a binary presence/absence sp x cell matrix
 	# where rownames are species and columns are cells
