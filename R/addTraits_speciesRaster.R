@@ -3,7 +3,9 @@
 ##' @description Add univariate or multivariate trait data to a speciesRaster object.
 ##'
 ##' @param x object of class \code{speciesRaster}
-##' @param data named numeric vector, matrix or dataframe with rownames corresponding to species in \code{x}. 
+##' @param data named numeric vector, matrix or dataframe with rownames corresponding to species in \code{x}
+##' 	or pairwise matrix with row and column names corresponding to species in \code{x}. If pairwise matrix,
+##' 	the upper triangle of the matrix will be used for calculations.
 ##' @param replace boolean; if data is already a part of \code{x},
 ##' should it be replaced?
 ##'
@@ -61,7 +63,13 @@ addTraits_speciesRaster <- function(x, data, replace = FALSE) {
 		if (length(traitSpecies) == 0) {
 			stop('There are no common species in geographic and trait data.')
 		}
-		x[['data']] <- as.data.frame(data[traitSpecies,], stringsAsFactors = FALSE)
+		
+		if (identical(rownames(data), colnames(data))) {
+			# pairwise matrix
+			x[['data']] <- as.data.frame(data[traitSpecies, traitSpecies], stringsAsFactors = FALSE)
+		} else {
+			x[['data']] <- as.data.frame(data[traitSpecies,], stringsAsFactors = FALSE)
+		}
 	}
 	
 	if (length(inDataNotGeog) > 0) {
