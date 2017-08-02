@@ -40,7 +40,8 @@ pts <- coordinates(pts)
 	
 extractFromSpeciesRaster(tamiasSpRas, pts)
 
-box <- readWKT("POLYGON((-120 38, -119 39, -120 40, -120 38))", p4s=CRS('+proj=longlat +datum=WGS84'))
+box <- readWKT("POLYGON((-120 38, -119 39, -120 40, -120 38))", 
+	p4s=CRS('+proj=longlat +datum=WGS84'))
 # transform to the same coordinate system as the speciesRaster object
 box <- spTransform(box, CRS(proj))
 

@@ -49,6 +49,13 @@ Univariate morphological metrics
 		\item{patristicNN:} {mean nearest neighbor in patristic distance}
 		\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 	}
+	Range-weighted metrics
+	\itemize{
+		\item{weightedEndemism}
+		\item{phyloWeightedEndemism:}
+	}
+
+	If data slot contains a pairwise matrix, var is ignored.
 }
 \examples{
 tamiasSpRas <- addPhylo_speciesRaster(tamiasSpRas, tamiasTree)

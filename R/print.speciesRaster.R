@@ -7,19 +7,19 @@ print.speciesRaster <- function(x, ...) {
 	}
 	
 	# if data present in object, then report info
-	if (class(x[[4]]) %in% c('numeric', 'matrix', 'data.frame')) {
-		if (is.vector(x[[4]])) {
-			data <- length(intersect(x[[3]], names(x[[4]])))
+	if (class(x[['data']]) %in% c('numeric', 'matrix', 'data.frame')) {
+		if (is.vector(x[['data']])) {
+			data <- length(intersect(x[['geogSpecies']], names(x[['data']])))
 		} else {
-			data <- length(intersect(x[[3]], rownames(x[[4]])))
+			data <- length(intersect(x[['geogSpecies']], rownames(x[['data']])))
 		}
 	} else {
 		data <- NA
 	}
 	
 	# if phylogeny present in object, then report info
-	if (class(x[[5]]) %in% 'phylo') {
-		phylo <- length(intersect(x[[3]], x[[5]]$tip.label))
+	if (class(x[['phylo']]) %in% 'phylo') {
+		phylo <- length(intersect(x[['geogSpecies']], x[['phylo']]$tip.label))
 	} else {
 		phylo <- NA
 	}
@@ -29,9 +29,9 @@ print.speciesRaster <- function(x, ...) {
 	rasterExtent <- raster::extent(x[[1]])
 	resolution <- raster::res(x[[1]])
 	proj <- raster::projection(x[[1]])
-	lengthUniqueSp <- length(x[[3]])
-	minSp <- min(sapply(x[[2]], length))
-	maxSp <- max(sapply(x[[2]], length))
+	lengthUniqueSp <- length(x[['geogSpecies']])
+	minSp <- min(sapply(x[['speciesList']], length))
+	maxSp <- max(sapply(x[['speciesList']], length))
 	
 	cat('\n\tSummary of speciesRaster object:\n\n')
 	cat('\tMetric:', metric, '\n')

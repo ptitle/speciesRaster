@@ -78,6 +78,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'rangePCA', 'disparity', 'NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'weightedEndemism', 'phyloWeightedEndemism'))
 	
+	pairwise <- FALSE
+	
 	if (class(x[['data']]) %in% c('matrix', 'data.frame')) {
 		if (identical(rownames(x[['data']]), colnames(x[['data']]))) {
 			if (verbose) cat('\t...detected pairwise distance matrix...\n') 
@@ -88,8 +90,6 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			if (all(is.na(x[['data']][upper.tri(x[['data']])]))) {
 				stop('There are no values in the upper triangle of the pairwise matrix.')
 			}
-		} else {
-			pairwise <- FALSE
 		}
 	}
 
@@ -166,7 +166,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		if (metric == 'mean') {
 			resVal[!sapply(uniqueComm, anyNA)] <- sapply(uniqueComm[!sapply(uniqueComm, anyNA)], function(y) mean(unlist(x[['data']][y, y]), na.rm = TRUE))
 		} else if (metric == 'median') {
-			resVal[!sapply(uniqueComm, anyNA)] <- sapply(uniqueComm[!sapply(uniqueComm, anyNA)], function(y) median(unlist(x[['data']][y, y]), na.rm = TRUE))
+			resVal[!sapply(uniqueComm, anyNA)] <- sapply(uniqueComm[!sapply(uniqueComm, anyNA)], function(y) stats::median(unlist(x[['data']][y, y]), na.rm = TRUE))
 		}
 		resVal[is.na(resVal)] <- NA
 	}

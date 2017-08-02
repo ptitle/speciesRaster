@@ -30,6 +30,7 @@ list containing the following elements:
 	\item{\code{raster:}} {A raster representing counts of species per cell.}
 	\item{\code{speciesList:}} {A list of species found in each cell.}
 	\item{\code{geogSpecies:}} {a vector of unique species in all cells.}
+	\item{\code{cellCount:}} {a vector of counts of presence cells for each species.}
 	\item{\code{data:}} {An empty spot that morphological data can be added to.}
 	\item{\code{phylo:}} {An empty spot that a phylogeny can be added to.}
 }

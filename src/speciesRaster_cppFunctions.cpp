@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <numeric>
+#include <algorithm>
 using namespace Rcpp;
 
 // return list of species per cell
@@ -144,7 +145,7 @@ List intersectList(List input, StringVector vec) {
 			StringVector res = intersect(sp, vec);
 	
 			if (res.size() > 0) {
-				out[i] = intersect(sp, vec);
+				out[i] = res;
 			} else {
 				out[i] = NA_REAL;
 			}
@@ -233,16 +234,13 @@ std::vector<std::vector<int> > ListIsEmpty(List input) {
 
 	int nx = input.size();
 	
-	//std::vector<int> y;
-	//y.reserve(nx);
-
 	std::vector<int> empty;
 	std::vector<int> nonempty;
 
 	for(int i = 0; i < nx; i++) {
-		CharacterVector vec = as< CharacterVector >(input[i]);
+		std::vector<std::string> vec = as< std::vector<std::string> >(input[i]);
 		if (vec.size() == 1) {
-			if (vec[0] == "NA") {
+			if (vec[0] == "empty") {
 				//y.push_back(i);
 				empty.push_back(i);
 			} else {
@@ -253,15 +251,6 @@ std::vector<std::vector<int> > ListIsEmpty(List input) {
 		}
 	}
 
-	//IntegerVector empty = wrap(y);
-
-	// empty is indices for elements that are only NA
-	//IntegerVector v = Rcpp::seq(0, input.size() - 1);
-	//IntegerVector nonEmpty = setdiff(v, empty);
-
-	//List out(2);
-	//out[0] = empty;
-	//out[1] = nonEmpty;
 	out.push_back(empty);
 	out.push_back(nonempty);
 
@@ -275,23 +264,20 @@ List ListIsEmptyR(List input) {
 
 	int nx = input.size();
 	
-	//std::vector<int> y;
-	//y.reserve(nx);
-
 	std::vector<int> empty;
 	std::vector<int> nonempty;
 
 	for(int i = 0; i < nx; i++) {
-		CharacterVector vec = as< CharacterVector >(input[i]);
+		std::vector<std::string> vec = as< std::vector<std::string> >(input[i]);
 		if (vec.size() == 1) {
-			if (vec[0] == "NA") {
+			if (vec[0] == "empty") {
 				//y.push_back(i);
-				empty.push_back(i);
+				empty.push_back(i + 1);
 			} else {
-				nonempty.push_back(i);
+				nonempty.push_back(i + 1);
 			}
 		} else {
-			nonempty.push_back(i);
+			nonempty.push_back(i + 1);
 		}
 	}
 
@@ -783,6 +769,550 @@ List mapComm(CharacterVector uniqueCommLabels, CharacterVector allComm) {
 	return out;
 
 }
+
+
+
+
+// Calculate beta diversity distance for all cells, using multi-site metrics
+// [[Rcpp::export(name = calcRWTurnover, rng = false)]]
+NumericVector calcRWTurnover(List spByCell, List nbList, String metric) {
+	
+	NumericVector out(spByCell.size());
+
+	if (spByCell.size() != nbList.size()) {
+		throw std::range_error("Input lists of unequal length");
+	}
+
+	Rcout << "\tIndexing cells...";
+	// drop all cells that are empty
+	std::vector<std::vector<int> > emptyInd = ListIsEmpty(spByCell);
+	Rcout << "done\n";
+
+	IntegerVector emptyCells = wrap( emptyInd[0] );
+	IntegerVector nonEmptyCells = wrap( emptyInd[1] );
+	//Rcout << "...Converting done...\n";
+
+	int n = nonEmptyCells.size();
+
+	Rcout << "\tStarting metric calculation...";
+
+	for (int i = 0; i < n; i++) {
+
+		// 	subset spByCell list to relevant cells
+		IntegerVector nbCells = as< IntegerVector >(nbList[nonEmptyCells[i]]);
+		//std::vector<int> nbCells = as< std::vector<int> >(nbList[nonEmptyCells[i]]);
+	
+		// fix indexing as passed from R
+		nbCells = nbCells - 1;
+		//for (int j = 0; j < n; j++) {
+		//	nbCells[j] = nbCells[j] - 1;
+		//}
+	
+		// drop cells that have been identified as empty
+		// IntegerVector goodCells = setdiff(nbCells, emptyCells);
+		// determine which cells are empty in this set
+		std::vector<std::vector<int> > allInd = ListIsEmpty(spByCell[nbCells]);
+		IntegerVector ind = wrap(allInd[1]);
+		IntegerVector goodCells = nbCells[ind];
+
+	 	List subList = spByCell[goodCells];
+
+	 	// calculate values that will be needed
+	 	std::vector<double> prepVec = multiPrepCpp(subList);
+
+		if (metric == "betaJAC") {
+				out[nonEmptyCells[i]] = betaJAC(prepVec);
+			} else if (metric == "betaJTU") {
+				out[nonEmptyCells[i]] = betaJTU(prepVec);
+			} else if (metric == "betaJNE") {
+				out[nonEmptyCells[i]] = betaJNE(prepVec);
+			} else if (metric == "betaSOR") {
+				out[nonEmptyCells[i]] = betaSOR(prepVec);
+			} else if (metric == "betaSIM") {
+				out[nonEmptyCells[i]] = betaSIM(prepVec);
+			} else if (metric == "betaSNE") {
+				out[nonEmptyCells[i]] = betaSNE(prepVec);
+			} else {
+			throw std::range_error("Metric not recognized.");
+		}
+	 	//out[nonEmptyCells[i]] = wrap(prepVec);
+	}
+
+	Rcout << "done\n";
+
+
+	out[emptyCells] = NA_REAL;
+	
+	return out;
+}
+
+// return index of x in integer vec
+// [[Rcpp::export(name = c_which_int, rng = false)]]
+int c_which_int(std::vector<int> vec, int x) {
+	int nx = vec.size();
+	for (int i = 0; i < nx; i++) {
+		if (vec[i] == x) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+
+// return edge indices
+// [[Rcpp::export(name = getRootToTipEdges, rng = false)]]
+List getRootToTipEdges(List phylo) {
+
+	// extract components from phylo list
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
+	NumericVector edge1a = edge(_, 0);
+	NumericVector edge2a = edge(_, 1);
+  
+	std::vector<int> edge1 = as< std::vector<int> >(edge1a);
+	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
+	int rootnode = tipLabels.size() + 1;
+
+	List out = tipLabels.size();
+	
+	for (int i = 0; i < tipLabels.size(); i++) {
+		std::vector<int> nodes;
+		int childnode = i + 1;
+		while (childnode != rootnode) {
+			int parentnode = edge1[c_which_int(edge2, childnode)];
+			nodes.push_back(childnode);
+			childnode = parentnode;
+		}
+
+		std::vector<int> edgesInd(nodes.size());
+		for (int j = 0; j < nodes.size(); j++) {
+			edgesInd[j] = c_which_int(edge2, nodes[j]);
+		}
+
+		out[i] = edgesInd;
+	}
+
+
+	return out;
+}
+
+
+// function to determine the number of geographic cells for every branch in phylogeny
+// [[Rcpp::export(name = phyloBranchRanges, rng = false)]]
+List phyloBranchRanges(List phylo, List speciesList, List tipEdges) {
+
+	// extract components from phylo list
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
+	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
+	NumericVector edge1a = edge(_, 0);
+	NumericVector edge2a = edge(_, 1);
+  
+	std::vector<int> edge1 = as< std::vector<int> >(edge1a);
+	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
+
+	std::vector<int> allnodes = edge2;
+
+	// tipEdges are edge indices. Convert to child node number
+	// tipNodes and tipEdges are in order of tiplabels
+	List tipNodes(tipEdges.size());
+	for (int i = 0; i < tipEdges.size(); i++) {
+		std::vector<int> spTipEdges = as< std::vector<int> >(tipEdges[i]);
+		for (int j = 0; j < spTipEdges.size(); j++) {
+			spTipEdges[j] = edge2[spTipEdges[j]];
+		}
+		tipNodes[i] = spTipEdges;
+	}
+
+	// For each node number, find which species have it listed
+	// speciesFromNode is in order of edge2 nodes
+	List speciesFromNode(allnodes.size());
+	for (int i = 0; i < allnodes.size(); i++) {
+		std::vector<int> isPresent;
+		if (allnodes[i] <= tipLabels.size()) {
+			isPresent.push_back(allnodes[i]);
+		} else {
+			for (int j = 0; j < tipNodes.size(); j++) { 
+				std::vector<int> nodesForSp = as< std::vector<int> >(tipNodes[j]);
+				for (int k = 0; k < nodesForSp.size(); k++) { 
+					if (nodesForSp[k] == allnodes[i]) {
+						isPresent.push_back(j+1);
+						break;
+					}
+				}
+			}
+		}
+		speciesFromNode[i] = isPresent;
+	}
+
+//	convert tip indices to names
+//	allLeaves is in order of edge2 nodes
+	List allLeaves(speciesFromNode.size());
+	for (int i = 0; i < speciesFromNode.size(); i++) {
+		std::vector<int> tipIndices = as< std::vector<int> >(speciesFromNode[i]);
+		std::vector<std::string> tipNames(tipIndices.size());
+		for (int j = 0; j < tipIndices.size(); j++) { 
+			tipNames[j] = tipLabels[tipIndices[j] - 1];
+		}
+		allLeaves[i] = tipNames;
+	}
+
+	// for each branch (= child node), count the number of cells that contain any of the
+	// tip taxa
+	std::vector<int> branchCellCount(allLeaves.size());
+	for (int i = 0; i < allLeaves.size(); i++) {
+		int counter = 0;
+		std::vector<std::string> nodeSp = as< std::vector<std::string> >(allLeaves[i]);
+		for (int j = 0; j < speciesList.size(); j++) {
+			int counter2 = 0;
+			std::vector<std::string> cellSp = as< std::vector<std::string> >(speciesList[j]);
+			for (int k = 0; k < nodeSp.size(); k++) {
+				if (std::find(cellSp.begin(), cellSp.end(), nodeSp[k]) != cellSp.end()) {
+					counter2 = counter2 + 1;
+				}
+			}
+			if (counter2 > 0) {
+				counter = counter + 1;
+			}
+		}
+		branchCellCount[i] = counter;
+	}
+
+	List out(2);
+	out[0] = edgeLengths;
+	out[1] = branchCellCount;
+
+	return out;
+}
+
+
+// for each species in vec, count how many cells it is found in
+// [[Rcpp::export(name = countCells, rng = false)]]
+NumericVector countCells(List cellList, StringVector vec) {
+	
+	std::vector<std::string> uniqueSp = as< std::vector<std::string> >(vec);
+	std::vector<int> out(uniqueSp.size());
+	
+	for (int i = 0; i < cellList.size(); i++) {
+		
+		std::vector<std::string> cell = as< std::vector<std::string> >(cellList[i]);
+		
+		for (int j = 0; j < uniqueSp.size(); j++) {
+		
+			if (std::find(cell.begin(), cell.end(), uniqueSp[j]) != cell.end()) {
+				out[j] = out[j] + 1;
+			}
+		}
+	}
+	
+	return wrap(out);
+}
+
+// after creating speciesRaster in blocks, merge separate lists into 1
+// [[Rcpp::export(name = mergeLists, rng = false)]]
+List mergeLists(List input) {
+
+	List firstList = as< List >(input[0]);
+	
+	int n = firstList.size();
+	List out(n);
+	
+	int iterN = input.size();
+		
+	// first loop: blocks
+	for (int i = 0; i < n; i++) {
+
+		std::vector<std::string> cellSp;
+	
+		// across cells
+		for (int j = 0; j < iterN; j++) {
+			List subList = as< List >(input[j]);
+			std::vector<std::string> cell = as< std::vector<std::string> >(subList[i]);
+			for (int k = 0; k < cell.size(); k++) {	
+				if (cell[k] != "empty") {
+					cellSp.push_back(cell[k]);
+				}
+			}
+		}
+		out[i] = cellSp;
+	}
+
+	return out;
+}
+
+
+// return intersect of two species vectors
+// [[Rcpp::export(name = getComponentA, rng = false)]]
+std::vector<std::string> getComponentA(std::vector<std::string> commI, std::vector<std::string> commJ) {
+
+	// intersect(cellI, cellJ)
+	std::vector<std::string> a;
+	// for each species in cellI, is it present in cellJ?
+	for (int k = 0; k < commI.size(); k++) { 
+		if (std::find(commJ.begin(), commJ.end(), commI[k]) != commJ.end()) {
+			a.push_back(commI[k]);
+		}
+	}
+
+	return a;
+}
+
+
+// return species in commJ but not commI
+// [[Rcpp::export(name = getComponentB, rng = false)]]
+std::vector<std::string> getComponentB(std::vector<std::string> commI, std::vector<std::string> commJ) {
+
+	// setdiff(cellI, cellJ)
+	std::vector<std::string> diffIJ;
+
+	sort(commI.begin(), commI.end());
+	sort(commJ.begin(), commJ.end());
+	set_difference(
+		commI.begin(),
+	    commI.end(),
+	    commJ.begin(),
+	    commJ.end(),
+	    back_inserter(diffIJ));
+	
+	return diffIJ;
+}
+
+
+// return species in commI but not commJ
+// [[Rcpp::export(name = getComponentC, rng = false)]]
+std::vector<std::string> getComponentC(std::vector<std::string> commI, std::vector<std::string> commJ) {
+
+	// setdiff(cellI, cellJ)
+	std::vector<std::string> diffJI;
+
+	set_difference(
+		commJ.begin(),
+	    commJ.end(),
+	    commI.begin(),
+	    commI.end(),
+	    back_inserter(diffJI));
+	
+	return diffJI;
+}
+
+
+// return index of x in integer vec
+// [[Rcpp::export(name = c_which_char, rng = false)]]
+int c_which_char(std::vector<std::string> vec, std::string x) {
+	int nx = vec.size();
+	for (int i = 0; i < nx; i++) {
+		if (vec[i] == x) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+
+
+// return index of x in integer vec
+// [[Rcpp::export(name = weightedPhylo, rng = false)]]
+double weightedPhylo(std::vector<std::string> a, std::vector<std::string> tipLabels, List spEdges, std::vector<double> edgeArea1, std::vector<double> edgeArea2) {
+		
+	std::vector<int> branchIndices;
+	
+	// get index of species labels and get branch indices from spEdges
+	for (int i = 0; i < a.size(); i++) {
+		
+		int tmpInd = c_which_char(tipLabels, a[i]);
+		std::vector<int> branchInd = as< std::vector<int> >(spEdges[tmpInd]);
+		
+		for (int j = 0; j < branchInd.size(); j++) {
+			if (std::find(branchIndices.begin(), branchIndices.end(), branchInd[j]) == branchIndices.end()) {
+				branchIndices.push_back(branchInd[j]);
+			}
+		}
+	}
+
+	// use branchIndices to look up branch and branch area in edgeArea table
+	double summedRes = 0;
+
+	for (int i = 0; i < branchIndices.size(); i++) {
+		summedRes = summedRes + edgeArea1[branchIndices[i]] / edgeArea2[branchIndices[i]];
+	}
+
+	return summedRes;
+	
+}
+
+
+
+
+// Calculate beta diversity distance for all cells, using multi-site metrics
+// [[Rcpp::export(name = calcRWTurnover_taxonomic, rng = false)]]
+NumericVector calcRWTurnover_taxonomic(List spByCell, List nbList) {
+	
+	NumericVector out(spByCell.size());
+
+	if (spByCell.size() != nbList.size()) {
+		throw std::range_error("Input lists of unequal length");
+	}
+
+	// for each cell, identify neighborhood cells
+	for (int i = 0; i < spByCell.size(); i++) {
+
+		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
+
+ 		// 	pull out the neighborhood cells for the i'th cell
+ 		std::vector<int> cellNeighbors = as< std::vector<int> >(nbList[i]);
+ 		NumericVector cellVec(cellNeighbors.size());
+		
+ 		for (int j = 0; j < cellNeighbors.size(); j++) {
+
+			// for the focal cell and each neighbor, calculate:
+			// a = intersect(cellI, cellJ)
+			// b = setdiff(cellI, cellJ)
+			// c = setdiff(cellJ, cellI)
+
+			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j] - 1]);
+			std::vector<std::string> a = getComponentA(commI, commJ);
+			std::vector<std::string> b = getComponentB(commI, commJ);
+			std::vector<std::string> c = getComponentC(commI, commJ);
+
+			// Simpson's beta diversity index
+			cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+			
+			// Sorenson metric
+			//cellVec[j] = 1.0 - 2 * double(a.size()) / (2 * double(a.size()) + double(b.size() + double(c.size())));
+		
+			// Jaccard metric
+			//cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size() + double(c.size())));
+		}
+		out[i] = mean(cellVec);
+	}
+
+	return out;
+}
+
+
+// Calculate beta diversity distance for all cells, using multi-site metrics
+// [[Rcpp::export(name = calcRWTurnover_rangeWeighted, rng = false)]]
+NumericVector calcRWTurnover_rangeWeighted(List spByCell, List nbList, NumericVector cellCountsR) {
+	
+	NumericVector out(spByCell.size());
+
+	if (spByCell.size() != nbList.size()) {
+		throw std::range_error("Input lists of unequal length");
+	}
+
+	// pull out cell count information
+	std::vector<std::string> cellCountNames = as< std::vector<std::string> >(cellCountsR.attr("names"));
+	std::vector<double> cellCounts = as< std::vector<double> >(cellCountsR);
+
+	// for each cell, identify neighborhood cells
+	for (int i = 0; i < spByCell.size(); i++) {
+
+		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
+
+ 		// 	pull out the neighborhood cells for the i'th cell
+ 		std::vector<int> cellNeighbors = as< std::vector<int> >(nbList[i]);
+ 		NumericVector cellVec(cellNeighbors.size());
+		
+ 		for (int j = 0; j < cellNeighbors.size(); j++) {
+
+			// for the focal cell and each neighbor, calculate:
+			// a = intersect(cellI, cellJ)
+			// b = setdiff(cellI, cellJ)
+			// c = setdiff(cellJ, cellI)
+
+			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j] - 1]);
+			std::vector<std::string> a = getComponentA(commI, commJ);
+			std::vector<std::string> b = getComponentB(commI, commJ);
+			std::vector<std::string> c = getComponentC(commI, commJ);
+
+			double rwA = 0.0;
+			for (int k = 0; k < a.size(); k++) {
+				int ind = c_which_char(cellCountNames, a[k]);
+				rwA = rwA + cellCounts[ind];
+			}
+
+			double rwB = 0.0;
+			for (int k = 0; k < b.size(); k++) {
+				int ind = c_which_char(cellCountNames, b[k]);
+				rwB = rwB + cellCounts[ind];
+			}
+
+			double rwC = 0.0;
+			for (int k = 0; k < c.size(); k++) {
+				int ind = c_which_char(cellCountNames, c[k]);
+				rwC = rwC + cellCounts[ind];
+			}
+
+			cellVec[j] = 1.0 - rwA / (rwA + rwB + rwC);
+
+		}
+		out[i] = mean(cellVec);
+	}
+
+	return out;
+
+}
+
+
+
+
+
+// Calculate beta diversity distance for all cells, using multi-site metrics
+// [[Rcpp::export(name = calcRWTurnover_phyloRangeWeighted, rng = false)]]
+NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, List nbList, List phylo, List spEdges, NumericMatrix edgeArea) {
+	
+	NumericVector out(spByCell.size());
+
+	if (spByCell.size() != nbList.size()) {
+		throw std::range_error("Input lists of unequal length");
+	}
+
+	// extract relevant info from input data
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	
+	NumericVector edgeArea1a = edgeArea(_, 0);
+	NumericVector edgeArea2a = edgeArea(_, 1);
+  
+	std::vector<double> edgeArea1 = as< std::vector<double> >(edgeArea1a);
+	std::vector<double> edgeArea2 = as< std::vector<double> >(edgeArea2a);
+
+	// for each cell, identify neighborhood cells
+	for (int i = 0; i < spByCell.size(); i++) {
+
+		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
+
+ 		// 	pull out the neighborhood cells for the i'th cell
+ 		std::vector<int> cellNeighbors = as< std::vector<int> >(nbList[i]);
+ 		NumericVector cellVec(cellNeighbors.size());
+		
+ 		for (int j = 0; j < cellNeighbors.size(); j++) {
+
+			// for the focal cell and each neighbor, calculate:
+			// a = intersect(cellI, cellJ)
+			// b = setdiff(cellI, cellJ)
+			// c = setdiff(cellJ, cellI)
+
+			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j] - 1]);
+			std::vector<std::string> a = getComponentA(commI, commJ);
+			std::vector<std::string> b = getComponentB(commI, commJ);
+			std::vector<std::string> c = getComponentC(commI, commJ);
+
+			double wpA = weightedPhylo(a, tipLabels, spEdges, edgeArea1, edgeArea2);
+			double wpB = weightedPhylo(b, tipLabels, spEdges, edgeArea1, edgeArea2);
+			double wpC = weightedPhylo(c, tipLabels, spEdges, edgeArea1, edgeArea2);
+
+
+			cellVec[j] = 1.0 - wpA / (wpA + wpB + wpC);
+
+		}
+		out[i] = mean(cellVec);
+	}
+
+	return out;
+
+}
+
+
 
 
 

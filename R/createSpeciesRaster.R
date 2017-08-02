@@ -164,7 +164,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 				cellVals[[i]] <- cellSums
 				
 				# get list of which species are found in each cell
-				SpByCellList[[i]] <- spListPerCell(submat)	
+				SpByCellList[[i]] <- spListPerCell(submat)
 				
 				raster::pbStep(pb, step = i)	
 			}
@@ -174,11 +174,18 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 			# combine pieces
 			if (verbose) cat('\t...Assembling speciesRaster...\n')	
 			raster::values(ras) <- rowSums(do.call(cbind, cellVals))
-			for (i in 1:length(SpByCellList[[1]])) {
-				tmp <- unlist(lapply(SpByCellList, function(x) x[[i]]))
-				tmp <- tmp[stats::complete.cases(tmp)]
-				spByCell[[i]] <- tmp
+			# for now, replace all NA with 'empty'
+			for (i in 1:length(SpByCellList)) {
+				for (j in 1:length(SpByCellList[[i]])) {
+					if (all(is.na(SpByCellList[[i]][[j]]))) {
+						SpByCellList[[i]][[j]] <- 'empty'
+					}
+				}
 			}
+			spByCell <- mergeLists(SpByCellList)
+			spByCell <- lapply(spByCell, unique)
+			spByCell[sapply(spByCell, length) == 0] <- NA
+
 		}
 				
 		#remove zero cells
@@ -189,7 +196,10 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 	}
 	
 	# calculate range area for each species ( = number of cells)
-	obj[['cellCount']] <- raster::cellStats(ranges, stat = sum)
+	if (verbose) cat('\t...Calculating species cell counts...\n')
+	# obj[['cellCount']] <- raster::cellStats(ranges, stat = sum)
+	obj[['cellCount']] <- countCells(convertNAtoEmpty(spByCell), sort(unique(names(ranges))))
+	names(obj[['cellCount']]) <- sort(unique(names(ranges)))
 	
 	# input ranges can be a binary presence/absence sp x cell matrix
 	# where rownames are species and columns are cells

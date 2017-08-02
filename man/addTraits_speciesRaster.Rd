@@ -9,7 +9,9 @@ addTraits_speciesRaster(x, data, replace = FALSE)
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
 
-\item{data}{named numeric vector, matrix or dataframe with rownames corresponding to species in \code{x}.}
+\item{data}{named numeric vector, matrix or dataframe with rownames corresponding to species in \code{x}
+or pairwise matrix with row and column names corresponding to species in \code{x}. If pairwise matrix,
+the upper triangle of the matrix will be used for calculations.}
 
 \item{replace}{boolean; if data is already a part of \code{x},
 should it be replaced?}

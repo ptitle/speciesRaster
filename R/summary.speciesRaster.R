@@ -25,19 +25,19 @@ summary.speciesRaster <- function(object) {
 	}
 	
 	# if data present in object, then report info
-	if (class(object[[4]]) %in% c('numeric', 'matrix', 'data.frame')) {
-		if (is.vector(object[[4]])) {
-			data <- length(intersect(object[[3]], names(object[[4]])))
+	if (class(object[['data']]) %in% c('numeric', 'matrix', 'data.frame')) {
+		if (is.vector(object[['data']])) {
+			data <- length(intersect(object[['geogSpecies']], names(object[['data']])))
 		} else {
-			data <- length(intersect(object[[3]], rownames(object[[4]])))
+			data <- length(intersect(object[['geogSpecies']], rownames(object[['data']])))
 		}
 	} else {
 		data <- NA
 	}
 	
 	# if phylogeny present in object, then report info
-	if (class(object[[5]]) %in% 'phylo') {
-		phylo <- length(intersect(object[[3]], object[[5]]$tip.label))
+	if (class(object[['phylo']]) %in% 'phylo') {
+		phylo <- length(intersect(object[['geogSpecies']], object[['phylo']]$tip.label))
 	} else {
 		phylo <- NA
 	}
@@ -47,7 +47,7 @@ summary.speciesRaster <- function(object) {
 	rasterExtent <- raster::extent(object[[1]])
 	resolution <- raster::res(object[[1]])
 	proj <- raster::projection(object[[1]])
-	lengthUniqueSp <- length(object[[3]])
+	lengthUniqueSp <- length(object[['geogSpecies']])
 	minSp <- min(sapply(object[[2]], length))
 	maxSp <- max(sapply(object[[2]], length))
 	

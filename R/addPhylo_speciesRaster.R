@@ -34,16 +34,16 @@ addPhylo_speciesRaster <- function(x, tree, replace = FALSE) {
 		stop('tree must be a phylo object.')
 	}
 	
-	if (class(x[[5]]) %in% 'phylo' & !replace) {
+	if (class(x[['phylo']]) %in% 'phylo' & !replace) {
 		stop('Phylogeny already present. If phylogeny is to be replaced, set replace = TRUE')
 	}
 	
 	# if needed, prune species in phylogeny down to species with geog data
-	if (length(intersect(tree$tip.label, x[[3]])) == 0) {
+	if (length(intersect(tree$tip.label, x[['geogSpecies']])) == 0) {
 		stop('No matching taxa between geographic data and phylogeny.')
 	}
-	inPhyloNotGeog <- setdiff(tree$tip.label, x[[3]])
-	inGeogNotPhylo <- setdiff(x[[3]], tree$tip.label)
+	inPhyloNotGeog <- setdiff(tree$tip.label, x[['geogSpecies']])
+	inGeogNotPhylo <- setdiff(x[['geogSpecies']], tree$tip.label)
 	tree <- ape::drop.tip(tree, inPhyloNotGeog)
 	x[['phylo']] <- tree
 	

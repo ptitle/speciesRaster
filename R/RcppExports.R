@@ -2,118 +2,174 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 spListPerCell <- function(input) {
-    .Call('speciesRaster_spListPerCell', PACKAGE = 'speciesRaster', input)
+    .Call('_speciesRaster_spListPerCell', PACKAGE = 'speciesRaster', input)
 }
 
 sort_ <- function(x, cutoff) {
-    .Call('speciesRaster_sort_', PACKAGE = 'speciesRaster', x, cutoff)
+    .Call('_speciesRaster_sort_', PACKAGE = 'speciesRaster', x, cutoff)
 }
 
 returnTopIndices <- function(input, cutoff) {
-    .Call('speciesRaster_returnTopIndices', PACKAGE = 'speciesRaster', input, cutoff)
+    .Call('_speciesRaster_returnTopIndices', PACKAGE = 'speciesRaster', input, cutoff)
 }
 
 meanNNdist <- function(input) {
-    .Call('speciesRaster_meanNNdist', PACKAGE = 'speciesRaster', input)
+    .Call('_speciesRaster_meanNNdist', PACKAGE = 'speciesRaster', input)
 }
 
 cellAvg <- function(input, trait, stat) {
-    .Call('speciesRaster_cellAvg', PACKAGE = 'speciesRaster', input, trait, stat)
+    .Call('_speciesRaster_cellAvg', PACKAGE = 'speciesRaster', input, trait, stat)
 }
 
 intersectList <- function(input, vec) {
-    .Call('speciesRaster_intersectList', PACKAGE = 'speciesRaster', input, vec)
+    .Call('_speciesRaster_intersectList', PACKAGE = 'speciesRaster', input, vec)
 }
 
 flattenMatrix <- function(mat) {
-    .Call('speciesRaster_flattenMatrix', PACKAGE = 'speciesRaster', mat)
+    .Call('_speciesRaster_flattenMatrix', PACKAGE = 'speciesRaster', mat)
 }
 
 LegendreDiffIndex <- function(commA, commB) {
-    .Call('speciesRaster_LegendreDiffIndex', PACKAGE = 'speciesRaster', commA, commB)
+    .Call('_speciesRaster_LegendreDiffIndex', PACKAGE = 'speciesRaster', commA, commB)
 }
 
 jaccardDissimilarity <- function(commA, commB) {
-    .Call('speciesRaster_jaccardDissimilarity', PACKAGE = 'speciesRaster', commA, commB)
+    .Call('_speciesRaster_jaccardDissimilarity', PACKAGE = 'speciesRaster', commA, commB)
 }
 
 jaccardTurnover <- function(commA, commB) {
-    .Call('speciesRaster_jaccardTurnover', PACKAGE = 'speciesRaster', commA, commB)
+    .Call('_speciesRaster_jaccardTurnover', PACKAGE = 'speciesRaster', commA, commB)
 }
 
 jaccardNestedness <- function(commA, commB) {
-    .Call('speciesRaster_jaccardNestedness', PACKAGE = 'speciesRaster', commA, commB)
+    .Call('_speciesRaster_jaccardNestedness', PACKAGE = 'speciesRaster', commA, commB)
 }
 
 ListIsEmpty <- function(input) {
-    .Call('speciesRaster_ListIsEmpty', PACKAGE = 'speciesRaster', input)
+    .Call('_speciesRaster_ListIsEmpty', PACKAGE = 'speciesRaster', input)
 }
 
 ListIsEmptyR <- function(input) {
-    .Call('speciesRaster_ListIsEmptyR', PACKAGE = 'speciesRaster', input)
+    .Call('_speciesRaster_ListIsEmptyR', PACKAGE = 'speciesRaster', input)
 }
 
 whichCpp <- function(x) {
-    .Call('speciesRaster_whichCpp', PACKAGE = 'speciesRaster', x)
+    .Call('_speciesRaster_whichCpp', PACKAGE = 'speciesRaster', x)
 }
 
 characterUnlist <- function(list) {
-    .Call('speciesRaster_characterUnlist', PACKAGE = 'speciesRaster', list)
+    .Call('_speciesRaster_characterUnlist', PACKAGE = 'speciesRaster', list)
 }
 
 naomit <- function(x) {
-    .Call('speciesRaster_naomit', PACKAGE = 'speciesRaster', x)
+    .Call('_speciesRaster_naomit', PACKAGE = 'speciesRaster', x)
 }
 
 dropNeg <- function(x) {
-    .Call('speciesRaster_dropNeg', PACKAGE = 'speciesRaster', x)
+    .Call('_speciesRaster_dropNeg', PACKAGE = 'speciesRaster', x)
 }
 
 multiPrepCpp <- function(allComm) {
-    .Call('speciesRaster_multiPrepCpp', PACKAGE = 'speciesRaster', allComm)
+    .Call('_speciesRaster_multiPrepCpp', PACKAGE = 'speciesRaster', allComm)
 }
 
 multiPrep <- function(allComm) {
-    .Call('speciesRaster_multiPrep', PACKAGE = 'speciesRaster', allComm)
+    .Call('_speciesRaster_multiPrep', PACKAGE = 'speciesRaster', allComm)
 }
 
 betaJAC <- function(vec) {
-    .Call('speciesRaster_betaJAC', PACKAGE = 'speciesRaster', vec)
+    .Call('_speciesRaster_betaJAC', PACKAGE = 'speciesRaster', vec)
 }
 
 betaJTU <- function(vec) {
-    .Call('speciesRaster_betaJTU', PACKAGE = 'speciesRaster', vec)
+    .Call('_speciesRaster_betaJTU', PACKAGE = 'speciesRaster', vec)
 }
 
 betaJNE <- function(vec) {
-    .Call('speciesRaster_betaJNE', PACKAGE = 'speciesRaster', vec)
+    .Call('_speciesRaster_betaJNE', PACKAGE = 'speciesRaster', vec)
 }
 
 betaSOR <- function(vec) {
-    .Call('speciesRaster_betaSOR', PACKAGE = 'speciesRaster', vec)
+    .Call('_speciesRaster_betaSOR', PACKAGE = 'speciesRaster', vec)
 }
 
 betaSIM <- function(vec) {
-    .Call('speciesRaster_betaSIM', PACKAGE = 'speciesRaster', vec)
+    .Call('_speciesRaster_betaSIM', PACKAGE = 'speciesRaster', vec)
 }
 
 betaSNE <- function(vec) {
-    .Call('speciesRaster_betaSNE', PACKAGE = 'speciesRaster', vec)
+    .Call('_speciesRaster_betaSNE', PACKAGE = 'speciesRaster', vec)
 }
 
 calcBetaPairwise <- function(spByCell, nbList, metric) {
-    .Call('speciesRaster_calcBetaPairwise', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+    .Call('_speciesRaster_calcBetaPairwise', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
 }
 
 calcBetaMultiSite <- function(spByCell, nbList, metric) {
-    .Call('speciesRaster_calcBetaMultiSite', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+    .Call('_speciesRaster_calcBetaMultiSite', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
 }
 
 calcBetaMultiSiteBlock <- function(spByCell, nbList, metric) {
-    .Call('speciesRaster_calcBetaMultiSiteBlock', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+    .Call('_speciesRaster_calcBetaMultiSiteBlock', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
 }
 
 mapComm <- function(uniqueCommLabels, allComm) {
-    .Call('speciesRaster_mapComm', PACKAGE = 'speciesRaster', uniqueCommLabels, allComm)
+    .Call('_speciesRaster_mapComm', PACKAGE = 'speciesRaster', uniqueCommLabels, allComm)
+}
+
+calcRWTurnover <- function(spByCell, nbList, metric) {
+    .Call('_speciesRaster_calcRWTurnover', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
+}
+
+c_which_int <- function(vec, x) {
+    .Call('_speciesRaster_c_which_int', PACKAGE = 'speciesRaster', vec, x)
+}
+
+getRootToTipEdges <- function(phylo) {
+    .Call('_speciesRaster_getRootToTipEdges', PACKAGE = 'speciesRaster', phylo)
+}
+
+phyloBranchRanges <- function(phylo, speciesList, tipEdges) {
+    .Call('_speciesRaster_phyloBranchRanges', PACKAGE = 'speciesRaster', phylo, speciesList, tipEdges)
+}
+
+countCells <- function(cellList, vec) {
+    .Call('_speciesRaster_countCells', PACKAGE = 'speciesRaster', cellList, vec)
+}
+
+mergeLists <- function(input) {
+    .Call('_speciesRaster_mergeLists', PACKAGE = 'speciesRaster', input)
+}
+
+getComponentA <- function(commI, commJ) {
+    .Call('_speciesRaster_getComponentA', PACKAGE = 'speciesRaster', commI, commJ)
+}
+
+getComponentB <- function(commI, commJ) {
+    .Call('_speciesRaster_getComponentB', PACKAGE = 'speciesRaster', commI, commJ)
+}
+
+getComponentC <- function(commI, commJ) {
+    .Call('_speciesRaster_getComponentC', PACKAGE = 'speciesRaster', commI, commJ)
+}
+
+c_which_char <- function(vec, x) {
+    .Call('_speciesRaster_c_which_char', PACKAGE = 'speciesRaster', vec, x)
+}
+
+weightedPhylo <- function(a, tipLabels, spEdges, edgeArea1, edgeArea2) {
+    .Call('_speciesRaster_weightedPhylo', PACKAGE = 'speciesRaster', a, tipLabels, spEdges, edgeArea1, edgeArea2)
+}
+
+calcRWTurnover_taxonomic <- function(spByCell, nbList) {
+    .Call('_speciesRaster_calcRWTurnover_taxonomic', PACKAGE = 'speciesRaster', spByCell, nbList)
+}
+
+calcRWTurnover_rangeWeighted <- function(spByCell, nbList, cellCountsR) {
+    .Call('_speciesRaster_calcRWTurnover_rangeWeighted', PACKAGE = 'speciesRaster', spByCell, nbList, cellCountsR)
+}
+
+calcRWTurnover_phyloRangeWeighted <- function(spByCell, nbList, phylo, spEdges, edgeArea) {
+    .Call('_speciesRaster_calcRWTurnover_phyloRangeWeighted', PACKAGE = 'speciesRaster', spByCell, nbList, phylo, spEdges, edgeArea)
 }
 
