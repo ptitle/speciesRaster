@@ -311,18 +311,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// calcRWTurnover
-NumericVector calcRWTurnover(List spByCell, List nbList, String metric);
-RcppExport SEXP _speciesRaster_calcRWTurnover(SEXP spByCellSEXP, SEXP nbListSEXP, SEXP metricSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
-    Rcpp::traits::input_parameter< List >::type nbList(nbListSEXP);
-    Rcpp::traits::input_parameter< String >::type metric(metricSEXP);
-    rcpp_result_gen = Rcpp::wrap(calcRWTurnover(spByCell, nbList, metric));
-    return rcpp_result_gen;
-END_RCPP
-}
 // c_which_int
 int c_which_int(std::vector<int> vec, int x);
 RcppExport SEXP _speciesRaster_c_which_int(SEXP vecSEXP, SEXP xSEXP) {
@@ -435,32 +423,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// calcRWTurnover_taxonomic
-NumericVector calcRWTurnover_taxonomic(List spByCell, List nbList);
-RcppExport SEXP _speciesRaster_calcRWTurnover_taxonomic(SEXP spByCellSEXP, SEXP nbListSEXP) {
+// calcRWTurnover_taxonomic_old
+NumericVector calcRWTurnover_taxonomic_old(List spByCell, List nbList);
+RcppExport SEXP _speciesRaster_calcRWTurnover_taxonomic_old(SEXP spByCellSEXP, SEXP nbListSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
     Rcpp::traits::input_parameter< List >::type nbList(nbListSEXP);
-    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_taxonomic(spByCell, nbList));
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_taxonomic_old(spByCell, nbList));
     return rcpp_result_gen;
 END_RCPP
 }
-// calcRWTurnover_rangeWeighted
-NumericVector calcRWTurnover_rangeWeighted(List spByCell, List nbList, NumericVector cellCountsR);
-RcppExport SEXP _speciesRaster_calcRWTurnover_rangeWeighted(SEXP spByCellSEXP, SEXP nbListSEXP, SEXP cellCountsRSEXP) {
+// calcRWTurnover_rangeWeighted_old
+NumericVector calcRWTurnover_rangeWeighted_old(List spByCell, List nbList, NumericVector cellCountsR);
+RcppExport SEXP _speciesRaster_calcRWTurnover_rangeWeighted_old(SEXP spByCellSEXP, SEXP nbListSEXP, SEXP cellCountsRSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
     Rcpp::traits::input_parameter< List >::type nbList(nbListSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type cellCountsR(cellCountsRSEXP);
-    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_rangeWeighted(spByCell, nbList, cellCountsR));
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_rangeWeighted_old(spByCell, nbList, cellCountsR));
     return rcpp_result_gen;
 END_RCPP
 }
-// calcRWTurnover_phyloRangeWeighted
-NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, List nbList, List phylo, List spEdges, NumericMatrix edgeArea);
-RcppExport SEXP _speciesRaster_calcRWTurnover_phyloRangeWeighted(SEXP spByCellSEXP, SEXP nbListSEXP, SEXP phyloSEXP, SEXP spEdgesSEXP, SEXP edgeAreaSEXP) {
+// calcRWTurnover_phyloRangeWeighted_old
+NumericVector calcRWTurnover_phyloRangeWeighted_old(List spByCell, List nbList, List phylo, List spEdges, NumericMatrix edgeArea);
+RcppExport SEXP _speciesRaster_calcRWTurnover_phyloRangeWeighted_old(SEXP spByCellSEXP, SEXP nbListSEXP, SEXP phyloSEXP, SEXP spEdgesSEXP, SEXP edgeAreaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
@@ -468,7 +456,122 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
     Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type edgeArea(edgeAreaSEXP);
-    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_phyloRangeWeighted(spByCell, nbList, phylo, spEdges, edgeArea));
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_phyloRangeWeighted_old(spByCell, nbList, phylo, spEdges, edgeArea));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcRWTurnover_taxonomic_singleCell
+NumericVector calcRWTurnover_taxonomic_singleCell(StringVector focalCell, List nbList);
+RcppExport SEXP _speciesRaster_calcRWTurnover_taxonomic_singleCell(SEXP focalCellSEXP, SEXP nbListSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< StringVector >::type focalCell(focalCellSEXP);
+    Rcpp::traits::input_parameter< List >::type nbList(nbListSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_taxonomic_singleCell(focalCell, nbList));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcRWTurnover_rangeWeighted_singleCell
+NumericVector calcRWTurnover_rangeWeighted_singleCell(StringVector focalCell, List nbList, NumericVector cellCountsR);
+RcppExport SEXP _speciesRaster_calcRWTurnover_rangeWeighted_singleCell(SEXP focalCellSEXP, SEXP nbListSEXP, SEXP cellCountsRSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< StringVector >::type focalCell(focalCellSEXP);
+    Rcpp::traits::input_parameter< List >::type nbList(nbListSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type cellCountsR(cellCountsRSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_rangeWeighted_singleCell(focalCell, nbList, cellCountsR));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcRWTurnover_phyloRangeWeighted_singleCell
+NumericVector calcRWTurnover_phyloRangeWeighted_singleCell(StringVector focalCell, List nbList, StringVector phyloTipLabels, List spEdges, NumericMatrix edgeArea);
+RcppExport SEXP _speciesRaster_calcRWTurnover_phyloRangeWeighted_singleCell(SEXP focalCellSEXP, SEXP nbListSEXP, SEXP phyloTipLabelsSEXP, SEXP spEdgesSEXP, SEXP edgeAreaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< StringVector >::type focalCell(focalCellSEXP);
+    Rcpp::traits::input_parameter< List >::type nbList(nbListSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type phyloTipLabels(phyloTipLabelsSEXP);
+    Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type edgeArea(edgeAreaSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_phyloRangeWeighted_singleCell(focalCell, nbList, phyloTipLabels, spEdges, edgeArea));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getCellFromRowCol
+int getCellFromRowCol(int rowInd, int colInd, int nCol);
+RcppExport SEXP _speciesRaster_getCellFromRowCol(SEXP rowIndSEXP, SEXP colIndSEXP, SEXP nColSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< int >::type rowInd(rowIndSEXP);
+    Rcpp::traits::input_parameter< int >::type colInd(colIndSEXP);
+    Rcpp::traits::input_parameter< int >::type nCol(nColSEXP);
+    rcpp_result_gen = Rcpp::wrap(getCellFromRowCol(rowInd, colInd, nCol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getMovingWindowCells
+std::vector<int> getMovingWindowCells(int nRow, int nCol, int focalCell, int radius, std::vector<int> rasterValues);
+RcppExport SEXP _speciesRaster_getMovingWindowCells(SEXP nRowSEXP, SEXP nColSEXP, SEXP focalCellSEXP, SEXP radiusSEXP, SEXP rasterValuesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< int >::type nRow(nRowSEXP);
+    Rcpp::traits::input_parameter< int >::type nCol(nColSEXP);
+    Rcpp::traits::input_parameter< int >::type focalCell(focalCellSEXP);
+    Rcpp::traits::input_parameter< int >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type rasterValues(rasterValuesSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMovingWindowCells(nRow, nCol, focalCell, radius, rasterValues));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcRWTurnover_taxonomic
+NumericVector calcRWTurnover_taxonomic(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, bool showProgress);
+RcppExport SEXP _speciesRaster_calcRWTurnover_taxonomic(SEXP spByCellSEXP, SEXP radiusSEXP, SEXP rasterNRowSEXP, SEXP rasterNColSEXP, SEXP rasterValuesRSEXP, SEXP nonNAcellsRSEXP, SEXP showProgressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
+    Rcpp::traits::input_parameter< int >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNRow(rasterNRowSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNCol(rasterNColSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rasterValuesR(rasterValuesRSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type nonNAcellsR(nonNAcellsRSEXP);
+    Rcpp::traits::input_parameter< bool >::type showProgress(showProgressSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_taxonomic(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, showProgress));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcRWTurnover_rangeWeighted
+NumericVector calcRWTurnover_rangeWeighted(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, NumericVector cellCountsR, bool showProgress);
+RcppExport SEXP _speciesRaster_calcRWTurnover_rangeWeighted(SEXP spByCellSEXP, SEXP radiusSEXP, SEXP rasterNRowSEXP, SEXP rasterNColSEXP, SEXP rasterValuesRSEXP, SEXP nonNAcellsRSEXP, SEXP cellCountsRSEXP, SEXP showProgressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
+    Rcpp::traits::input_parameter< int >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNRow(rasterNRowSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNCol(rasterNColSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rasterValuesR(rasterValuesRSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type nonNAcellsR(nonNAcellsRSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type cellCountsR(cellCountsRSEXP);
+    Rcpp::traits::input_parameter< bool >::type showProgress(showProgressSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_rangeWeighted(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, cellCountsR, showProgress));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcRWTurnover_phyloRangeWeighted
+NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, List phylo, List spEdges, NumericMatrix edgeArea, bool showProgress);
+RcppExport SEXP _speciesRaster_calcRWTurnover_phyloRangeWeighted(SEXP spByCellSEXP, SEXP radiusSEXP, SEXP rasterNRowSEXP, SEXP rasterNColSEXP, SEXP rasterValuesRSEXP, SEXP nonNAcellsRSEXP, SEXP phyloSEXP, SEXP spEdgesSEXP, SEXP edgeAreaSEXP, SEXP showProgressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
+    Rcpp::traits::input_parameter< int >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNRow(rasterNRowSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNCol(rasterNColSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rasterValuesR(rasterValuesRSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type nonNAcellsR(nonNAcellsRSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type edgeArea(edgeAreaSEXP);
+    Rcpp::traits::input_parameter< bool >::type showProgress(showProgressSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcRWTurnover_phyloRangeWeighted(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, spEdges, edgeArea, showProgress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -503,7 +606,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_calcBetaMultiSite", (DL_FUNC) &_speciesRaster_calcBetaMultiSite, 3},
     {"_speciesRaster_calcBetaMultiSiteBlock", (DL_FUNC) &_speciesRaster_calcBetaMultiSiteBlock, 3},
     {"_speciesRaster_mapComm", (DL_FUNC) &_speciesRaster_mapComm, 2},
-    {"_speciesRaster_calcRWTurnover", (DL_FUNC) &_speciesRaster_calcRWTurnover, 3},
     {"_speciesRaster_c_which_int", (DL_FUNC) &_speciesRaster_c_which_int, 2},
     {"_speciesRaster_getRootToTipEdges", (DL_FUNC) &_speciesRaster_getRootToTipEdges, 1},
     {"_speciesRaster_phyloBranchRanges", (DL_FUNC) &_speciesRaster_phyloBranchRanges, 3},
@@ -514,9 +616,17 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_getComponentC", (DL_FUNC) &_speciesRaster_getComponentC, 2},
     {"_speciesRaster_c_which_char", (DL_FUNC) &_speciesRaster_c_which_char, 2},
     {"_speciesRaster_weightedPhylo", (DL_FUNC) &_speciesRaster_weightedPhylo, 5},
-    {"_speciesRaster_calcRWTurnover_taxonomic", (DL_FUNC) &_speciesRaster_calcRWTurnover_taxonomic, 2},
-    {"_speciesRaster_calcRWTurnover_rangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted, 3},
-    {"_speciesRaster_calcRWTurnover_phyloRangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_phyloRangeWeighted, 5},
+    {"_speciesRaster_calcRWTurnover_taxonomic_old", (DL_FUNC) &_speciesRaster_calcRWTurnover_taxonomic_old, 2},
+    {"_speciesRaster_calcRWTurnover_rangeWeighted_old", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted_old, 3},
+    {"_speciesRaster_calcRWTurnover_phyloRangeWeighted_old", (DL_FUNC) &_speciesRaster_calcRWTurnover_phyloRangeWeighted_old, 5},
+    {"_speciesRaster_calcRWTurnover_taxonomic_singleCell", (DL_FUNC) &_speciesRaster_calcRWTurnover_taxonomic_singleCell, 2},
+    {"_speciesRaster_calcRWTurnover_rangeWeighted_singleCell", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted_singleCell, 3},
+    {"_speciesRaster_calcRWTurnover_phyloRangeWeighted_singleCell", (DL_FUNC) &_speciesRaster_calcRWTurnover_phyloRangeWeighted_singleCell, 5},
+    {"_speciesRaster_getCellFromRowCol", (DL_FUNC) &_speciesRaster_getCellFromRowCol, 3},
+    {"_speciesRaster_getMovingWindowCells", (DL_FUNC) &_speciesRaster_getMovingWindowCells, 5},
+    {"_speciesRaster_calcRWTurnover_taxonomic", (DL_FUNC) &_speciesRaster_calcRWTurnover_taxonomic, 7},
+    {"_speciesRaster_calcRWTurnover_rangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted, 8},
+    {"_speciesRaster_calcRWTurnover_phyloRangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_phyloRangeWeighted, 10},
     {NULL, NULL, 0}
 };
 

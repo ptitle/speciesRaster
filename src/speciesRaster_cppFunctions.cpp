@@ -1,6 +1,10 @@
+// [[Rcpp::depends(RcppProgress)]]
 #include <Rcpp.h>
 #include <numeric>
 #include <algorithm>
+#include <math.h>
+#include <progress.hpp>
+#include <progress_bar.hpp>
 using namespace Rcpp;
 
 // return list of species per cell
@@ -137,7 +141,8 @@ List intersectList(List input, StringVector vec) {
 	List out(n);
 
 	for (int i = 0; i < n; i++) {
-		
+
+		Rcpp::checkUserInterrupt();		
 		StringVector sp = as< StringVector > (input[i]);
 
 		if (all(!is_na(sp))) {
@@ -772,80 +777,6 @@ List mapComm(CharacterVector uniqueCommLabels, CharacterVector allComm) {
 
 
 
-
-// Calculate beta diversity distance for all cells, using multi-site metrics
-// [[Rcpp::export(name = calcRWTurnover, rng = false)]]
-NumericVector calcRWTurnover(List spByCell, List nbList, String metric) {
-	
-	NumericVector out(spByCell.size());
-
-	if (spByCell.size() != nbList.size()) {
-		throw std::range_error("Input lists of unequal length");
-	}
-
-	Rcout << "\tIndexing cells...";
-	// drop all cells that are empty
-	std::vector<std::vector<int> > emptyInd = ListIsEmpty(spByCell);
-	Rcout << "done\n";
-
-	IntegerVector emptyCells = wrap( emptyInd[0] );
-	IntegerVector nonEmptyCells = wrap( emptyInd[1] );
-	//Rcout << "...Converting done...\n";
-
-	int n = nonEmptyCells.size();
-
-	Rcout << "\tStarting metric calculation...";
-
-	for (int i = 0; i < n; i++) {
-
-		// 	subset spByCell list to relevant cells
-		IntegerVector nbCells = as< IntegerVector >(nbList[nonEmptyCells[i]]);
-		//std::vector<int> nbCells = as< std::vector<int> >(nbList[nonEmptyCells[i]]);
-	
-		// fix indexing as passed from R
-		nbCells = nbCells - 1;
-		//for (int j = 0; j < n; j++) {
-		//	nbCells[j] = nbCells[j] - 1;
-		//}
-	
-		// drop cells that have been identified as empty
-		// IntegerVector goodCells = setdiff(nbCells, emptyCells);
-		// determine which cells are empty in this set
-		std::vector<std::vector<int> > allInd = ListIsEmpty(spByCell[nbCells]);
-		IntegerVector ind = wrap(allInd[1]);
-		IntegerVector goodCells = nbCells[ind];
-
-	 	List subList = spByCell[goodCells];
-
-	 	// calculate values that will be needed
-	 	std::vector<double> prepVec = multiPrepCpp(subList);
-
-		if (metric == "betaJAC") {
-				out[nonEmptyCells[i]] = betaJAC(prepVec);
-			} else if (metric == "betaJTU") {
-				out[nonEmptyCells[i]] = betaJTU(prepVec);
-			} else if (metric == "betaJNE") {
-				out[nonEmptyCells[i]] = betaJNE(prepVec);
-			} else if (metric == "betaSOR") {
-				out[nonEmptyCells[i]] = betaSOR(prepVec);
-			} else if (metric == "betaSIM") {
-				out[nonEmptyCells[i]] = betaSIM(prepVec);
-			} else if (metric == "betaSNE") {
-				out[nonEmptyCells[i]] = betaSNE(prepVec);
-			} else {
-			throw std::range_error("Metric not recognized.");
-		}
-	 	//out[nonEmptyCells[i]] = wrap(prepVec);
-	}
-
-	Rcout << "done\n";
-
-
-	out[emptyCells] = NA_REAL;
-	
-	return out;
-}
-
 // return index of x in integer vec
 // [[Rcpp::export(name = c_which_int, rng = false)]]
 int c_which_int(std::vector<int> vec, int x) {
@@ -924,10 +855,13 @@ List phyloBranchRanges(List phylo, List speciesList, List tipEdges) {
 		tipNodes[i] = spTipEdges;
 	}
 
+	Rcpp::checkUserInterrupt();
+
 	// For each node number, find which species have it listed
 	// speciesFromNode is in order of edge2 nodes
 	List speciesFromNode(allnodes.size());
 	for (int i = 0; i < allnodes.size(); i++) {
+		Rcpp::checkUserInterrupt();
 		std::vector<int> isPresent;
 		if (allnodes[i] <= tipLabels.size()) {
 			isPresent.push_back(allnodes[i]);
@@ -949,6 +883,7 @@ List phyloBranchRanges(List phylo, List speciesList, List tipEdges) {
 //	allLeaves is in order of edge2 nodes
 	List allLeaves(speciesFromNode.size());
 	for (int i = 0; i < speciesFromNode.size(); i++) {
+		Rcpp::checkUserInterrupt();
 		std::vector<int> tipIndices = as< std::vector<int> >(speciesFromNode[i]);
 		std::vector<std::string> tipNames(tipIndices.size());
 		for (int j = 0; j < tipIndices.size(); j++) { 
@@ -961,6 +896,7 @@ List phyloBranchRanges(List phylo, List speciesList, List tipEdges) {
 	// tip taxa
 	std::vector<int> branchCellCount(allLeaves.size());
 	for (int i = 0; i < allLeaves.size(); i++) {
+		Rcpp::checkUserInterrupt();
 		int counter = 0;
 		std::vector<std::string> nodeSp = as< std::vector<std::string> >(allLeaves[i]);
 		for (int j = 0; j < speciesList.size(); j++) {
@@ -1082,9 +1018,11 @@ std::vector<std::string> getComponentB(std::vector<std::string> commI, std::vect
 // [[Rcpp::export(name = getComponentC, rng = false)]]
 std::vector<std::string> getComponentC(std::vector<std::string> commI, std::vector<std::string> commJ) {
 
-	// setdiff(cellI, cellJ)
+	// setdiff(cellJ, cellI)
 	std::vector<std::string> diffJI;
 
+	sort(commI.begin(), commI.end());
+	sort(commJ.begin(), commJ.end());
 	set_difference(
 		commJ.begin(),
 	    commJ.end(),
@@ -1110,7 +1048,7 @@ int c_which_char(std::vector<std::string> vec, std::string x) {
 
 
 
-// return index of x in integer vec
+// return geog area of phylo branches, given species
 // [[Rcpp::export(name = weightedPhylo, rng = false)]]
 double weightedPhylo(std::vector<std::string> a, std::vector<std::string> tipLabels, List spEdges, std::vector<double> edgeArea1, std::vector<double> edgeArea2) {
 		
@@ -1143,9 +1081,9 @@ double weightedPhylo(std::vector<std::string> a, std::vector<std::string> tipLab
 
 
 
-// Calculate beta diversity distance for all cells, using multi-site metrics
-// [[Rcpp::export(name = calcRWTurnover_taxonomic, rng = false)]]
-NumericVector calcRWTurnover_taxonomic(List spByCell, List nbList) {
+// Calculate taxonomic beta diversity
+// [[Rcpp::export(name = calcRWTurnover_taxonomic_old, rng = false)]]
+NumericVector calcRWTurnover_taxonomic_old(List spByCell, List nbList) {
 	
 	NumericVector out(spByCell.size());
 
@@ -1171,17 +1109,25 @@ NumericVector calcRWTurnover_taxonomic(List spByCell, List nbList) {
 
 			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j] - 1]);
 			std::vector<std::string> a = getComponentA(commI, commJ);
-			std::vector<std::string> b = getComponentB(commI, commJ);
-			std::vector<std::string> c = getComponentC(commI, commJ);
 
-			// Simpson's beta diversity index
-			cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+			if (commI.size() == commJ.size() && commI.size() == a.size()) {
+				cellVec[j] = 0.0;
+			} else if (a.size() == 0) {
+				cellVec[j] = 1.0;
+			} else {
+
+				std::vector<std::string> b = getComponentB(commI, commJ);
+				std::vector<std::string> c = getComponentC(commI, commJ);
+
+				// Simpson's beta diversity index
+				// cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+				
+				// Sorenson metric
+				cellVec[j] = 1.0 - 2 * double(a.size()) / (2 * double(a.size()) + double(b.size()) + double(c.size()));
 			
-			// Sorenson metric
-			//cellVec[j] = 1.0 - 2 * double(a.size()) / (2 * double(a.size()) + double(b.size() + double(c.size())));
-		
-			// Jaccard metric
-			//cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size() + double(c.size())));
+				// Jaccard metric
+				//cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size() + double(c.size())));
+			}
 		}
 		out[i] = mean(cellVec);
 	}
@@ -1190,9 +1136,9 @@ NumericVector calcRWTurnover_taxonomic(List spByCell, List nbList) {
 }
 
 
-// Calculate beta diversity distance for all cells, using multi-site metrics
-// [[Rcpp::export(name = calcRWTurnover_rangeWeighted, rng = false)]]
-NumericVector calcRWTurnover_rangeWeighted(List spByCell, List nbList, NumericVector cellCountsR) {
+// Calculate range-weighted beta diversity
+// [[Rcpp::export(name = calcRWTurnover_rangeWeighted_old, rng = false)]]
+NumericVector calcRWTurnover_rangeWeighted_old(List spByCell, List nbList, NumericVector cellCountsR) {
 	
 	NumericVector out(spByCell.size());
 
@@ -1222,29 +1168,36 @@ NumericVector calcRWTurnover_rangeWeighted(List spByCell, List nbList, NumericVe
 
 			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j] - 1]);
 			std::vector<std::string> a = getComponentA(commI, commJ);
-			std::vector<std::string> b = getComponentB(commI, commJ);
-			std::vector<std::string> c = getComponentC(commI, commJ);
 
-			double rwA = 0.0;
-			for (int k = 0; k < a.size(); k++) {
-				int ind = c_which_char(cellCountNames, a[k]);
-				rwA = rwA + cellCounts[ind];
+			if (commI.size() == commJ.size() && commI.size() == a.size()) {
+				cellVec[j] = 0.0;
+			} else if (a.size() == 0) {
+				cellVec[j] = 1.0;
+			} else {
+
+				std::vector<std::string> b = getComponentB(commI, commJ);
+				std::vector<std::string> c = getComponentC(commI, commJ);
+
+				double rwA = 0.0;
+				for (int k = 0; k < a.size(); k++) {
+					int ind = c_which_char(cellCountNames, a[k]);
+					rwA = rwA + cellCounts[ind];
+				}
+
+				double rwB = 0.0;
+				for (int k = 0; k < b.size(); k++) {
+					int ind = c_which_char(cellCountNames, b[k]);
+					rwB = rwB + cellCounts[ind];
+				}
+
+				double rwC = 0.0;
+				for (int k = 0; k < c.size(); k++) {
+					int ind = c_which_char(cellCountNames, c[k]);
+					rwC = rwC + cellCounts[ind];
+				}
+
+				cellVec[j] = 1.0 - rwA / (rwA + rwB + rwC);
 			}
-
-			double rwB = 0.0;
-			for (int k = 0; k < b.size(); k++) {
-				int ind = c_which_char(cellCountNames, b[k]);
-				rwB = rwB + cellCounts[ind];
-			}
-
-			double rwC = 0.0;
-			for (int k = 0; k < c.size(); k++) {
-				int ind = c_which_char(cellCountNames, c[k]);
-				rwC = rwC + cellCounts[ind];
-			}
-
-			cellVec[j] = 1.0 - rwA / (rwA + rwB + rwC);
-
 		}
 		out[i] = mean(cellVec);
 	}
@@ -1257,9 +1210,9 @@ NumericVector calcRWTurnover_rangeWeighted(List spByCell, List nbList, NumericVe
 
 
 
-// Calculate beta diversity distance for all cells, using multi-site metrics
-// [[Rcpp::export(name = calcRWTurnover_phyloRangeWeighted, rng = false)]]
-NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, List nbList, List phylo, List spEdges, NumericMatrix edgeArea) {
+// Calculate range-weighted phylogenetic turnover
+// [[Rcpp::export(name = calcRWTurnover_phyloRangeWeighted_old, rng = false)]]
+NumericVector calcRWTurnover_phyloRangeWeighted_old(List spByCell, List nbList, List phylo, List spEdges, NumericMatrix edgeArea) {
 	
 	NumericVector out(spByCell.size());
 
@@ -1294,16 +1247,23 @@ NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, List nbList, List
 
 			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j] - 1]);
 			std::vector<std::string> a = getComponentA(commI, commJ);
-			std::vector<std::string> b = getComponentB(commI, commJ);
-			std::vector<std::string> c = getComponentC(commI, commJ);
 
-			double wpA = weightedPhylo(a, tipLabels, spEdges, edgeArea1, edgeArea2);
-			double wpB = weightedPhylo(b, tipLabels, spEdges, edgeArea1, edgeArea2);
-			double wpC = weightedPhylo(c, tipLabels, spEdges, edgeArea1, edgeArea2);
+			if (commI.size() == commJ.size() && commI.size() == a.size()) {
+				cellVec[j] = 0.0;
+			} else if (a.size() == 0) {
+				cellVec[j] = 1.0;
+			} else {
+
+				std::vector<std::string> b = getComponentB(commI, commJ);
+				std::vector<std::string> c = getComponentC(commI, commJ);
+
+				double wpA = weightedPhylo(a, tipLabels, spEdges, edgeArea1, edgeArea2);
+				double wpB = weightedPhylo(b, tipLabels, spEdges, edgeArea1, edgeArea2);
+				double wpC = weightedPhylo(c, tipLabels, spEdges, edgeArea1, edgeArea2);
 
 
-			cellVec[j] = 1.0 - wpA / (wpA + wpB + wpC);
-
+				cellVec[j] = 1.0 - wpA / (wpA + wpB + wpC);
+			}
 		}
 		out[i] = mean(cellVec);
 	}
@@ -1314,7 +1274,441 @@ NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, List nbList, List
 
 
 
+// Calculate beta diversity distance for one cell, averaged across its neighbors
+// [[Rcpp::export(name = calcRWTurnover_taxonomic_singleCell, rng = false)]]
+NumericVector calcRWTurnover_taxonomic_singleCell(StringVector focalCell, List nbList) {
+
+	std::vector<std::string> commI = as< std::vector<std::string> >(focalCell);
+
+	std::vector<double> resVec(nbList.size());
+			
+ 	for (int i = 0; i < nbList.size(); i++) {
+
+		// for the focal cell and each neighbor, calculate:
+		// a = intersect(cellI, cellJ)
+		// b = setdiff(cellI, cellJ)
+		// c = setdiff(cellJ, cellI)
+
+		std::vector<std::string> commJ = as< std::vector<std::string> >(nbList[i]);
+		std::vector<std::string> a = getComponentA(commI, commJ);
+
+		if (commI.size() == commJ.size() && commI.size() == a.size()) {
+			resVec[i] = 0.0;
+		} else if (a.size() == 0) {
+			resVec[i] = 1.0;
+		} else {
+
+			std::vector<std::string> b = getComponentB(commI, commJ);
+			std::vector<std::string> c = getComponentC(commI, commJ);
+
+			// Simpson's beta diversity index
+			// resVec[i] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+			
+			// Sorenson metric
+			resVec[i] = 1.0 - 2.0 * double(a.size()) / (2 * double(a.size()) + double(b.size()) + double(c.size()));
+			
+			// Jaccard metric
+			//resVec[i] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size()) + double(c.size()));
+		}
+	}
+		
+	double res = std::accumulate(resVec.begin(), resVec.end(), 0.0);
+	double out = res / resVec.size();
+
+	return (wrap(out));
+}
 
 
+
+
+// Calculate beta diversity distance for one cell, averaged across its neighbors
+// [[Rcpp::export(name = calcRWTurnover_rangeWeighted_singleCell, rng = false)]]
+NumericVector calcRWTurnover_rangeWeighted_singleCell(StringVector focalCell, List nbList, NumericVector cellCountsR) {
+
+	std::vector<std::string> commI = as< std::vector<std::string> >(focalCell);
+	
+	// pull out cell count information
+	std::vector<std::string> cellCountNames = as< std::vector<std::string> >(cellCountsR.attr("names"));
+	std::vector<double> cellCounts = as< std::vector<double> >(cellCountsR);
+
+	std::vector<double> resVec(nbList.size());
+			
+ 	for (int i = 0; i < nbList.size(); i++) {
+
+		// for the focal cell and each neighbor, calculate:
+		// a = intersect(cellI, cellJ)
+		// b = setdiff(cellI, cellJ)
+		// c = setdiff(cellJ, cellI)
+
+		std::vector<std::string> commJ = as< std::vector<std::string> >(nbList[i]);
+		std::vector<std::string> a = getComponentA(commI, commJ);
+
+		if (commI.size() == commJ.size() && commI.size() == a.size()) {
+			resVec[i] = 0.0;
+		} else if (a.size() == 0) {
+			resVec[i] = 1.0;
+		} else {
+
+			std::vector<std::string> b = getComponentB(commI, commJ);
+			std::vector<std::string> c = getComponentC(commI, commJ);
+
+			double rwA = 0.0;
+			for (int k = 0; k < a.size(); k++) {
+				int ind = c_which_char(cellCountNames, a[k]);
+				rwA = rwA + cellCounts[ind];
+			}
+
+			double rwB = 0.0;
+			for (int k = 0; k < b.size(); k++) {
+				int ind = c_which_char(cellCountNames, b[k]);
+				rwB = rwB + cellCounts[ind];
+			}
+
+			double rwC = 0.0;
+			for (int k = 0; k < c.size(); k++) {
+				int ind = c_which_char(cellCountNames, c[k]);
+				rwC = rwC + cellCounts[ind];
+			}
+
+			resVec[i] = 1.0 - rwA / (rwA + rwB + rwC);
+		}
+	}
+
+		
+	double res = std::accumulate(resVec.begin(), resVec.end(), 0.0);
+	double out = res / resVec.size();
+
+	return (wrap(out));
+}
+
+
+// Calculate beta diversity distance for one cell, averaged across its neighbors
+// [[Rcpp::export(name = calcRWTurnover_phyloRangeWeighted_singleCell, rng = false)]]
+NumericVector calcRWTurnover_phyloRangeWeighted_singleCell(StringVector focalCell, List nbList, StringVector phyloTipLabels, List spEdges, NumericMatrix edgeArea) {
+
+	// extract relevant info from input data
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phyloTipLabels);
+	
+	NumericVector edgeArea1a = edgeArea(_, 0);
+	NumericVector edgeArea2a = edgeArea(_, 1);
+  
+	std::vector<double> edgeArea1 = as< std::vector<double> >(edgeArea1a);
+	std::vector<double> edgeArea2 = as< std::vector<double> >(edgeArea2a);
+
+	std::vector<std::string> commI = as< std::vector<std::string> >(focalCell);
+
+	std::vector<double> resVec(nbList.size());
+			
+ 	for (int i = 0; i < nbList.size(); i++) {
+
+		// for the focal cell and each neighbor, calculate:
+		// a = intersect(cellI, cellJ)
+		// b = setdiff(cellI, cellJ)
+		// c = setdiff(cellJ, cellI)
+
+		std::vector<std::string> commJ = as< std::vector<std::string> >(nbList[i]);
+		std::vector<std::string> a = getComponentA(commI, commJ);
+
+		if (commI.size() == commJ.size() && commI.size() == a.size()) {
+			resVec[i] = 0.0;
+		} else if (a.size() == 0) {
+			resVec[i] = 1.0;
+		} else {
+
+			std::vector<std::string> b = getComponentB(commI, commJ);
+			std::vector<std::string> c = getComponentC(commI, commJ);
+
+			double wpA = weightedPhylo(a, tipLabels, spEdges, edgeArea1, edgeArea2);
+			double wpB = weightedPhylo(b, tipLabels, spEdges, edgeArea1, edgeArea2);
+			double wpC = weightedPhylo(c, tipLabels, spEdges, edgeArea1, edgeArea2);
+
+			resVec[i] = 1.0 - wpA / (wpA + wpB + wpC);
+		}	
+
+	}
+		
+	double res = std::accumulate(resVec.begin(), resVec.end(), 0.0);
+	double out = res / resVec.size();
+
+	return (wrap(out));
+}
+
+
+
+
+// function to return cell number, given row and column
+// [[Rcpp::export(name = getCellFromRowCol, rng = false)]]
+int getCellFromRowCol(int rowInd, int colInd, int nCol) {
+	return (rowInd) * nCol + colInd;
+}
+
+
+
+// return cells within window, where raster values are returned if not negative
+// this way, bad cells can be coded as -1
+// [[Rcpp::export(name = getMovingWindowCells, rng = false)]]
+std::vector<int> getMovingWindowCells(int nRow, int nCol, int focalCell, int radius, std::vector<int>  rasterValues) {
+
+	// convert indexing from R
+	int cell = focalCell - 1;
+
+	// get row and column from cell number
+	int cellRow = std::floor(cell / nCol - 1) + 1;
+	int cellCol = cell - nCol * cellRow;
+
+//	Rcout << "cellrow: " << cellRow << std::endl;
+//	Rcout << "cellcol: " << cellCol << std::endl;
+
+	// get neighborhood row and column bounds
+	int leftBoundCol = std::max(0, cellCol - radius);
+	int rightBoundCol = std::min(nCol - 1, cellCol + radius);
+
+	int topBoundRow = std::max(0, cellRow - radius);
+	int bottomBoundRow = std::min(nRow - 1, cellRow + radius);
+
+	std::vector<int> allRows((bottomBoundRow - topBoundRow) + 1);
+	std::iota(allRows.begin(), allRows.end(), topBoundRow);
+
+	std::vector<int> nbCells;
+	for (int i = 0; i < allRows.size(); i++) {
+		// for each row, pull out cells in window
+		int seqStart = getCellFromRowCol(allRows[i], leftBoundCol, nCol);
+		int seqEnd = getCellFromRowCol(allRows[i], rightBoundCol, nCol);
+		std::vector<int> tmpCells((seqEnd - seqStart) + 1);
+		std::iota(tmpCells.begin(), tmpCells.end(), seqStart);
+
+		// identify which cells are valid, and store
+		for (int j = 0; j < tmpCells.size(); j++) {
+			if (rasterValues[tmpCells[j]] > 0 && tmpCells[j] != cell) {
+				nbCells.push_back(rasterValues[tmpCells[j]]);
+			}
+		}
+	}
+
+	return nbCells;
+}
+
+
+// Calculate taxonomic beta diversity
+// [[Rcpp::export(name = calcRWTurnover_taxonomic, rng = false)]]
+NumericVector calcRWTurnover_taxonomic(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, bool showProgress) {
+	
+	NumericVector out(spByCell.size());
+
+	std::vector<int> rasterValues = as< std::vector<int> >(rasterValuesR);
+	std::vector<int> nonNAcells = as< std::vector<int> >(nonNAcellsR);
+
+	int n = spByCell.size();
+	Progress p(n, showProgress);
+
+	// for each cell, identify neighborhood cells
+	for (int i = 0; i < n; i++) {
+
+		Rcpp::checkUserInterrupt();
+		p.increment(); 
+		// if (fmod(i / double(n), 0.05) < (1 / double(n))) {
+		// 	Rcpp::checkUserInterrupt();
+		// 	//p.increment(); 
+		// 	//Rcout << i / double(n) << "% completed..." << std::endl;
+		// }
+
+		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
+
+ 		// 	pull out the neighborhood cells for the i'th cell
+ 		std::vector<int> cellNeighbors = getMovingWindowCells(rasterNRow, rasterNCol, nonNAcells[i], radius, rasterValues);
+
+ 		NumericVector cellVec(cellNeighbors.size());
+		
+ 		for (int j = 0; j < cellNeighbors.size(); j++) {
+
+			// for the focal cell and each neighbor, calculate:
+			// a = intersect(cellI, cellJ)
+			// b = setdiff(cellI, cellJ)
+			// c = setdiff(cellJ, cellI)
+
+			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j]]);
+			std::vector<std::string> a = getComponentA(commI, commJ);
+
+			if (commI.size() == commJ.size() && commI.size() == a.size()) {
+				cellVec[j] = 0.0;
+			} else if (a.size() == 0) {
+				cellVec[j] = 1.0;
+			} else {
+
+				std::vector<std::string> b = getComponentB(commI, commJ);
+				std::vector<std::string> c = getComponentC(commI, commJ);
+
+				// Simpson's beta diversity index
+				// cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+				
+				// Sorenson metric
+				cellVec[j] = 1.0 - 2 * double(a.size()) / (2 * double(a.size()) + double(b.size()) + double(c.size()));
+			
+				// Jaccard metric
+				//cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size() + double(c.size())));
+			}
+		}
+		out[i] = mean(cellVec);
+	}
+
+	return out;
+}
+
+
+
+// Calculate range-weighted beta diversity
+// [[Rcpp::export(name = calcRWTurnover_rangeWeighted, rng = false)]]
+NumericVector calcRWTurnover_rangeWeighted(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, NumericVector cellCountsR, bool showProgress) {
+	
+	NumericVector out(spByCell.size());
+
+	std::vector<int> rasterValues = as< std::vector<int> >(rasterValuesR);
+	std::vector<int> nonNAcells = as< std::vector<int> >(nonNAcellsR);
+
+	// pull out cell count information
+	std::vector<std::string> cellCountNames = as< std::vector<std::string> >(cellCountsR.attr("names"));
+	std::vector<double> cellCounts = as< std::vector<double> >(cellCountsR);
+
+	int n = spByCell.size();
+	Progress p(n, showProgress);
+
+	// for each cell, identify neighborhood cells
+	for (int i = 0; i < n; i++) {
+
+		Rcpp::checkUserInterrupt();
+		p.increment(); 
+		// if (fmod(i / double(n), 0.05) < (1 / double(n))) {
+		// 	Rcpp::checkUserInterrupt();
+		// 	//p.increment(); 
+		// 	//Rcout << i / double(n) << "% completed..." << std::endl;
+		// }
+
+		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
+
+ 		// 	pull out the neighborhood cells for the i'th cell
+ 		std::vector<int> cellNeighbors = getMovingWindowCells(rasterNRow, rasterNCol, nonNAcells[i], radius, rasterValues);
+
+ 		NumericVector cellVec(cellNeighbors.size());
+		
+ 		for (int j = 0; j < cellNeighbors.size(); j++) {
+
+			// for the focal cell and each neighbor, calculate:
+			// a = intersect(cellI, cellJ)
+			// b = setdiff(cellI, cellJ)
+			// c = setdiff(cellJ, cellI)
+
+			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j]]);
+			std::vector<std::string> a = getComponentA(commI, commJ);
+
+			if (commI.size() == commJ.size() && commI.size() == a.size()) {
+				cellVec[j] = 0.0;
+			} else if (a.size() == 0) {
+				cellVec[j] = 1.0;
+			} else {
+
+				std::vector<std::string> b = getComponentB(commI, commJ);
+				std::vector<std::string> c = getComponentC(commI, commJ);
+
+				double rwA = 0.0;
+				for (int k = 0; k < a.size(); k++) {
+					int ind = c_which_char(cellCountNames, a[k]);
+					rwA = rwA + cellCounts[ind];
+				}
+
+				double rwB = 0.0;
+				for (int k = 0; k < b.size(); k++) {
+					int ind = c_which_char(cellCountNames, b[k]);
+					rwB = rwB + cellCounts[ind];
+				}
+
+				double rwC = 0.0;
+				for (int k = 0; k < c.size(); k++) {
+					int ind = c_which_char(cellCountNames, c[k]);
+					rwC = rwC + cellCounts[ind];
+				}
+
+				cellVec[j] = 1.0 - rwA / (rwA + rwB + rwC);
+			}
+		}
+		out[i] = mean(cellVec);
+	}
+
+	return out;
+}
+
+
+
+// Calculate range-weighted phylogenetic turnover
+// [[Rcpp::export(name = calcRWTurnover_phyloRangeWeighted, rng = false)]]
+NumericVector calcRWTurnover_phyloRangeWeighted(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, List phylo, List spEdges, NumericMatrix edgeArea, bool showProgress) {
+	
+	NumericVector out(spByCell.size());
+
+	std::vector<int> rasterValues = as< std::vector<int> >(rasterValuesR);
+	std::vector<int> nonNAcells = as< std::vector<int> >(nonNAcellsR);
+
+	// extract relevant info from input data
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	
+	NumericVector edgeArea1a = edgeArea(_, 0);
+	NumericVector edgeArea2a = edgeArea(_, 1);
+  
+	std::vector<double> edgeArea1 = as< std::vector<double> >(edgeArea1a);
+	std::vector<double> edgeArea2 = as< std::vector<double> >(edgeArea2a);
+
+	int n = spByCell.size();
+	Progress p(n, showProgress);
+
+	// for each cell, identify neighborhood cells
+	for (int i = 0; i < n; i++) {
+
+		Rcpp::checkUserInterrupt();
+		p.increment(); 
+		// if (fmod(i / double(n), 0.05) < (1 / double(n))) {
+		// 	Rcpp::checkUserInterrupt();
+		// 	//p.increment(); 
+		// 	//Rcout << i / double(n) << "% completed..." << std::endl;
+		// }
+
+		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
+
+ 		// 	pull out the neighborhood cells for the i'th cell
+ 		std::vector<int> cellNeighbors = getMovingWindowCells(rasterNRow, rasterNCol, nonNAcells[i], radius, rasterValues);
+
+ 		NumericVector cellVec(cellNeighbors.size());
+		
+ 		for (int j = 0; j < cellNeighbors.size(); j++) {
+
+			// for the focal cell and each neighbor, calculate:
+			// a = intersect(cellI, cellJ)
+			// b = setdiff(cellI, cellJ)
+			// c = setdiff(cellJ, cellI)
+
+			std::vector<std::string> commJ = as< std::vector<std::string> >(spByCell[cellNeighbors[j]]);
+			std::vector<std::string> a = getComponentA(commI, commJ);
+
+			if (commI.size() == commJ.size() && commI.size() == a.size()) {
+				cellVec[j] = 0.0;
+			} else if (a.size() == 0) {
+				cellVec[j] = 1.0;
+			} else {
+
+				std::vector<std::string> b = getComponentB(commI, commJ);
+				std::vector<std::string> c = getComponentC(commI, commJ);
+
+				double wpA = weightedPhylo(a, tipLabels, spEdges, edgeArea1, edgeArea2);
+				double wpB = weightedPhylo(b, tipLabels, spEdges, edgeArea1, edgeArea2);
+				double wpC = weightedPhylo(c, tipLabels, spEdges, edgeArea1, edgeArea2);
+
+
+				cellVec[j] = 1.0 - wpA / (wpA + wpB + wpC);
+			}
+		}
+		out[i] = mean(cellVec);
+	}
+
+	return out;
+
+}
 
 

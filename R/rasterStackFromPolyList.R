@@ -14,8 +14,7 @@
 ##' @param extent if 'auto', then the maximal extent of the polygons will be used. 
 ##' 	If not auto, must be a numeric vector of length 4 with minLong, maxLong, minLat, maxLat.
 ##'
-##' @param nthreads number of threads to use for parallelization of the function. The R
-##' 	package	\code{parallel} must be loaded for \code{nthreads > 1}.
+##' @param nthreads number of threads to use for parallelization of the function. 
 ##'
 ##' @details 
 ##' 	In the rasterization process, all cells for which the polygon covers the midpoint are

@@ -117,10 +117,6 @@ mapComm <- function(uniqueCommLabels, allComm) {
     .Call('_speciesRaster_mapComm', PACKAGE = 'speciesRaster', uniqueCommLabels, allComm)
 }
 
-calcRWTurnover <- function(spByCell, nbList, metric) {
-    .Call('_speciesRaster_calcRWTurnover', PACKAGE = 'speciesRaster', spByCell, nbList, metric)
-}
-
 c_which_int <- function(vec, x) {
     .Call('_speciesRaster_c_which_int', PACKAGE = 'speciesRaster', vec, x)
 }
@@ -161,15 +157,47 @@ weightedPhylo <- function(a, tipLabels, spEdges, edgeArea1, edgeArea2) {
     .Call('_speciesRaster_weightedPhylo', PACKAGE = 'speciesRaster', a, tipLabels, spEdges, edgeArea1, edgeArea2)
 }
 
-calcRWTurnover_taxonomic <- function(spByCell, nbList) {
-    .Call('_speciesRaster_calcRWTurnover_taxonomic', PACKAGE = 'speciesRaster', spByCell, nbList)
+calcRWTurnover_taxonomic_old <- function(spByCell, nbList) {
+    .Call('_speciesRaster_calcRWTurnover_taxonomic_old', PACKAGE = 'speciesRaster', spByCell, nbList)
 }
 
-calcRWTurnover_rangeWeighted <- function(spByCell, nbList, cellCountsR) {
-    .Call('_speciesRaster_calcRWTurnover_rangeWeighted', PACKAGE = 'speciesRaster', spByCell, nbList, cellCountsR)
+calcRWTurnover_rangeWeighted_old <- function(spByCell, nbList, cellCountsR) {
+    .Call('_speciesRaster_calcRWTurnover_rangeWeighted_old', PACKAGE = 'speciesRaster', spByCell, nbList, cellCountsR)
 }
 
-calcRWTurnover_phyloRangeWeighted <- function(spByCell, nbList, phylo, spEdges, edgeArea) {
-    .Call('_speciesRaster_calcRWTurnover_phyloRangeWeighted', PACKAGE = 'speciesRaster', spByCell, nbList, phylo, spEdges, edgeArea)
+calcRWTurnover_phyloRangeWeighted_old <- function(spByCell, nbList, phylo, spEdges, edgeArea) {
+    .Call('_speciesRaster_calcRWTurnover_phyloRangeWeighted_old', PACKAGE = 'speciesRaster', spByCell, nbList, phylo, spEdges, edgeArea)
+}
+
+calcRWTurnover_taxonomic_singleCell <- function(focalCell, nbList) {
+    .Call('_speciesRaster_calcRWTurnover_taxonomic_singleCell', PACKAGE = 'speciesRaster', focalCell, nbList)
+}
+
+calcRWTurnover_rangeWeighted_singleCell <- function(focalCell, nbList, cellCountsR) {
+    .Call('_speciesRaster_calcRWTurnover_rangeWeighted_singleCell', PACKAGE = 'speciesRaster', focalCell, nbList, cellCountsR)
+}
+
+calcRWTurnover_phyloRangeWeighted_singleCell <- function(focalCell, nbList, phyloTipLabels, spEdges, edgeArea) {
+    .Call('_speciesRaster_calcRWTurnover_phyloRangeWeighted_singleCell', PACKAGE = 'speciesRaster', focalCell, nbList, phyloTipLabels, spEdges, edgeArea)
+}
+
+getCellFromRowCol <- function(rowInd, colInd, nCol) {
+    .Call('_speciesRaster_getCellFromRowCol', PACKAGE = 'speciesRaster', rowInd, colInd, nCol)
+}
+
+getMovingWindowCells <- function(nRow, nCol, focalCell, radius, rasterValues) {
+    .Call('_speciesRaster_getMovingWindowCells', PACKAGE = 'speciesRaster', nRow, nCol, focalCell, radius, rasterValues)
+}
+
+calcRWTurnover_taxonomic <- function(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, showProgress) {
+    .Call('_speciesRaster_calcRWTurnover_taxonomic', PACKAGE = 'speciesRaster', spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, showProgress)
+}
+
+calcRWTurnover_rangeWeighted <- function(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, cellCountsR, showProgress) {
+    .Call('_speciesRaster_calcRWTurnover_rangeWeighted', PACKAGE = 'speciesRaster', spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, cellCountsR, showProgress)
+}
+
+calcRWTurnover_phyloRangeWeighted <- function(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, spEdges, edgeArea, showProgress) {
+    .Call('_speciesRaster_calcRWTurnover_phyloRangeWeighted', PACKAGE = 'speciesRaster', spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, spEdges, edgeArea, showProgress)
 }
 

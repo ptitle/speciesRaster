@@ -23,7 +23,7 @@ Returns a new \code{speciesRaster} object, with mean community dissimilarity for
 Mean community dissimilarity is calculated for each cell within a moving window of neighboring cells.
 }
 \details{
-Simpson's Beta diversity \code{SimpsonBeta} is a purely taxonomic measure of turnover.
+Sorenson's Beta diversity \code{Sorenson} is a purely taxonomic measure of turnover.
 
 Range-weighted turnover \code{RWTurnover} measures turnover but where taxa are weighted
 	according to the inverse of their range size.
@@ -41,7 +41,7 @@ The radius value defines the number of cells counted out from the focal cell in 
 library(raster)
 tamiasSpRas
 
-beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'SimpsonBeta')
+beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'Sorenson')
 
 beta_RW <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'RWTurnover')
 
@@ -50,9 +50,9 @@ beta_phyloRW <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'p
 
 colramp <- colorRampPalette(c('blue','yellow','red'))
 par(mfrow=c(1,3))
-plot(beta_taxonomic, col = colramp(100), breaks=seq(0, 1,length.out=99), legend = FALSE)
-plot(beta_RW, col = colramp(100), breaks=seq(0, 1,length.out=99), legend = FALSE)
-plot(beta_phyloRW, col = colramp(100), breaks=seq(0, 1,length.out=99), legend = FALSE)
+plot(beta_taxonomic, col = colramp(100))
+plot(beta_RW, col = colramp(100))
+plot(beta_phyloRW, col = colramp(100))
 
 
 }
