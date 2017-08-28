@@ -14,6 +14,7 @@ Description: An R package that facilitates the aggregation of species'
 	across geography.
 License: GPL (>= 2)
 NeedsCompilation: yes
+SystemRequirements: C++11
 LinkingTo: Rcpp, RcppProgress
 LazyData: true
 RoxygenNote: 6.0.1
