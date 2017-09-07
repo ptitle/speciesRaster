@@ -122,7 +122,8 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	cellMap[nonNAcells] <- 0:(length(nonNAcells) - 1)
 	
 	# display progress bar if large dataset
-	showProgress <- length(spCellList) > 100000
+	#showProgress <- length(spCellList) > 100000
+	showProgress <- TRUE
 	
 	if (verbose) cat(paste0('\t...calculating metric ', metric, '\n'))
 	if (metric == 'Sorenson') {

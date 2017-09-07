@@ -18,6 +18,10 @@ and vertical directions.}
 \description{
 Return a speciesRaster object with a coarser resolution.
 }
+\details{
+Species will be included in the coarser cell if they are found in
+	>= 50 percent of the original-resolution cells that are being aggregated.
+}
 \examples{
 tamiasSpRas
 

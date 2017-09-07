@@ -5,7 +5,8 @@
 \title{Polygon List to rasterStack}
 \usage{
 rasterStackFromPolyList(polyList, resolution = 50000,
-  retainSmallRanges = TRUE, extent = "auto", nthreads = 1)
+  retainSmallRanges = TRUE, extent = "auto", dropEmptyRasters = TRUE,
+  nthreads = 1)
 }
 \arguments{
 \item{polyList}{a list of SpatialPolygon objects, named with taxon names}
@@ -18,6 +19,9 @@ See details.}
 
 \item{extent}{if 'auto', then the maximal extent of the polygons will be used. 
 If not auto, must be a numeric vector of length 4 with minLong, maxLong, minLat, maxLat.}
+
+\item{dropEmptyRasters}{if \code{TRUE}, then species that have no presence cells will be dropped.
+If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}.}
 
 \item{nthreads}{number of threads to use for parallelization of the function.}
 }
@@ -34,6 +38,10 @@ In the rasterization process, all cells for which the polygon covers the midpoin
 	then species whose ranges are so small that no cell registers as present will be 
 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
 	is found in will be considered as present.
+
+	If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species that 
+	will be dropped are those that are outside of the requested extent (which in that case 
+	would be specified explicitly).
 }
 \examples{
 library(raster)

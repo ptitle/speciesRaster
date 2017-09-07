@@ -14,6 +14,9 @@
 ##' @param extent if 'auto', then the maximal extent of the polygons will be used. 
 ##' 	If not auto, must be a numeric vector of length 4 with minLong, maxLong, minLat, maxLat.
 ##'
+##' @param dropEmptyRasters if \code{TRUE}, then species that have no presence cells will be dropped.
+##'		If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}. 
+##'
 ##' @param nthreads number of threads to use for parallelization of the function. 
 ##'
 ##' @details 
@@ -21,7 +24,11 @@
 ##' 	considered as present and receive a value of 1. If \code{retainSmallRanges = FALSE}, 
 ##' 	then species whose ranges are so small that no cell registers as present will be 
 ##' 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
-##' 	is found in will be considered as present. 
+##' 	is found in will be considered as present.
+##' 
+##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species that 
+##' 	will be dropped are those that are outside of the requested extent (which in that case 
+##' 	would be specified explicitly).  
 ##' 
 ##' @return an object of class \code{RasterStack} where all rasters contain values of 
 ##' either NA or 1. 
@@ -39,7 +46,7 @@
 ##' 
 ##' @export
 
-rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRanges = TRUE, extent = 'auto', nthreads = 1) {
+rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE, nthreads = 1) {
 	
 	if (class(polyList) == 'list') {
 		if (!class(polyList[[1]]) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
@@ -110,6 +117,23 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 		
 		# drop those species with no presences (due to small range size)
 		ret <- ret[[setdiff(1:raster::nlayers(ret), smallSp)]]
+	}
+	
+	# if requested, drop rasters that are entirely NA (and print to screen for reference)
+	if (dropEmptyRasters) {
+		valCheck <- raster::minValue(ret)
+		badEntries <- which(is.na(valCheck))
+		badEntriesInd <- badEntries
+		badEntries <- sort(names(ret)[badEntries])
+		if (length(badEntries) > 0) {
+			cat('The following rasters have no non-NA cells:\n\n')
+			for (i in 1:length(badEntries)) {
+				cat('\t', badEntries[i], '\n')
+			}
+			
+			# drop empty rasters
+			ret <- ret[[setdiff(1:raster::nlayers(ret), badEntriesInd)]]
+		}		
 	}
 
 	return(ret)

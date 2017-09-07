@@ -8,6 +8,9 @@
 ##'		and vertical directions.
 ##'
 ##' @return \code{speciesRaster} with a coarser resolution. 
+##' 
+##' @details Species will be included in the coarser cell if they are found in
+##' 	>= 50 percent of the original-resolution cells that are being aggregated.
 ##'
 ##' @author Pascal Title
 ##'
@@ -37,14 +40,13 @@ coarsen_speciesRaster <- function(x, fact) {
 	eList <- lapply(1:raster::ncell(template), function(y) which(e == y))
 	
 	# for each new cell, find the unioned set of species found in all included cells
+	# for each set of cells, keep those species that are found in 50% or more of the cells
 	newSpList <- vector('list', length = raster::ncell(template))
 	for (i in 1:length(eList)) {
-		tmp <- Reduce(union, x[['speciesList']][eList[[i]]])
-		tmp <- tmp[stats::complete.cases(tmp)]
-		newSpList[[i]] <- tmp
+		newSpList[[i]] <- keepMajoritySpecies(x[['speciesList']][eList[[i]]])		
 	}
 	
-	newSpList[which(sapply(newSpList, length) == 0)] <- NA
+	# newSpList[which(sapply(newSpList, length) == 0)] <- NA
 		
 	res <- x
 	res[[1]] <- template
@@ -54,4 +56,25 @@ coarsen_speciesRaster <- function(x, fact) {
 	
 	return(res)
 
+}
+
+# function returns the species found in 50% or more of the list entries
+keepMajoritySpecies <- function(z) {
+	
+	cutoff <- length(z) / 2
+	uniqueSp <- Reduce(union, z)
+	uniqueSp <- uniqueSp[stats::complete.cases(uniqueSp)]
+	
+	if (length(uniqueSp) > 0) {
+		majoritySp <- sapply(uniqueSp, function(y) sum(sapply(z, function(yy) y %in% yy)))
+		majoritySp <- names(majoritySp)[majoritySp >= cutoff]
+		if (length(majoritySp) > 0) {
+			return(majoritySp)
+		} else {
+			return(NA)
+		}
+		
+	} else {
+		return(NA)
+	}
 }
