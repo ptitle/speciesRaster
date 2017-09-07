@@ -18,7 +18,8 @@ of the polygons' projection}
 See details.}
 
 \item{extent}{if 'auto', then the maximal extent of the polygons will be used. 
-If not auto, must be a numeric vector of length 4 with minLong, maxLong, minLat, maxLat.}
+If not auto, can be a SpatialPolygon object or a numeric vector of length 4 
+with minLong, maxLong, minLat, maxLat.}
 
 \item{dropEmptyRasters}{if \code{TRUE}, then species that have no presence cells will be dropped.
 If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}.}

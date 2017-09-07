@@ -12,7 +12,8 @@
 ##'		See details.
 ##'
 ##' @param extent if 'auto', then the maximal extent of the polygons will be used. 
-##' 	If not auto, must be a numeric vector of length 4 with minLong, maxLong, minLat, maxLat.
+##' 	If not auto, can be a SpatialPolygon object or a numeric vector of length 4 
+##' 	with minLong, maxLong, minLat, maxLat.
 ##'
 ##' @param dropEmptyRasters if \code{TRUE}, then species that have no presence cells will be dropped.
 ##'		If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}. 
@@ -64,14 +65,28 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	}
 	proj <- sp::proj4string(polyList[[1]])
 
-	if ('auto' %in% extent) {
+	if (class(extent) == 'character') {
+		
 		#get overall extent
 		masterExtent <- getExtentOfList(polyList)
 		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
+		
 	} else if (is.numeric(extent) & length(extent) == 4) {
+		# use user-specified bounds
 		masterExtent <- list(minLong = extent[1], maxLong = extent[2], minLat = extent[3], maxLat = extent[4])
+
+	} else if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
+		# use extent polygon
+		if (is.na(sp::proj4string(extent))) {
+			stop('extent must have a proj4string.')
+		}
+		if (!identical(sp::proj4string(extent), proj)) {
+			stop('extent must have same projection as polyList.')
+		}
+		masterExtent <- raster::extent(extent)
+		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 	} else {
-		stop("extent must be 'auto' or a vector with minLong, maxLong, minLat, maxLat.")
+		stop("extent must be 'auto', a SpatialPolygon or a vector with minLong, maxLong, minLat, maxLat.")
 	}
 
 	#create template raster
@@ -93,6 +108,11 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	
 	ret <- raster::stack(rasList)
 	
+	# if extent was polygon, then mask rasterStack
+	if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
+		ret <- raster::mask(ret, extent)
+	}
+	
 	# if user wants to retain species that would otherwise be dropped
 	# sample some random points in the range and identify cells
 	valCheck <- raster::minValue(ret)
@@ -109,7 +129,9 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 						try(presenceCells <- unique(raster::cellFromXY(ret[[smallSp[i]]], sp::spsample(polyList[[smallSp[i]]], 10, type = 'random'))), silent = TRUE)
 					}
 				}
-				ret[[smallSp[i]]][presenceCells] <- 1
+				if (!anyNA(presenceCells)) {
+					ret[[smallSp[i]]][presenceCells] <- 1
+				}
 			}
 		}
 		
