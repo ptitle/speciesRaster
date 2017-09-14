@@ -39,10 +39,14 @@ plot.speciesRaster <- function(x, log = FALSE, includeLegend = TRUE, colorvec = 
 	# } else {
 		if (!log) {
 			raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE)
-			addRasterLegend(x[[1]], location = location, ramp = colorvec, ncolors=100, ...)
+			if (includeLegend) {
+				addRasterLegend(x[[1]], location = location, ramp = colorvec, ncolors=100, ...)
+			}
 		} else {
 			raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE)
-			addRasterLegend(log(x[[1]]), location = location, ramp = colorvec, ncolors=100, ...)
+			if (includeLegend) {
+				addRasterLegend(log(x[[1]]), location = location, ramp = colorvec, ncolors=100, ...)
+			}
 		}
 	# }
 }
