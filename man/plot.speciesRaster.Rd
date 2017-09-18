@@ -4,9 +4,8 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-plot.speciesRaster(x, log = FALSE, includeLegend = TRUE,
-  colorvec = c("blue", "yellow", "red"), box = TRUE, axes = TRUE,
-  location = "right", ...)
+plot.speciesRaster(x, log = FALSE, includeLegend = TRUE, col = c("blue",
+  "yellow", "red"), box = TRUE, axes = TRUE, location = "right", ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -15,7 +14,8 @@ plot.speciesRaster(x, log = FALSE, includeLegend = TRUE,
 
 \item{includeLegend}{boolean; should legend be included?}
 
-\item{colorvec}{vector of color names that will be used for the color ramp}
+\item{col}{either a vector of color names that will be interpolated, or a color ramp
+function that takes an integer (see for example \code{\link{colorRampPalette}})}
 
 \item{box}{boolean; should box be drawn around plot?}
 

@@ -25,8 +25,9 @@
 
 ##'	@param border logical, should the color legend have a black border
 
-##'	@param ramp either a vector of color names for defining the color ramp, 
-##'		or "terrain" (default raster behavior)
+##'	@param ramp either a vector of color names that will be interpolated, or a color ramp
+##' 	function that takes an integer (see for example \code{\link{colorRampPalette}}).
+##' 	If omitted, default raster colors ('terrain')
 
 ##'	@param isInteger If \code{auto}, automatically determines if raster is made up of integer 
 ##'		values, otherwise \code{TRUE} or \code{FALSE}
@@ -113,12 +114,14 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 		stop('isInteger must be "auto", TRUE or FALSE.')
 	}
 	
-	if (length(ramp) == 1) {
-		if (ramp == 'terrain') {
-			pal <- rev(grDevices::terrain.colors(ncolors));
+	if(!methods::hasArg('ramp')) {
+		pal <- rev(grDevices::terrain.colors(ncolors));
+	} else {
+		if (class(ramp) == 'function') {
+			pal <- ramp(ncolors)
+		} else {
+			pal <- grDevices::colorRampPalette(ramp)(ncolors)
 		}
-	} else if (length(ramp) > 1) {
-		pal <- grDevices::colorRampPalette(ramp)(ncolors);
 	}
 	
 	#if minmax provided, use to generate linear color breaks

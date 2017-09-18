@@ -34,8 +34,9 @@ of the legend. Only applies to preset location options.}
 
 \item{border}{logical, should the color legend have a black border}
 
-\item{ramp}{either a vector of color names for defining the color ramp, 
-or "terrain" (default raster behavior)}
+\item{ramp}{either a vector of color names that will be interpolated, or a color ramp
+function that takes an integer (see for example \code{\link{colorRampPalette}}).
+If omitted, default raster colors ('terrain')}
 
 \item{isInteger}{If \code{auto}, automatically determines if raster is made up of integer 
 values, otherwise \code{TRUE} or \code{FALSE}}

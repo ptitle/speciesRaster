@@ -5,7 +5,8 @@
 ##' @param x object of class \code{speciesRaster}
 ##' @param log boolean; should the cell values be logged?
 ##' @param includeLegend boolean; should legend be included?
-##' @param colorvec vector of color names that will be used for the color ramp
+##' @param col either a vector of color names that will be interpolated, or a color ramp
+##' 	function that takes an integer (see for example \code{\link{colorRampPalette}})
 ##' @param box boolean; should box be drawn around plot?
 ##' @param axes boolean; should axes be included?
 ##' @param location location of legend, if included. See \code{\link{addRasterLegend}}.
@@ -23,13 +24,19 @@
 ##' 
 ##' @export
 
-plot.speciesRaster <- function(x, log = FALSE, includeLegend = TRUE, colorvec = c('blue', 'yellow', 'red'), box=TRUE, axes=TRUE, location = 'right', ...) {
+plot.speciesRaster <- function(x, log = FALSE, includeLegend = TRUE, col = c('blue', 'yellow', 'red'), box=TRUE, axes=TRUE, location = 'right', ...) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('Object must be of class speciesRaster')
 	}
 	
-	colramp <- grDevices::colorRampPalette(colorvec)
+	if (class(col) == 'function') {
+		colramp <- col
+	} else {
+		if (class(col) == 'character') {
+			colramp <- grDevices::colorRampPalette(col)
+		}
+	}
 	
 	# if (grepl('beta', names(x[[1]]))) {
 		# raster::plot(x[[1]], col = colramp(100), breaks = seq(from = 0, to = 1, length.out = (100)), legend = FALSE, box = box, axes = axes)
@@ -40,12 +47,12 @@ plot.speciesRaster <- function(x, log = FALSE, includeLegend = TRUE, colorvec = 
 		if (!log) {
 			raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE)
 			if (includeLegend) {
-				addRasterLegend(x[[1]], location = location, ramp = colorvec, ncolors=100, ...)
+				addRasterLegend(x[[1]], location = location, ramp = colramp, ncolors=100, ...)
 			}
 		} else {
 			raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE)
 			if (includeLegend) {
-				addRasterLegend(log(x[[1]]), location = location, ramp = colorvec, ncolors=100, ...)
+				addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, ...)
 			}
 		}
 	# }
