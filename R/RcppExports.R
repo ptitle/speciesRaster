@@ -201,3 +201,27 @@ calcRWTurnover_phyloRangeWeighted <- function(spByCell, radius, rasterNRow, rast
     .Call('_speciesRaster_calcRWTurnover_phyloRangeWeighted', PACKAGE = 'speciesRaster', spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, spEdges, edgeArea, showProgress)
 }
 
+getUnion <- function(vec1, vec2) {
+    .Call('_speciesRaster_getUnion', PACKAGE = 'speciesRaster', vec1, vec2)
+}
+
+getLeavesForNodes <- function(phylo) {
+    .Call('_speciesRaster_getLeavesForNodes', PACKAGE = 'speciesRaster', phylo)
+}
+
+getMRCA_from_nodeLeaves <- function(nodeLeaves, taxa) {
+    .Call('_speciesRaster_getMRCA_from_nodeLeaves', PACKAGE = 'speciesRaster', nodeLeaves, taxa)
+}
+
+FaithPD_branchIndices <- function(a, phylo, nodeLeaves, spEdges) {
+    .Call('_speciesRaster_FaithPD_branchIndices', PACKAGE = 'speciesRaster', a, phylo, nodeLeaves, spEdges)
+}
+
+calcPhylosor <- function(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, showProgress) {
+    .Call('_speciesRaster_calcPhylosor', PACKAGE = 'speciesRaster', spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, showProgress)
+}
+
+calcPhylosor2 <- function(spByCell, phylo, showProgress) {
+    .Call('_speciesRaster_calcPhylosor2', PACKAGE = 'speciesRaster', spByCell, phylo, showProgress)
+}
+

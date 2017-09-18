@@ -575,6 +575,80 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getUnion
+std::vector<std::string> getUnion(std::vector<std::string> vec1, std::vector<std::string> vec2);
+RcppExport SEXP _speciesRaster_getUnion(SEXP vec1SEXP, SEXP vec2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type vec1(vec1SEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type vec2(vec2SEXP);
+    rcpp_result_gen = Rcpp::wrap(getUnion(vec1, vec2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getLeavesForNodes
+List getLeavesForNodes(List phylo);
+RcppExport SEXP _speciesRaster_getLeavesForNodes(SEXP phyloSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    rcpp_result_gen = Rcpp::wrap(getLeavesForNodes(phylo));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getMRCA_from_nodeLeaves
+int getMRCA_from_nodeLeaves(List nodeLeaves, std::vector<std::string> taxa);
+RcppExport SEXP _speciesRaster_getMRCA_from_nodeLeaves(SEXP nodeLeavesSEXP, SEXP taxaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type nodeLeaves(nodeLeavesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type taxa(taxaSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMRCA_from_nodeLeaves(nodeLeaves, taxa));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FaithPD_branchIndices
+std::vector<int> FaithPD_branchIndices(std::vector<std::string> a, List phylo, List nodeLeaves, List spEdges);
+RcppExport SEXP _speciesRaster_FaithPD_branchIndices(SEXP aSEXP, SEXP phyloSEXP, SEXP nodeLeavesSEXP, SEXP spEdgesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type a(aSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< List >::type nodeLeaves(nodeLeavesSEXP);
+    Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
+    rcpp_result_gen = Rcpp::wrap(FaithPD_branchIndices(a, phylo, nodeLeaves, spEdges));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcPhylosor
+NumericVector calcPhylosor(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, List phylo, bool showProgress);
+RcppExport SEXP _speciesRaster_calcPhylosor(SEXP spByCellSEXP, SEXP radiusSEXP, SEXP rasterNRowSEXP, SEXP rasterNColSEXP, SEXP rasterValuesRSEXP, SEXP nonNAcellsRSEXP, SEXP phyloSEXP, SEXP showProgressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
+    Rcpp::traits::input_parameter< int >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNRow(rasterNRowSEXP);
+    Rcpp::traits::input_parameter< int >::type rasterNCol(rasterNColSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rasterValuesR(rasterValuesRSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type nonNAcellsR(nonNAcellsRSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< bool >::type showProgress(showProgressSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcPhylosor(spByCell, radius, rasterNRow, rasterNCol, rasterValuesR, nonNAcellsR, phylo, showProgress));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcPhylosor2
+NumericVector calcPhylosor2(List spByCell, List phylo, bool showProgress);
+RcppExport SEXP _speciesRaster_calcPhylosor2(SEXP spByCellSEXP, SEXP phyloSEXP, SEXP showProgressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type spByCell(spByCellSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< bool >::type showProgress(showProgressSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcPhylosor2(spByCell, phylo, showProgress));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_spListPerCell", (DL_FUNC) &_speciesRaster_spListPerCell, 1},
@@ -627,6 +701,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_calcRWTurnover_taxonomic", (DL_FUNC) &_speciesRaster_calcRWTurnover_taxonomic, 7},
     {"_speciesRaster_calcRWTurnover_rangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted, 8},
     {"_speciesRaster_calcRWTurnover_phyloRangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_phyloRangeWeighted, 10},
+    {"_speciesRaster_getUnion", (DL_FUNC) &_speciesRaster_getUnion, 2},
+    {"_speciesRaster_getLeavesForNodes", (DL_FUNC) &_speciesRaster_getLeavesForNodes, 1},
+    {"_speciesRaster_getMRCA_from_nodeLeaves", (DL_FUNC) &_speciesRaster_getMRCA_from_nodeLeaves, 2},
+    {"_speciesRaster_FaithPD_branchIndices", (DL_FUNC) &_speciesRaster_FaithPD_branchIndices, 4},
+    {"_speciesRaster_calcPhylosor", (DL_FUNC) &_speciesRaster_calcPhylosor, 8},
+    {"_speciesRaster_calcPhylosor2", (DL_FUNC) &_speciesRaster_calcPhylosor2, 3},
     {NULL, NULL, 0}
 };
 

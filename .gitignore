@@ -1,5 +1,6 @@
 
 *.DS_Store
+createSpeciesRaster_forFuture.R
 exampleData.R
 speciesRaster.Rcheck/*
 old/*

@@ -3,13 +3,16 @@
 ##' @description Mean community dissimilarity is calculated for each cell within a moving window of neighboring cells. 
 ##' 
 ##' @param x object of class \code{speciesRaster}.
-##' @param radius Radius in terms of number of cells in all directions from the focal cell 
-##' 	to define the moving window. 
+##' @param radius Radius in terms of number of cells in horizontal and vertical directions from 
+##' 	the focal cell to define the moving window. 
 ##' @param metric choice of metric, see details.
 ##' @param verbose Primarily intended for debugging, print progress to the console.
 ##'
 ##' @details
-##' Sorenson's Beta diversity \code{Sorenson} is a purely taxonomic measure of turnover.
+##' Sorenson's Beta diversity \code{sorenson} is a purely taxonomic measure of turnover.
+##' 
+##' Phylogenetic Sorensen's Similarity \code{phylosor} is a measure of phylogenetic turnover, 
+##' 	ranging from 0 to 1.
 ##'
 ##' Range-weighted turnover \code{RWTurnover} measures turnover but where taxa are weighted
 ##' 	according to the inverse of their range size.
@@ -39,7 +42,7 @@
 ##' library(raster)
 ##' tamiasSpRas
 ##' 
-##' beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'Sorenson')
+##' beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'sorenson')
 ##' 
 ##' beta_RW <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'RWTurnover')
 ##' 
@@ -78,14 +81,14 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 		stop('radius must be an integer >= 1.')
 	}
 	
-	metric <- match.arg(metric, choices = c('Sorenson', 'RWTurnover', 'phyloRWTurnover'))
-	if (!metric %in% c('Sorenson', 'RWTurnover', 'phyloRWTurnover')) {
+	metric <- match.arg(metric, choices = c('sorenson', 'RWTurnover', 'phyloRWTurnover', 'phylosor'))
+	if (!metric %in% c('sorenson', 'RWTurnover', 'phyloRWTurnover', 'phylosor')) {
 		stop('Invalid metric.')
 	}
 	
 	# if phylogenetic, there must be a phylo object
 	# check that there is a phylogeny in speciesRaster object
-	if (metric == 'phyloRWTurnover') {
+	if (metric %in% c('phylosor', 'phyloRWTurnover')) {
 		if (is.null(x[['phylo']])) {
 			stop('speciesRaster object does not contain a phylo object!')
 		}
@@ -94,12 +97,14 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
  		# prune speciesRaster object down to species shared with phylogeny
 		x[[2]] <- intersectList(x[[2]], x[['phylo']]$tip.label)
 		
-		spEdges <- getRootToTipEdges(x[['phylo']])
+		if (metric == 'phyloRWTurnover') {
+			spEdges <- getRootToTipEdges(x[['phylo']])
 		
-		if (!'edgeArea' %in% names(x)) {
-			if (verbose) cat('\t...calculating branch-specific range sizes...\n')
-			x[['edgeArea']] <- do.call(cbind, phyloBranchRanges(x[['phylo']], convertNAtoEmpty(x[['speciesList']]), spEdges))
-		}
+			if (!'edgeArea' %in% names(x)) {
+				if (verbose) cat('\t...calculating branch-specific range sizes...\n')
+				x[['edgeArea']] <- do.call(cbind, phyloBranchRanges(x[['phylo']], convertNAtoEmpty(x[['speciesList']]), spEdges))
+			}
+		}		
 	} 
 		
 	# identify non-empty cells
@@ -126,12 +131,14 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	showProgress <- TRUE
 	
 	if (verbose) cat(paste0('\t...calculating metric ', metric, '\n'))
-	if (metric == 'Sorenson') {
+	if (metric == 'sorenson') {
 		cellBeta <- calcRWTurnover_taxonomic(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, showProgress = showProgress)
 	} else if (metric == 'RWTurnover') {
 		cellBeta <- calcRWTurnover_rangeWeighted(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, 1 / x[['cellCount']], showProgress = showProgress)
 	} else if (metric == 'phyloRWTurnover') {
 		cellBeta <- calcRWTurnover_phyloRangeWeighted(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, x[['phylo']], spEdges, x[['edgeArea']], showProgress = showProgress)
+	} else if (metric == 'phylosor') {
+		cellBeta <- calcPhylosor(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, x[['phylo']], showProgress = showProgress)
 	}
 	
 	cellVal <- rep(NA, raster::ncell(x[[1]]))
