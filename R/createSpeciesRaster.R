@@ -193,7 +193,12 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		names(ras) <- 'spRichness'
 		obj[['raster']] <- ras		
 		obj[['speciesList']] <- spByCell
-		obj[['geogSpecies']] <- sort(unique(names(ranges)))	
+		obj[['geogSpecies']] <- sort(unique(names(ranges)))
+		
+		# calculate range area for each species ( = number of cells)
+		if (verbose) cat('\t...Calculating species cell counts...\n')
+		obj[['cellCount']] <- countCells(convertNAtoEmpty(obj[['speciesList']]), obj[['geogSpecies']])
+		names(obj[['cellCount']]) <- obj[['geogSpecies']]
 	}
 		
 	# input ranges can be a binary presence/absence sp x cell matrix
@@ -208,7 +213,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		if (mode(ranges) != 'numeric') {
 			stop('matrix data does not appear to be numeric.')	
 		}
-		if (!identical(unique(as.vector(ranges)), c(0, 1))) {
+		if (!identical(range(as.vector(ranges)), c(0, 1))) {
 			mode(ranges) <- 'logical'
 			mode(ranges) <- 'numeric'
 		}
@@ -217,25 +222,25 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		}
 		if (raster::ncell(rasterTemplate) != ncol(ranges)) {
 			stop('If input is species x cell matrix, then number of columns must equal the number of raster cells.')
-		}	
+		}
+		if (verbose) cat('\t...Using species by cell matrix...\n')
+		if (verbose) cat('\t...Calculating species richness...\n')
 		raster::values(rasterTemplate) <- colSums(ranges)
 		rasterTemplate[rasterTemplate == 0] <- NA
 		
+		if (verbose) cat('\t...Indexing species in cells...\n')
 		obj[['raster']] <- rasterTemplate
 		obj[['speciesList']] <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
 		emptyInd <- which(sapply(obj[['speciesList']], length) == 0)
 		emptyList <- rep(list(NA), length(emptyInd))
 		obj[['speciesList']][emptyInd] <- emptyList
 		obj[['geogSpecies']] <- sort(rownames(ranges))
-	}
+		
+		# calculate range area for each species ( = number of cells)
+		if (verbose) cat('\t...Calculating species cell counts...\n')
+		obj[['cellCount']] <- rowSums(ranges)
 
-	
-	
-	# calculate range area for each species ( = number of cells)
-	if (verbose) cat('\t...Calculating species cell counts...\n')
-	obj[['cellCount']] <- countCells(convertNAtoEmpty(obj[['speciesList']]), obj[['geogSpecies']])
-	names(obj[['cellCount']]) <- obj[['geogSpecies']]
-	
+	}	
 	
 	if (class(obj[[1]]) != 'RasterLayer') {
 		stop('Input type not supported.')
