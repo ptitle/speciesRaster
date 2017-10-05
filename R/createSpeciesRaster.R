@@ -59,7 +59,7 @@
 
 createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) {
 	
-	if (!class(ranges) %in% c('RasterStack', 'RasterBrick', 'matrix')) {
+	if (all(!class(ranges) %in% c('RasterStack', 'RasterBrick', 'matrix', 'data.frame'))) {
 		stop('Input must be a list of SpatialPolygons or a RasterStack.')
 	}
 		
@@ -69,7 +69,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 	
 	
 	# if rasterstack as input
-	if (class(ranges) %in% c('RasterStack', 'RasterBrick')) {
+	if (all(class(ranges) %in% c('RasterStack', 'RasterBrick'))) {
 		
 		#check that all rasters have values
 		if (verbose) cat('\t...Checking for empty rasters...\n')
@@ -191,43 +191,55 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		#remove zero cells
 		ras[ras == 0] <- NA
 		names(ras) <- 'spRichness'
-		obj[[1]] <- ras		
-		obj[[2]] <- spByCell
+		obj[['raster']] <- ras		
+		obj[['speciesList']] <- spByCell
+		obj[['geogSpecies']] <- sort(unique(names(ranges)))	
 	}
+		
+	# input ranges can be a binary presence/absence sp x cell matrix
+	# where rownames are species and columns are cells
+	if (any(class(ranges) %in%  c('matrix', 'data.frame'))) {
+		if (any(class(ranges) == 'data.frame')) {
+			ranges <- as.matrix(ranges)
+		}
+		if (length(unique(rownames(ranges))) != nrow(ranges)) {
+			stop('rownames in species x cell matrix must be unique.')
+		}
+		if (mode(ranges) != 'numeric') {
+			stop('matrix data does not appear to be numeric.')	
+		}
+		if (!identical(unique(as.vector(ranges)), c(0, 1))) {
+			mode(ranges) <- 'logical'
+			mode(ranges) <- 'numeric'
+		}
+		if (is.null(rasterTemplate)) {
+			stop('If input is a species x cell matrix, then a raster template must be provided.')
+		}
+		if (raster::ncell(rasterTemplate) != ncol(ranges)) {
+			stop('If input is species x cell matrix, then number of columns must equal the number of raster cells.')
+		}	
+		raster::values(rasterTemplate) <- colSums(ranges)
+		rasterTemplate[rasterTemplate == 0] <- NA
+		
+		obj[['raster']] <- rasterTemplate
+		obj[['speciesList']] <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
+		emptyInd <- which(sapply(obj[['speciesList']], length) == 0)
+		emptyList <- rep(list(NA), length(emptyInd))
+		obj[['speciesList']][emptyInd] <- emptyList
+		obj[['geogSpecies']] <- sort(rownames(ranges))
+	}
+
+	
 	
 	# calculate range area for each species ( = number of cells)
 	if (verbose) cat('\t...Calculating species cell counts...\n')
-	# obj[['cellCount']] <- raster::cellStats(ranges, stat = sum)
-	obj[['cellCount']] <- countCells(convertNAtoEmpty(spByCell), sort(unique(names(ranges))))
-	names(obj[['cellCount']]) <- sort(unique(names(ranges)))
+	obj[['cellCount']] <- countCells(convertNAtoEmpty(obj[['speciesList']]), obj[['geogSpecies']])
+	names(obj[['cellCount']]) <- obj[['geogSpecies']]
 	
-	# input ranges can be a binary presence/absence sp x cell matrix
-	# where rownames are species and columns are cells
-	if (class(ranges) == 'matrix') {
-		if (mode(ranges) == 'numeric') {
-			if (identical(unique(as.vector(ranges)), c(0, 1))) {
-				if (!is.null(rasterTemplate)) {
-					if (raster::ncell(rasterTemplate) == ncol(ranges)) {
-							
-						raster::values(rasterTemplate) <- colSums(ranges)
-						rasterTemplate[rasterTemplate == 0] <- NA
-						
-						obj[[1]] <- rasterTemplate
-						obj[[2]] <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
-						
-					} else {
-						stop('If input is a species by cell matrix, then it must be numeric with 0 or 1 and a template raster must be provided with the same number of cells as there are columns in the species by cell matrix.')					
-					}
-				}
-			}
-		}		
-	}
 	
 	if (class(obj[[1]]) != 'RasterLayer') {
 		stop('Input type not supported.')
 	}
-	
-	obj[[3]] <- sort(unique(names(ranges)))
 	
 	class(obj) <- 'speciesRaster'
 	return(obj)	
