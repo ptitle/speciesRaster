@@ -15,6 +15,10 @@
 
 ##'	@param nTicks number of tick marks, besides min and max.
 
+##' @param adj if location is top, left, bottom or right, use this argument to 
+##' 	adjust the location of the legend, defined in percent of the figure width.
+##' 	See Details for additional information.  
+
 ##'	@param shortFrac Percent of the plot width range that will be used as the short 
 ##'		dimention of the legend. Only applies to preset location options. 
 
@@ -58,6 +62,12 @@
 ##'		If more fine-tuned control is desired, then a numeric vector of length 4 can be 
 ##'		supplied to \code{location}, specifying the min x, max x, min y and max y 
 ##'		values for the legend. 
+##' 	
+##' 	Additionally, the \code{adj} argument can be used to more intuitively adjust
+##' 	where the legend is placed. \code{adj} is defined as a percentage of the 
+##' 	figure width or height, left to right, or bottom to top, respectively. For 
+##' 	example, if the legend is at the bottom, \code{adj = 0.8} will place the
+##' 	legend 80% of the distance from the top of the figure, horizontally centered.  
 ##'
 ##' See examples.
 
@@ -86,14 +96,14 @@
 ##'  
 ##' @export
 
-addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, shortFrac = 0.02, longFrac = 0.3, axisOffset = 0, border = TRUE, ramp = "terrain", isInteger = 'auto', ncolors = 64, breaks = NULL, minmax = NULL, locs = NULL, cex.axis = 0.8, labelDist = 0.7, digits = 2, ...) {
+addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, adj = NULL, shortFrac = 0.02, longFrac = 0.3, axisOffset = 0, border = TRUE, ramp = "terrain", isInteger = 'auto', ncolors = 64, breaks = NULL, minmax = NULL, locs = NULL, cex.axis = 0.8, labelDist = 0.7, digits = 2, ...) {
 		
 	if (class(r) == 'speciesRaster') {
 		r <- r[[1]]
 	}
 	
 	if (class(r) != 'RasterLayer') {
-		stop("r must be a RasterLayer.");
+		stop("r must be a speciesRaster object or RasterLayer.");
 	}
 		
 	if(!methods::hasArg('direction')) {
@@ -153,6 +163,8 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 	maxY <- maxY - yrange * 0.05
 	
 	if (is.character(location)) {
+		
+		locChar <- location
 	
 		if (location == 'topleft' & direction %in% c('auto', 'vertical')) {
 			location <- vector('numeric', length = 4);
@@ -252,6 +264,23 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 			location[3] <- minY
 			location[4] <- minY + (maxY - minY) * shortFrac
 			direction <- 'horizontal'
+		}
+	}
+	
+	# if adj argument provided, use to adjust location
+	# currently only implemented for locations bottom, left, top, right
+	if (!is.null(adj)) {
+		if (adj > 1) {
+			stop('adj must be supplied as a percentage.')
+		}
+		if (locChar %in% c('top', 'bottom')) {
+			Ydiff <- diff(location[3:4])
+			location[3] <- minY + (maxY - minY) * adj
+			location[4] <- location[3] + Ydiff
+		} else if (locChar %in% c('left', 'right')) {
+			Xdiff <- diff(location[1:2])
+			location[1] <- minX + (maxX - minX) * adj
+			location[2] <- location[1] + Xdiff			
 		}
 	}
 
