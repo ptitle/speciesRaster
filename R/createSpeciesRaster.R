@@ -196,7 +196,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		obj[['geogSpecies']] <- sort(unique(names(ranges)))
 		
 		# calculate range area for each species ( = number of cells)
-		if (verbose) cat('\t...Calculating species cell counts...\n')
+		if (verbose) cat('\t...Calculating species cell counts...\n\n')
 		obj[['cellCount']] <- countCells(convertNAtoEmpty(obj[['speciesList']]), obj[['geogSpecies']])
 		names(obj[['cellCount']]) <- obj[['geogSpecies']]
 	}
@@ -237,7 +237,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		obj[['geogSpecies']] <- sort(rownames(ranges))
 		
 		# calculate range area for each species ( = number of cells)
-		if (verbose) cat('\t...Calculating species cell counts...\n')
+		if (verbose) cat('\t...Calculating species cell counts...\n\n')
 		obj[['cellCount']] <- rowSums(ranges)
 
 	}	

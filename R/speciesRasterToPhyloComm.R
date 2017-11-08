@@ -36,7 +36,7 @@ speciesRasterToPhyloComm <- function(x, sites) {
 	}
 	
 	# depending on input, make sites a vector of cell indices
-	if (class(sites) %in% c('matrix', 'data.frame')) {
+	if (class(sites) %in% c('matrix', 'data.frame', 'numeric')) {
 		sites <- raster::cellFromXY(x[[1]], sites)
 	} else if (class(sites) == 'character') {
 		sites <- 1:raster::ncell(x[[1]])
