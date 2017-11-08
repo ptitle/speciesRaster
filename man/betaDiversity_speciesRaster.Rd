@@ -23,7 +23,7 @@ Returns a new \code{speciesRaster} object, with mean community dissimilarity for
 Mean community dissimilarity is calculated for each cell within a moving window of neighboring cells.
 }
 \details{
-Sorenson's Beta diversity \code{sorenson} is a purely taxonomic measure of turnover.
+Sorensen's Beta diversity \code{sorensen} is a purely taxonomic measure of turnover.
 
 Phylogenetic Sorensen's Similarity \code{phylosor} is a measure of phylogenetic turnover, 
 	ranging from 0 to 1.
@@ -44,7 +44,7 @@ The radius value defines the number of cells counted out from the focal cell in 
 library(raster)
 tamiasSpRas
 
-beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'sorenson')
+beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'sorensen')
 
 beta_RW <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'RWTurnover')
 

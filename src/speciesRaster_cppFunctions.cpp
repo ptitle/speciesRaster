@@ -2085,6 +2085,3 @@ NumericVector calcPhylosor2(List spByCell, List phylo, bool showProgress) {
 	return cellVec;
 
 }
-
-
-

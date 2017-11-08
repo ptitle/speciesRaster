@@ -9,7 +9,7 @@
 ##' @param verbose Primarily intended for debugging, print progress to the console.
 ##'
 ##' @details
-##' Sorenson's Beta diversity \code{sorenson} is a purely taxonomic measure of turnover.
+##' Sorensen's Beta diversity \code{sorensen} is a purely taxonomic measure of turnover.
 ##' 
 ##' Phylogenetic Sorensen's Similarity \code{phylosor} is a measure of phylogenetic turnover, 
 ##' 	ranging from 0 to 1.
@@ -42,7 +42,7 @@
 ##' library(raster)
 ##' tamiasSpRas
 ##' 
-##' beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'sorenson')
+##' beta_taxonomic <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'sorensen')
 ##' 
 ##' beta_RW <- betaDiversity_speciesRaster(tamiasSpRas, radius = 4, metric = 'RWTurnover')
 ##' 
@@ -81,8 +81,8 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 		stop('radius must be an integer >= 1.')
 	}
 	
-	metric <- match.arg(metric, choices = c('sorenson', 'RWTurnover', 'phyloRWTurnover', 'phylosor'))
-	if (!metric %in% c('sorenson', 'RWTurnover', 'phyloRWTurnover', 'phylosor')) {
+	metric <- match.arg(metric, choices = c('sorensen', 'RWTurnover', 'phyloRWTurnover', 'phylosor'))
+	if (!metric %in% c('sorensen', 'RWTurnover', 'phyloRWTurnover', 'phylosor')) {
 		stop('Invalid metric.')
 	}
 	
@@ -95,7 +95,9 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 		
 		if (verbose) cat('\t...dropping species that are not in phylo data...\n')
  		# prune speciesRaster object down to species shared with phylogeny
-		x[[2]] <- intersectList(x[[2]], x[['phylo']]$tip.label)
+		x[['speciesList']] <- intersectList(x[['speciesList']], x[['phylo']]$tip.label)
+		raster::values(x[[1]]) <- sapply(x[['speciesList']], length)
+		raster::values(x[[1]])[which(sapply(x[['speciesList']], anyNA) == TRUE)] <- NA
 		
 		if (metric == 'phyloRWTurnover') {
 			spEdges <- getRootToTipEdges(x[['phylo']])
@@ -119,6 +121,14 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 
 	# subset species cell list to non-empty cells
 	spCellList <- x[['speciesList']][nonNAcells]
+	
+	if (anyNA(unlist(spCellList))) {
+		stop('Empty communities in list. Please inform the developer.')
+		
+		# zz <- which(sapply(x[[2]], anyNA) == TRUE)
+		# test <- raster::values(x[[1]])[zz]
+		# unique(test)
+	}
 
 	# remap the cell numbers to the list with empty cells removed
 	if (verbose) cat('\t...remapping cell indexing...\n')
@@ -131,7 +141,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	showProgress <- TRUE
 	
 	if (verbose) cat(paste0('\t...calculating metric ', metric, '\n'))
-	if (metric == 'sorenson') {
+	if (metric == 'sorensen') {
 		cellBeta <- calcRWTurnover_taxonomic(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, showProgress = showProgress)
 	} else if (metric == 'RWTurnover') {
 		cellBeta <- calcRWTurnover_rangeWeighted(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, 1 / x[['cellCount']], showProgress = showProgress)
@@ -167,8 +177,8 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 		# stop('radius must be an integer >= 1.')
 	# }
 	
-	# metric <- match.arg(metric, choices = c('Sorenson', 'RWTurnover', 'phyloRWTurnover'))
-	# if (!metric %in% c('Sorenson', 'RWTurnover', 'phyloRWTurnover')) {
+	# metric <- match.arg(metric, choices = c('Sorensen', 'RWTurnover', 'phyloRWTurnover'))
+	# if (!metric %in% c('Sorensen', 'RWTurnover', 'phyloRWTurnover')) {
 		# stop('Invalid metric.')
 	# }
 	
@@ -229,7 +239,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	# if (verbose) cat('done...\n')
 	
 	# if (verbose) cat(paste0('\t...calculating metric ', metric, '\n'))
-	# if (metric == 'Sorenson') {
+	# if (metric == 'Sorensen') {
 		# cellBeta <- calcRWTurnover_taxonomic(spCellList, nbList)
 	# } else if (metric == 'RWTurnover') {
 		# cellBeta <- calcRWTurnover_rangeWeighted(spCellList, nbList, 1 / x[['cellCount']])
@@ -263,8 +273,8 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 		# stop('radius must be an integer >= 1.')
 	# }
 	
-	# metric <- match.arg(metric, choices = c('Sorenson', 'RWTurnover', 'phyloRWTurnover'))
-	# if (!metric %in% c('Sorenson', 'RWTurnover', 'phyloRWTurnover')) {
+	# metric <- match.arg(metric, choices = c('Sorensen', 'RWTurnover', 'phyloRWTurnover'))
+	# if (!metric %in% c('Sorensen', 'RWTurnover', 'phyloRWTurnover')) {
 		# stop('Invalid metric.')
 	# }
 	
@@ -314,7 +324,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	# names(cellNumVec) <- 1:raster::ncell(x[[1]])
 	# cellNumVec[nonNAcells] <- 1:length(nonNAcells)
 		
-	# if (metric == 'Sorenson') {
+	# if (metric == 'Sorensen') {
 		
 		# if (nthreads > 1) {
 			# cl <- parallel::makePSOCKcluster(nthreads)
