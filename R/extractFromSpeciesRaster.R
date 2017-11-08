@@ -5,8 +5,9 @@
 ##'
 ##' @param x object of class \code{speciesRaster}
 
-##' @param spatial coordinates as either a SpatialPoints object, or as a 
-##' 	marix/dataframe with two columns, or as a SpatialPolygons object.
+##' @param spatial coordinates as either a SpatialPoints object, a 
+##' 	marix/dataframe with two columns, a numeric vector of c(long, lat), 
+##'		or as a SpatialPolygons object.
 
 ##' @param collapse boolean; if \code{TRUE}, then a vector of unique species 
 ##' 	is returned, pooled from all cells, if \code{FALSE}, then list is 
@@ -51,6 +52,12 @@ extractFromSpeciesRaster <- function(x, spatial, collapse=TRUE) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('x must be of class speciesRaster.')
+	}
+	
+	if (class(spatial) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame', 'SpatialPoints', 'SpatialPointsDataFrame')) {
+		if (is.na(sp::proj4string(spatial)) | !identical(sp::proj4string(spatial), sp::proj4string(x[[1]]))) {
+			stop("Both inputs must have the same proj4string.")
+		}
 	}
 	
 	if (class(spatial) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {

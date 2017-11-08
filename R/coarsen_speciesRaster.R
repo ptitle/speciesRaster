@@ -10,7 +10,10 @@
 ##' @return \code{speciesRaster} with a coarser resolution. 
 ##' 
 ##' @details Species will be included in the coarser cell if they are found in
-##' 	>= 50 percent of the original-resolution cells that are being aggregated.
+##' 	>= 50 percent of the original-resolution cells that are being aggregated. 
+##' 	This should be thought of as more of a convenience function for experimentation.
+##' 	Creating a coarser resolution speciesRaster from species ranges with 
+##'		\code{\link{createSpeciesRaster}} is the more appropriate approach.
 ##'
 ##' @author Pascal Title
 ##'

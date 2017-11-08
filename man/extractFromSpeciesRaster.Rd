@@ -9,8 +9,9 @@ extractFromSpeciesRaster(x, spatial, collapse = TRUE)
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
 
-\item{spatial}{coordinates as either a SpatialPoints object, or as a 
-marix/dataframe with two columns, or as a SpatialPolygons object.}
+\item{spatial}{coordinates as either a SpatialPoints object, a 
+marix/dataframe with two columns, a numeric vector of c(long, lat), 
+or as a SpatialPolygons object.}
 
 \item{collapse}{boolean; if \code{TRUE}, then a vector of unique species 
 is returned, pooled from all cells, if \code{FALSE}, then list is 
