@@ -139,7 +139,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	 	# prune speciesRaster object down to species shared with phylogeny
 		x[[2]] <- intersectList(x[[2]], x[['phylo']]$tip.label)
 	
-	} else if (!metric %in% c('weightedEndemism')) {
+	} else if (!metric %in% c('weightedEndemism', 'correctedWeightedEndemism')) {
 		stop('Metric not recognized!')
 	}
 	
@@ -157,7 +157,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## MORPHOLOGY-RELATED METRICS
 	
 	## UNIVARIATE
-	if (metric %in% c('mean', 'median', 'variance', 'NN_dist') & !pairwise) {
+	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise) {
 		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
 		if (is.vector(x[['data']])) {
 			trait <- x[['data']]
