@@ -4,13 +4,18 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-plot.speciesRaster(x, log = FALSE, includeLegend = TRUE, col = c("blue",
-  "yellow", "red"), box = TRUE, axes = TRUE, location = "right", ...)
+plot.speciesRaster(x, log = FALSE, colorRampRange = NULL,
+  includeLegend = TRUE, col = c("blue", "yellow", "red"), box = TRUE,
+  axes = TRUE, location = "right", ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
 
 \item{log}{boolean; should the cell values be logged?}
+
+\item{colorRampRange}{numeric vector of min and max value for scaling the color
+ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
+plots are desired on the same scale. See \code{\link{getMultiMapRamp}}.}
 
 \item{includeLegend}{boolean; should legend be included?}
 
@@ -36,6 +41,18 @@ plot(tamiasSpRas)
 
 plot(tamiasSpRas, includeLegend=FALSE, axes=FALSE, box=FALSE)
 addRasterLegend(tamiasSpRas, location = 'top', ramp=c('blue','yellow','red'))
+
+# Example for how to plot multiple speciesRasters on the same color scale
+# for illustration purposes, we will compare weighted endemism to
+# phylogenetic weighted endemism
+tamiasSpRas <- addPhylo_speciesRaster(tamiasSpRas, tamiasTree)
+spRas1 <- cellMetrics_speciesRaster(tamiasSpRas, metric='weightedEndemism')
+spRas2 <- cellMetrics_speciesRaster(tamiasSpRas, metric='phyloWeightedEndemism')
+# get global min and max values
+minmax <- getMultiMapRamp(list(spRas1, spRas2))
+par(mfrow = c(1,2))
+plot(spRas1, colorRampRange = log(minmax), log = TRUE, location='right')
+plot(spRas2, colorRampRange = log(minmax), log = TRUE, location='left')
 
 }
 \author{
