@@ -35,6 +35,8 @@ Univariate morphological metrics
 		\item{range}
 		\item{NN_dist:} {mean nearest neighbor distance}
 		\item{variance}
+		\item{arithmeticWeightedMean} (see below)
+		\item{geometricWeightedMean} (see below)
 	}
 	Multivariate morphological metrics
 	\itemize{
@@ -52,10 +54,16 @@ Univariate morphological metrics
 	Range-weighted metrics
 	\itemize{
 		\item{weightedEndemism}
+		\item{correctedWeightedEndemism:} {Weighted endemism standardized by species richness}
 		\item{phyloWeightedEndemism:}
 	}
 
 	If data slot contains a pairwise matrix, var is ignored.
+	Weighted mean options are available where, for each cell, a weighting scheme 
+	(inverse of species range sizes) is applied such that small-ranged species are 
+	up-weighted, and broadly distributed species are down-weighted. 
+	This can be a useful way to lessen the influence of broadly distributed species 
+	in the geographic mapping of trait data.
 }
 \examples{
 tamiasSpRas <- addPhylo_speciesRaster(tamiasSpRas, tamiasTree)

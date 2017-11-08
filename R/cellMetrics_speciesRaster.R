@@ -25,6 +25,8 @@
 ##' 		\item{range}
 ##'			\item{NN_dist:} {mean nearest neighbor distance}
 ##' 		\item{variance}
+##' 		\item{arithmeticWeightedMean} (see below)
+##' 		\item{geometricWeightedMean} (see below)
 ##' 	}
 ##' 	Multivariate morphological metrics
 ##'		\itemize{
@@ -42,10 +44,16 @@
 ##' 	Range-weighted metrics
 ##' 	\itemize{
 ##'			\item{weightedEndemism}
+##'			\item{correctedWeightedEndemism:} {Weighted endemism standardized by species richness}
 ##'			\item{phyloWeightedEndemism:}
 ##' 	}
 ##'
 ##'		If data slot contains a pairwise matrix, var is ignored.
+##'		Weighted mean options are available where, for each cell, a weighting scheme 
+##' 	(inverse of species range sizes) is applied such that small-ranged species are 
+##' 	up-weighted, and broadly distributed species are down-weighted. 
+##' 	This can be a useful way to lessen the influence of broadly distributed species 
+##' 	in the geographic mapping of trait data. 
 ##'
 ##' @examples
 ##' tamiasSpRas <- addPhylo_speciesRaster(tamiasSpRas, tamiasTree)
@@ -76,7 +84,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		stop('You can only specify one metric.')
 	}
 	
-	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'rangePCA', 'disparity', 'NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'weightedEndemism', 'phyloWeightedEndemism'))
+	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism'))
 	
 	pairwise <- FALSE
 	
@@ -93,7 +101,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}
 	}
 
-	if (metric %in% c('mean', 'median', 'variance') & class(x[['data']]) %in% c('matrix', 'data.frame') & is.null(var) & !pairwise) {
+	if (metric %in% c('mean', 'median', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean') & class(x[['data']]) %in% c('matrix', 'data.frame') & is.null(var) & !pairwise) {
 		stop('If a univariate metric is requested from a multivariate dataset, a column name must be provided as var.')
 	}
 		
@@ -105,7 +113,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	
 	# Prune species list according to metric of interest
-	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'rangePCA', 'NN_dist')) {
+	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'NN_dist')) {
 		
 		if (verbose) cat('\t...dropping species that are not in trait data...\n')
 		# check that there is data in speciesRaster object
@@ -148,7 +156,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## ----------------------------------
 	## MORPHOLOGY-RELATED METRICS
 	
-	if (metric %in% c('mean', 'median') & !pairwise) {
+	## UNIVARIATE
+	if (metric %in% c('mean', 'median', 'variance', 'NN_dist') & !pairwise) {
 		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
 		if (is.vector(x[['data']])) {
 			trait <- x[['data']]
@@ -158,19 +167,51 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
 	}
 	
+	if (metric %in% c('arithmeticWeightedMean', 'geometricWeightedMean')) {
+		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
+		if (is.vector(x[['data']])) {
+			trait <- x[['data']]
+		} else {
+			trait <- setNames(x[['data']][, var], rownames(x[['data']]))
+		}
+		
+		# get inverse range sizes (1 / cell counts)
+		inverseCellCount <- 1 / x[['cellCount']]
+		
+		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+		resVal[sapply(uniqueComm, anyNA)] <- NA
+		ind <- which(sapply(uniqueComm, length) > 0 & sapply(uniqueComm, anyNA) == FALSE)
+
+		if (metric == 'arithmeticWeightedMean') {
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
+				(1 / sum(inverseCellCount[y])) * sum(inverseCellCount[y] * trait[y])
+			})
+		}
+		if (metric == 'geometricWeightedMean') {
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
+				exp(sum(inverseCellCount[y] * log(trait[y])) / sum(inverseCellCount[y]))
+			})			
+		}	
+	}
+	
 	if (metric %in% c('mean', 'median') & pairwise) {
 	
 		# if pairwise matrix
 	
 		resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		
+		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+		resVal[sapply(uniqueComm, anyNA)] <- NA
+		ind <- which(sapply(uniqueComm, anyNA) == FALSE)
+
 		if (metric == 'mean') {
-			resVal[!sapply(uniqueComm, anyNA)] <- sapply(uniqueComm[!sapply(uniqueComm, anyNA)], function(y) mean(unlist(x[['data']][y, y]), na.rm = TRUE))
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) mean(unlist(x[['data']][y, y]), na.rm = TRUE))
 		} else if (metric == 'median') {
-			resVal[!sapply(uniqueComm, anyNA)] <- sapply(uniqueComm[!sapply(uniqueComm, anyNA)], function(y) stats::median(unlist(x[['data']][y, y]), na.rm = TRUE))
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) stats::median(unlist(x[['data']][y, y]), na.rm = TRUE))
 		}
-		resVal[is.na(resVal)] <- NA
 	}
 
+	## MULTIVARIATE
 	
 	if (metric == 'disparity') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
@@ -178,7 +219,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
-		resVal[ind] <- sapply(uniqueComm[ind], function(y) sum(diag(cov(x[['data']][y,]))))
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum(diag(cov(x[['data']][y,]))))
 	}
 	
 	if (metric == 'range' & is.null(var)) {
@@ -187,7 +228,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
-		resVal[ind] <- sapply(uniqueComm[ind], function(y) max(dist(x[['data']][y, ])))
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) max(dist(x[['data']][y, ])))
 	}
 	
 	if (metric == 'rangePCA') {
@@ -195,12 +236,12 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		pc <- prcomp(x[['data']])
 		# retain 99% of the variation
 		keep <- 1:which(cumsum(((pc$sdev)^2) / sum(pc$sdev^2)) >= 0.99)[1]
-		if (length(keep) == 1) {keep <- 1:ncol(pc$x)}
+		if (length(keep) == 1) { keep <- 1:ncol(pc$x) }
 		pc <- pc$x[,keep]
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
-		resVal[ind] <- sapply(uniqueComm[ind], function(y) {
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
 			sum(apply(pc[y,], 2, function(z) diff(range(z))))
 		})	
 	}
@@ -208,7 +249,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	if (metric == 'NN_dist' & is.null(var)) {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 			
-		nnDistRes <- lapply(uniqueComm, function(y) nnDist(x[['data']][y, ], Nrep = nreps))	
+		nnDistRes <- pbapply::pblapply(uniqueComm, function(y) nnDist(x[['data']][y, ], Nrep = nreps))	
 				
 		resVal <- sapply(nnDistRes, function(y) {
 			if (!anyNA(y)) {
@@ -232,46 +273,52 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
 			# meanPatristic is 0 if 1 species, NA if no species
 			patdist[upper.tri(patdist, diag = TRUE)] <- NA
-			resVal <- sapply(uniqueComm, function(y) mean(unlist(patdist[y, y]), na.rm = TRUE))
+			resVal <- pbapply::pbsapply(uniqueComm, function(y) mean(unlist(patdist[y, y]), na.rm = TRUE))
 			resVal[sapply(uniqueComm, length) == 1] <- 0
 			resVal[sapply(uniqueComm, anyNA)] <- NA
 		}
 		
-		if (all(metric == 'patristicNN')) {
+		if (metric == 'patristicNN') {
 			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
 			# the mean of the minimum patristic distance for each species present
-			resVal <- sapply(uniqueComm, function(y) {
-				if (!anyNA(y)) {
-					if (length(y) > 1) {
-						return(mean(apply(patdist[y, y], MARGIN = 1, min, na.rm = TRUE)))
-					} else {
-						return(0)
-					}
-				} else {
-					return(NA)
-				}
+			resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+			resVal[sapply(uniqueComm, anyNA)] <- NA
+			ind <- which(sapply(uniqueComm, length) > 1)
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
+				return(mean(apply(patdist[y, y], MARGIN = 1, min, na.rm = TRUE)))
 			})
 		}
 
-		if (all(metric == 'phyloDisparity')) {
+		if (metric == 'phyloDisparity') {
 			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
 			# the sum of the squared deviations from the mean
 			# value of 0 if 1 species, NA if no species
-			patdist[upper.tri(patdist, diag = TRUE)] <- NA
-			resVal <- sapply(uniqueComm, function(y) sum((patdist[y, y] - mean(patdist[y,y], na.rm = TRUE)) ^ 2, na.rm = TRUE))
-			resVal[sapply(uniqueComm, length) == 1] <- 0
+			
+			resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 			resVal[sapply(uniqueComm, anyNA)] <- NA
-		}
-		
+			ind <- which(sapply(uniqueComm, length) > 1)
+
+			patdist[upper.tri(patdist, diag = TRUE)] <- NA
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum((patdist[y, y] - mean(patdist[y,y], na.rm = TRUE)) ^ 2, na.rm = TRUE))
+		}		
 	}
 	
 	## ----------------------------------
 	## RANGE-WEIGHTED METRICS
 	
-	if (metric == 'weightedEndemism') {
+	if (metric %in% c('weightedEndemism', 'correctedWeightedEndemism')) {
 		if (verbose) cat('\t...calculating weighted endemism metric...\n')
-		resVal <- sapply(uniqueComm, function(y) sum(1 / x[['cellCount']][y]))
+		
+		# get inverse range sizes (1 / cell counts)
+		inverseCellCount <- 1 / x[['cellCount']]
+
+		resVal <- pbapply::pbsapply(uniqueComm, function(y) sum(inverseCellCount[y]))
 		resVal[sapply(uniqueComm, anyNA)] <- NA
+	
+		# if corrected metric, we will standardize by species richness
+		if (metric == 'correctedWeightedEndemism') {
+			resVal <- resVal / sapply(uniqueComm, length)
+		}
 	}
 	
 	if (metric == 'phyloWeightedEndemism') {
@@ -282,17 +329,16 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			x[['edgeArea']] <- do.call(cbind, phyloBranchRanges(x[['phylo']], convertNAtoEmpty(x[['speciesList']]), spEdges))
 		}
 		tipIndVec <- sapply(x[['phylo']]$tip.label, function(z) which(x[['phylo']]$tip.label == z))
-		resVal <- sapply(uniqueComm, function(y) {
-			if (!anyNA(y)) {
-				commEdges <- unique(unlist(spEdges[tipIndVec[y]])) + 1
-				sub <- x[['edgeArea']][commEdges,]
-				if (class(sub) == 'numeric') {
-					sub <- matrix(sub, nrow = 1)
-				}
-				sum(sub[,1] / sub[,2])
-			} else {
-				return(NA)
+		resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		ind <- which(sapply(uniqueComm, anyNA) == FALSE)
+
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
+			commEdges <- unique(unlist(spEdges[tipIndVec[y]])) + 1
+			sub <- x[['edgeArea']][commEdges,]
+			if (class(sub) == 'numeric') {
+				sub <- matrix(sub, nrow = 1)
 			}
+			sum(sub[,1] / sub[,2])
 		})
 	}
 	
@@ -302,6 +348,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## REMAP RESULTS TO RELEVANT CELLS AND ASSIGN TO RASTERS
 	
 	if (!is.list(resVal)) {
+		resVal[is.nan(resVal)] <- NA
 		cellVec <- numeric(length = length(allComm))
 		for (i in 1:length(resVal)) {
 			cellVec[cellMap[[i]]] <- resVal[i]
