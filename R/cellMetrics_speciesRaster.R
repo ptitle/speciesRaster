@@ -157,7 +157,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## MORPHOLOGY-RELATED METRICS
 	
 	## UNIVARIATE
-	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise) {
+	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise & !is.null(var)) {
 		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
 		if (is.vector(x[['data']])) {
 			trait <- x[['data']]
