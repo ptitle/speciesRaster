@@ -18,3 +18,4 @@ SystemRequirements: C++11
 LinkingTo: Rcpp, RcppProgress
 LazyData: true
 RoxygenNote: 6.0.1
+ByteCompile: true
