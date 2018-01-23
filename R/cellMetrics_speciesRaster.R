@@ -299,7 +299,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			ind <- which(sapply(uniqueComm, length) > 1)
 
 			patdist[upper.tri(patdist, diag = TRUE)] <- NA
-			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum((patdist[y, y] - mean(patdist[y,y], na.rm = TRUE)) ^ 2, na.rm = TRUE))
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum((patdist[y, y] - mean(patdist[y,y], na.rm = TRUE)) ^ 2, na.rm = TRUE) / choose(length(y), 2))
 		}		
 	}
 	
