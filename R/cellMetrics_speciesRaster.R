@@ -88,6 +88,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	pairwise <- FALSE
 	
+	# if data is pairwise matrix, then set flag appropriately
 	if (class(x[['data']]) %in% c('matrix', 'data.frame')) {
 		if (identical(rownames(x[['data']]), colnames(x[['data']]))) {
 			if (verbose) cat('\t...detected pairwise distance matrix...\n') 
@@ -99,6 +100,11 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 				stop('There are no values in the upper triangle of the pairwise matrix.')
 			}
 		}
+	}
+	
+	# if var is defined but data are univariate, disable var. 
+	if (is.vector(x[['data']]) & !is.null(var)) {
+		var <- NULL
 	}
 
 	if (metric %in% c('mean', 'median', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean') & class(x[['data']]) %in% c('matrix', 'data.frame') & is.null(var) & !pairwise) {
@@ -157,9 +163,10 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## MORPHOLOGY-RELATED METRICS
 	
 	## UNIVARIATE
-	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise & !is.null(var)) {
+	
+	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise) {
 		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
-		if (is.vector(x[['data']])) {
+		if (is.vector(x[['data']]) & is.null(var)) {
 			trait <- x[['data']]
 		} else {
 			trait <- setNames(x[['data']][, var], rownames(x[['data']]))
