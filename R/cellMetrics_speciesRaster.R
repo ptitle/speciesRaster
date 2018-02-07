@@ -201,7 +201,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}	
 	}
 	
-	if (metric %in% c('mean', 'median') & pairwise) {
+	if (metric %in% c('mean', 'median', 'variance') & pairwise) {
 	
 		# if pairwise matrix
 	
@@ -215,6 +215,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) mean(unlist(x[['data']][y, y]), na.rm = TRUE))
 		} else if (metric == 'median') {
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) stats::median(unlist(x[['data']][y, y]), na.rm = TRUE))
+		} else if (metric == 'variance') {
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) stats::var(unlist(x[['data']][y, y]), na.rm = TRUE))
 		}
 	}
 

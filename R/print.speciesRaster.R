@@ -49,4 +49,6 @@ print.speciesRaster <- function(x, ...) {
 		cat('\tnumber of species shared between phylogeny and raster:', phylo)
 	}
 	
+	cat('\n')
+	
 }
