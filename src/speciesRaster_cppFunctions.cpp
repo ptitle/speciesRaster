@@ -1932,6 +1932,13 @@ NumericVector calcPhylosor(List spByCell, int radius, int rasterNRow, int raster
 
 		std::vector<std::string> commI = as< std::vector<std::string> >(spByCell[i]);
 
+		// get Faith's PD for commI 
+		std::vector<int> edgesCommI = FaithPD_branchIndices(commI, phylo, nodeLeaves, spEdges);
+		double pdCommI = 0;
+		for (int k = 0; k < edgesCommI.size(); k++) {
+			pdCommI = pdCommI + edgeLengths[edgesCommI[k]];
+		}
+
  		// 	pull out the neighborhood cells for the i'th cell
  		std::vector<int> cellNeighbors = getMovingWindowCells(rasterNRow, rasterNCol, nonNAcells[i], radius, rasterValues);
 
@@ -1951,16 +1958,17 @@ NumericVector calcPhylosor(List spByCell, int radius, int rasterNRow, int raster
 			} else {
 
 				double pdCombined = 0;
-				double pdCommI = 0;
 				double pdCommJ = 0;
 
-				// get Faith's PD for commI and commJ separately
-				std::vector<int> edgesCommI = FaithPD_branchIndices(commI, phylo, nodeLeaves, spEdges);
+				// get Faith's PD for commJ
 				std::vector<int> edgesCommJ = FaithPD_branchIndices(commJ, phylo, nodeLeaves, spEdges);
+				for (int k = 0; k < edgesCommJ.size(); k++) {
+					pdCommJ = pdCommJ + edgeLengths[edgesCommJ[k]];
+				}
 
 				// numerator is sum of branches shared by commI and commJ
 				std::vector<int> sharedIJ;
-				// for each species in cellI, is it present in cellJ?
+				// for each branch in cellI, is it present in cellJ?
 				for (int k = 0; k < edgesCommI.size(); k++) { 
 					if (std::find(edgesCommJ.begin(), edgesCommJ.end(), edgesCommI[k]) != edgesCommJ.end()) {
 						sharedIJ.push_back(edgesCommI[k]);
@@ -1971,14 +1979,6 @@ NumericVector calcPhylosor(List spByCell, int radius, int rasterNRow, int raster
 					for (int i = 0; i < sharedIJ.size(); i++) {
 						pdCombined = pdCombined + edgeLengths[sharedIJ[i]];
 					}
-				}
-
-				for (int i = 0; i < edgesCommI.size(); i++) {
-					pdCommI = pdCommI + edgeLengths[edgesCommI[i]];
-				}
-
-				for (int i = 0; i < edgesCommJ.size(); i++) {
-					pdCommJ = pdCommJ + edgeLengths[edgesCommJ[i]];
 				}
 
 				cellVec[j] = pdCombined / (0.5 * (pdCommI + pdCommJ));

@@ -12,7 +12,8 @@
 ##' Sorensen's Beta diversity \code{sorensen} is a purely taxonomic measure of turnover.
 ##' 
 ##' Phylogenetic Sorensen's Similarity \code{phylosor} is a measure of phylogenetic turnover, 
-##' 	ranging from 0 to 1.
+##' 	ranging from 0 to 1. This function returns \code{1 - phylosor}, such that little 
+##' 	change in phylogenetic community structure results in values closer to 0. 
 ##'
 ##' Range-weighted turnover \code{RWTurnover} measures turnover but where taxa are weighted
 ##' 	according to the inverse of their range size.
@@ -96,7 +97,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 		if (verbose) cat('\t...dropping species that are not in phylo data...\n')
  		# prune speciesRaster object down to species shared with phylogeny
 		x[['speciesList']] <- intersectList(x[['speciesList']], x[['phylo']]$tip.label)
-		raster::values(x[[1]]) <- sapply(x[['speciesList']], length)
+		raster::values(x[[1]]) <- lengths(x[['speciesList']])
 		raster::values(x[[1]])[which(sapply(x[['speciesList']], anyNA) == TRUE)] <- NA
 		
 		if (metric == 'phyloRWTurnover') {
@@ -148,7 +149,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	} else if (metric == 'phyloRWTurnover') {
 		cellBeta <- calcRWTurnover_phyloRangeWeighted(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, x[['phylo']], spEdges, x[['edgeArea']], showProgress = showProgress)
 	} else if (metric == 'phylosor') {
-		cellBeta <- calcPhylosor(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, x[['phylo']], showProgress = showProgress)
+		cellBeta <- 1 - calcPhylosor(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, x[['phylo']], showProgress = showProgress)
 	}
 	
 	cellVal <- rep(NA, raster::ncell(x[[1]]))

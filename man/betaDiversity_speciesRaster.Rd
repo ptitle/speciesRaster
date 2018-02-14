@@ -26,7 +26,8 @@ Mean community dissimilarity is calculated for each cell within a moving window 
 Sorensen's Beta diversity \code{sorensen} is a purely taxonomic measure of turnover.
 
 Phylogenetic Sorensen's Similarity \code{phylosor} is a measure of phylogenetic turnover, 
-	ranging from 0 to 1.
+	ranging from 0 to 1. This function returns \code{1 - phylosor}, such that little 
+	change in phylogenetic community structure results in values closer to 0. 
 
 Range-weighted turnover \code{RWTurnover} measures turnover but where taxa are weighted
 	according to the inverse of their range size.
