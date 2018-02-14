@@ -18,7 +18,9 @@ of the polygons' projection}
 See details.}
 
 \item{extent}{if 'auto', then the maximal extent of the polygons will be used. 
-If not auto, can be a SpatialPolygon object or a numeric vector of length 4 
+If not auto, can be a SpatialPolygon object, in which case the resulting rasterStack
+will be cropped and masked with respect to the polygon, or a SpatialPoints object, 
+from which an extent object will be generated, or a numeric vector of length 4 
 with minLong, maxLong, minLat, maxLat.}
 
 \item{dropEmptyRasters}{if \code{TRUE}, then species that have no presence cells will be dropped.
@@ -40,9 +42,9 @@ In the rasterization process, all cells for which the polygon covers the midpoin
 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
 	is found in will be considered as present.
 
-	If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species that 
-	will be dropped are those that are outside of the requested extent (which in that case 
-	would be specified explicitly).
+	If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
+	that will be dropped are those that are outside of the requested extent (which in that
+	case would be specified explicitly).
 }
 \examples{
 library(raster)

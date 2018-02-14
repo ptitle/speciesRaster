@@ -12,7 +12,9 @@
 ##'		See details.
 ##'
 ##' @param extent if 'auto', then the maximal extent of the polygons will be used. 
-##' 	If not auto, can be a SpatialPolygon object or a numeric vector of length 4 
+##' 	If not auto, can be a SpatialPolygon object, in which case the resulting rasterStack
+##'		will be cropped and masked with respect to the polygon, or a SpatialPoints object, 
+##' 	from which an extent object will be generated, or a numeric vector of length 4 
 ##' 	with minLong, maxLong, minLat, maxLat.
 ##'
 ##' @param dropEmptyRasters if \code{TRUE}, then species that have no presence cells will be dropped.
@@ -27,9 +29,9 @@
 ##' 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
 ##' 	is found in will be considered as present.
 ##' 
-##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species that 
-##' 	will be dropped are those that are outside of the requested extent (which in that case 
-##' 	would be specified explicitly).  
+##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
+##' 	that will be dropped are those that are outside of the requested extent (which in that
+##' 	case would be specified explicitly).  
 ##' 
 ##' @return an object of class \code{RasterStack} where all rasters contain values of 
 ##' either NA or 1. 
@@ -74,7 +76,16 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	} else if (is.numeric(extent) & length(extent) == 4) {
 		# use user-specified bounds
 		masterExtent <- list(minLong = extent[1], maxLong = extent[2], minLat = extent[3], maxLat = extent[4])
+		
+	} else if (class(extent) %in% c('SpatialPoints', 'SpatialPointsDataFrame')) {
+		# get extent from points
+		masterExtent <- raster::extent(extent)
+		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 
+	} else if ("Extent" %in% class(extent)) {
+		
+		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
+		
 	} else if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
 		# use extent polygon
 		if (is.na(sp::proj4string(extent))) {
