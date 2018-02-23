@@ -21,7 +21,8 @@ See details.}
 If not auto, can be a SpatialPolygon object, in which case the resulting rasterStack
 will be cropped and masked with respect to the polygon, or a SpatialPoints object, 
 from which an extent object will be generated, or a numeric vector of length 4 
-with minLong, maxLong, minLat, maxLat.}
+with minLong, maxLong, minLat, maxLat. If 'interactive', then an interactive plot
+will appear in which the user can draw the desired polygon extent.}
 
 \item{dropEmptyRasters}{if \code{TRUE}, then species that have no presence cells will be dropped.
 If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}.}
@@ -44,7 +45,9 @@ In the rasterization process, all cells for which the polygon covers the midpoin
 
 	If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 	that will be dropped are those that are outside of the requested extent (which in that
-	case would be specified explicitly).
+	case would be specified explicitly).  
+
+	In interactive mode, the basemap is from \url{www.naturalearthdata.com}.
 }
 \examples{
 library(raster)

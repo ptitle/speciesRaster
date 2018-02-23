@@ -15,7 +15,8 @@
 ##' 	If not auto, can be a SpatialPolygon object, in which case the resulting rasterStack
 ##'		will be cropped and masked with respect to the polygon, or a SpatialPoints object, 
 ##' 	from which an extent object will be generated, or a numeric vector of length 4 
-##' 	with minLong, maxLong, minLat, maxLat.
+##' 	with minLong, maxLong, minLat, maxLat. If 'interactive', then an interactive plot
+##'		will appear in which the user can draw the desired polygon extent.
 ##'
 ##' @param dropEmptyRasters if \code{TRUE}, then species that have no presence cells will be dropped.
 ##'		If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}. 
@@ -32,6 +33,8 @@
 ##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 ##' 	that will be dropped are those that are outside of the requested extent (which in that
 ##' 	case would be specified explicitly).  
+##' 
+##' 	In interactive mode, the basemap is from \url{www.naturalearthdata.com}. 
 ##' 
 ##' @return an object of class \code{RasterStack} where all rasters contain values of 
 ##' either NA or 1. 
@@ -99,6 +102,48 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	} else {
 		stop("extent must be 'auto', a SpatialPolygon or a vector with minLong, maxLong, minLat, maxLat.")
 	}
+	
+	# interactive extent: if this option is selected, a coarse richness raster
+	# will be plotted, so that the user can designate an extent polygon
+	# at this point, masterExtent is a the maximal extent
+	if (class(extent) == 'character') {
+		if (extent == 'interactive') {
+			
+			# coarse template
+			# if projected, use 100km, if not, use 20 degrees
+			quickRes <- ifelse(sp::is.projected(polyList[[1]]), 100000, 20)
+			quickTemplate <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(quickRes, 2), crs = proj)
+			quick <- lapply(polyList, function(x) raster::rasterize(x, quickTemplate))
+			rich <- raster::calc(raster::stack(quick), fun=sum, na.rm = TRUE)
+			
+			# add map for context
+			if (sp::is.projected(polyList[[1]])) {
+				wrld <- sp::spTransform(worldmap, CRS(proj))
+			} else {
+				wrld <- worldmap
+			}
+			
+			plot(rich, legend = FALSE)
+			cat('\n\tAn interactive coarse-grain map has been displayed.\n')
+			cat('\n\tPlease wait until plot is completed......')
+			
+			plot(wrld, add = TRUE, lwd = 0.5)
+			cat('done!\n')
+			graphics::title(main = 'Define your extent polygon.')
+		
+			cat('\tClick on the map to create a polygon that will define the extent of the rasterStack.')
+			cat('\tRight-clicking will close the polygon and terminate the interactive plot.\n\n')
+			
+			userPoly <- raster::drawPoly(sp = TRUE, col='red', xpd=NA)
+			proj4string(userPoly) <- proj
+			masterExtent <- raster::extent(userPoly)
+			masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
+			extent <- userPoly
+			grDevices::dev.off()
+			
+		}
+	}
+
 
 	#create template raster
 	ras <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(resolution, 2), crs = proj)
@@ -118,9 +163,10 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	}
 	
 	ret <- raster::stack(rasList)
-	
+		
 	# if extent was polygon, then mask rasterStack
 	if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
+
 		ret <- raster::mask(ret, extent)
 	}
 	
@@ -133,19 +179,16 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 		
 		if (length(smallSp) > 0) {
 			for (i in 1:length(smallSp)) {
-				try(presenceCells <- unique(raster::cellFromXY(ret[[smallSp[i]]], sp::spsample(polyList[[smallSp[i]]], 10, type = 'random'))), silent = TRUE)
-				if ('try-error' %in% class(presenceCells)) {
-					counter <- 1
-					while ('try-error' %in% class(presenceCells) & counter < 10) {
-						try(presenceCells <- unique(raster::cellFromXY(ret[[smallSp[i]]], sp::spsample(polyList[[smallSp[i]]], 10, type = 'random'))), silent = TRUE)
-					}
-				}
-				if (!anyNA(presenceCells)) {
+				
+				cover <- raster::rasterize(polyList[[smallSp[i]]], ras, getCover = TRUE)
+				presenceCells <- which(raster::values(cover) > 0)
+
+				if (length(presenceCells) > 0) {
 					ret[[smallSp[i]]][presenceCells] <- 1
 				}
 			}
 		}
-		
+
 	} else {
 		
 		# drop those species with no presences (due to small range size)
