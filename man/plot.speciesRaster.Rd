@@ -5,8 +5,9 @@
 \title{Plot speciesRaster}
 \usage{
 plot.speciesRaster(x, log = FALSE, colorRampRange = NULL,
-  includeLegend = TRUE, col = c("blue", "yellow", "red"), box = TRUE,
-  axes = TRUE, location = "right", ...)
+  includeLegend = TRUE, col = c("blue", "yellow", "red"),
+  includeWorldMap = TRUE, box = TRUE, axes = TRUE, location = "right",
+  ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -21,6 +22,8 @@ plots are desired on the same scale. See \code{\link{getMultiMapRamp}}.}
 
 \item{col}{either a vector of color names that will be interpolated, or a color ramp
 function that takes an integer (see for example \code{\link{colorRampPalette}})}
+
+\item{includeWorldMap}{boolean; should a world map be plotted?}
 
 \item{box}{boolean; should box be drawn around plot?}
 

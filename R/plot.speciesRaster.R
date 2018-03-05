@@ -10,6 +10,7 @@
 ##' @param includeLegend boolean; should legend be included?
 ##' @param col either a vector of color names that will be interpolated, or a color ramp
 ##' 	function that takes an integer (see for example \code{\link{colorRampPalette}})
+##'	@param includeWorldMap boolean; should a world map be plotted?
 ##' @param box boolean; should box be drawn around plot?
 ##' @param axes boolean; should axes be included?
 ##' @param location location of legend, if included. See \code{\link{addRasterLegend}}.
@@ -39,7 +40,7 @@
 ##' 
 ##' @export
 
-plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, includeLegend = TRUE, col = c('blue', 'yellow', 'red'), box=TRUE, axes=TRUE, location = 'right', ...) {
+plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, includeLegend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', ...) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('Object must be of class speciesRaster')
@@ -73,5 +74,11 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, includeLeg
 		if (includeLegend) {
 			addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, minmax = colorRampRange, ...)
 		}
+	}
+	
+	if (includeWorldMap) {
+		# add map for context
+		wrld <- sp::spTransform(worldmap, sp::CRS(raster::projection(x[[1]])))
+		plot(wrld, add = TRUE, lwd = 0.5)		
 	}
 }
