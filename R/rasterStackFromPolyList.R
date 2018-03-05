@@ -33,6 +33,10 @@
 ##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 ##' 	that will be dropped are those that are outside of the requested extent (which in that
 ##' 	case would be specified explicitly).  
+##'
+##'		In interactive mode for defining the extent, the user can draw a bounding polygon on a 
+##'		map. A function call will then be printed to the console so that the user can hard-code 
+##'		that bounding polygon in future calls to this function.
 ##' 
 ##' 	In interactive mode, the basemap is from \url{www.naturalearthdata.com}. 
 ##' 
@@ -90,13 +94,16 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 		
 	} else if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
+		
 		# use extent polygon
-		if (is.na(sp::proj4string(extent))) {
-			stop('extent must have a proj4string.')
+		if (!is.na(sp::proj4string(extent))) {
+			if (!identical(sp::proj4string(extent), proj)) {
+				stop('extent must have same projection as polyList.')
+			}
+		} else {
+			sp::proj4string(extent) <- proj
 		}
-		if (!identical(sp::proj4string(extent), proj)) {
-			stop('extent must have same projection as polyList.')
-		}
+		
 		masterExtent <- raster::extent(extent)
 		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 	} else {
@@ -106,6 +113,7 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	# interactive extent: if this option is selected, a coarse richness raster
 	# will be plotted, so that the user can designate an extent polygon
 	# at this point, masterExtent is a the maximal extent
+	wkt <- NULL
 	if (class(extent) == 'character') {
 		if (extent == 'interactive') {
 			
@@ -118,7 +126,7 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 			
 			# add map for context
 			if (sp::is.projected(polyList[[1]])) {
-				wrld <- sp::spTransform(worldmap, CRS(proj))
+				wrld <- sp::spTransform(worldmap, sp::CRS(proj))
 			} else {
 				wrld <- worldmap
 			}
@@ -139,8 +147,11 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 			masterExtent <- raster::extent(userPoly)
 			masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 			extent <- userPoly
-			grDevices::dev.off()
 			
+			# display call so user can use this extent in the future
+			wkt <- rgeos::writeWKT(userPoly)
+			
+			grDevices::dev.off()
 		}
 	}
 
@@ -210,6 +221,11 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 			# drop empty rasters
 			ret <- ret[[setdiff(1:raster::nlayers(ret), badEntriesInd)]]
 		}		
+	}
+
+	if (!is.null(wkt)) {
+		cat('\n\tUse the same extent in the future by supplying the following to the extent argument:\n\n')
+		cat(paste0('\trgeos::readWKT("', wkt, '")'), '\n\n')
 	}
 
 	return(ret)

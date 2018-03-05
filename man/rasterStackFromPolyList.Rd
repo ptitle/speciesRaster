@@ -47,6 +47,10 @@ In the rasterization process, all cells for which the polygon covers the midpoin
 	that will be dropped are those that are outside of the requested extent (which in that
 	case would be specified explicitly).  
 
+	In interactive mode for defining the extent, the user can draw a bounding polygon on a 
+	map. A function call will then be printed to the console so that the user can hard-code 
+	that bounding polygon in future calls to this function.
+
 	In interactive mode, the basemap is from \url{www.naturalearthdata.com}.
 }
 \examples{
