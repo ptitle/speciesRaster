@@ -10,8 +10,8 @@ createSpeciesRaster(ranges, rasterTemplate = NULL, verbose = FALSE)
 \item{ranges}{Either a RasterStack, RasterBrick, or species by cell matrix. If 
 raster objects, cell values can either be binary presence/absence, or probabilities.}
 
-\item{rasterTemplate}{If input is a species x cell matrix, then a rasterTemplate must be
-provided.}
+\item{rasterTemplate}{If input is a species x cell matrix, then a rasterTemplate ##' must be provided. Cells with a value of 1 will be processed, cells with a value 
+of 0 will be ommitted. Therefore, all cells must have a value of 0/1.}
 
 \item{verbose}{Primarily intended for debugging, print progress to the console.}
 }

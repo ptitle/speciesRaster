@@ -8,8 +8,8 @@
 ##' @param ranges Either a RasterStack, RasterBrick, or species by cell matrix. If 
 ##' 	raster objects, cell values can either be binary presence/absence, or probabilities.
 ##'
-##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate must be
-##' 	provided.
+##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate ##' must be provided. Cells with a value of 1 will be processed, cells with a value 
+##' of 0 will be ommitted. Therefore, all cells must have a value of 0/1.
 ##'
 ##' @param verbose Primarily intended for debugging, print progress to the console.
 ##'
@@ -213,7 +213,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		if (mode(ranges) != 'numeric') {
 			stop('matrix data does not appear to be numeric.')	
 		}
-		if (!identical(range(as.vector(ranges)), c(0, 1))) {
+		if (!identical(as.numeric(range(as.vector(ranges))), c(0, 1))) {
 			mode(ranges) <- 'logical'
 			mode(ranges) <- 'numeric'
 		}
@@ -223,15 +223,25 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		if (raster::ncell(rasterTemplate) != ncol(ranges)) {
 			stop('If input is species x cell matrix, then number of columns must equal the number of raster cells.')
 		}
+		if (!identical(as.numeric(range(raster::values(rasterTemplate))), c(0, 1))) {
+			stop('rasterTemplate can only have values of 0 or 1.')
+		}
 		if (verbose) cat('\t...Using species by cell matrix...\n')
 		if (verbose) cat('\t...Calculating species richness...\n')
+		dropCells <- which(raster::values(rasterTemplate) == 0)
 		raster::values(rasterTemplate) <- colSums(ranges)
+		if (length(dropCells) > 0) {
+			rasterTemplate[dropCells] <- 0
+		}
 		rasterTemplate[rasterTemplate == 0] <- NA
 		
 		if (verbose) cat('\t...Indexing species in cells...\n')
 		obj[['raster']] <- rasterTemplate
 		obj[['speciesList']] <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
 		emptyInd <- which(sapply(obj[['speciesList']], length) == 0)
+		if (length(dropCells) > 0) {
+			emptyInd <- union(emptyInd, dropCells)
+		}
 		emptyList <- rep(list(NA), length(emptyInd))
 		obj[['speciesList']][emptyInd] <- emptyList
 		obj[['geogSpecies']] <- sort(rownames(ranges))
@@ -239,7 +249,8 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		# calculate range area for each species ( = number of cells)
 		if (verbose) cat('\t...Calculating species cell counts...\n\n')
 		obj[['cellCount']] <- rowSums(ranges)
-
+		
+		names(obj[['raster']]) <- 'spRichness'
 	}	
 	
 	if (class(obj[[1]]) != 'RasterLayer') {
