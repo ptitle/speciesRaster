@@ -165,13 +165,15 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## UNIVARIATE
 	
 	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise) {
-		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
-		if (is.vector(x[['data']]) & is.null(var)) {
-			trait <- x[['data']]
-		} else {
-			trait <- setNames(x[['data']][, var], rownames(x[['data']]))
+		if (is.vector(x[['data']]) | !is.vector(x[['data']]) & !is.null(var)) {
+			if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
+			if (is.vector(x[['data']]) & is.null(var)) {
+				trait <- x[['data']]
+			} else {
+				trait <- setNames(x[['data']][, var], rownames(x[['data']]))
+			}
+			resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
 		}
-		resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
 	}
 	
 	if (metric %in% c('arithmeticWeightedMean', 'geometricWeightedMean')) {

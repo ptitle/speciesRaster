@@ -21,14 +21,13 @@ genRi <- function(Row, Mins, Maxs, Ntax, Nrep = 20) {
 
 
 nnDist <- function(Mat, dMat = NULL, Nrep = 20) {
-	if (class(Mat) != "matrix") {
-		if (all(is.na(Mat))) {
-			return(NA)
-		}
-		if (is.vector(Mat))	{
-			# This matrix only has one species, so disparity is 0.
-			outMat <- data.frame(pi = 0, ri = 0, di = 0, NN_id = 0, mean_dist = 0, sd_dist = 0, max_dist = 0)
-		}
+	if (all(is.na(Mat))) {
+		return(NA)
+	}
+
+	if (is.vector(Mat) | nrow(Mat) == 1) {
+		# This matrix only has one species, so disparity is 0.
+		outMat <- data.frame(pi = 0, ri = 0, di = 0, NN_id = 0, mean_dist = 0, sd_dist = 0, max_dist = 0)
 	} else {
 		Means <- apply(Mat, 2, mean)
 		SDs <- apply(Mat, 2, sd)
