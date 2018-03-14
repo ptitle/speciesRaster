@@ -60,8 +60,10 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	
 	if (class(polyList) == 'list') {
 		if (!class(polyList[[1]]) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
-			stop('Input must be a list of SpatialPolygons or a RasterStack.')
+			stop('Input must be a list of SpatialPolygons.')
 		}
+	} else {
+		stop('polyList must be a list of SpatialPolygons.')
 	}
 
 	if (is.null(names(polyList))) {
