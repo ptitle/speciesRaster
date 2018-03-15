@@ -398,6 +398,7 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 	if (side == 4) { #right
 		axis(side, at = tickLocs, pos = location[2] + axisOffset, labels = signif(tx, digitLength), xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
 	}
+	
 }
 
 	

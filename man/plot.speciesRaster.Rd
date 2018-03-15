@@ -4,10 +4,9 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-plot.speciesRaster(x, log = FALSE, colorRampRange = NULL,
-  includeLegend = TRUE, col = c("blue", "yellow", "red"),
-  includeWorldMap = TRUE, box = TRUE, axes = TRUE, location = "right",
-  ...)
+plot.speciesRaster(x, log = FALSE, colorRampRange = NULL, legend = TRUE,
+  col = c("blue", "yellow", "red"), includeWorldMap = TRUE, box = TRUE,
+  axes = TRUE, location = "right", ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -18,7 +17,7 @@ plot.speciesRaster(x, log = FALSE, colorRampRange = NULL,
 ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
 plots are desired on the same scale. See \code{\link{getMultiMapRamp}}.}
 
-\item{includeLegend}{boolean; should legend be included?}
+\item{legend}{boolean; should legend be included?}
 
 \item{col}{either a vector of color names that will be interpolated, or a color ramp
 function that takes an integer (see for example \code{\link{colorRampPalette}})}
@@ -42,7 +41,7 @@ Plot a speciesRaster object.
 \examples{
 plot(tamiasSpRas)
 
-plot(tamiasSpRas, includeLegend=FALSE, axes=FALSE, box=FALSE)
+plot(tamiasSpRas, legend=FALSE, axes=FALSE, box=FALSE)
 addRasterLegend(tamiasSpRas, location = 'top', ramp=c('blue','yellow','red'))
 
 # Example for how to plot multiple speciesRasters on the same color scale

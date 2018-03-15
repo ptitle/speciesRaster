@@ -7,7 +7,7 @@
 ##' @param colorRampRange numeric vector of min and max value for scaling the color
 ##' 	ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
 ##' 	plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. 
-##' @param includeLegend boolean; should legend be included?
+##' @param legend boolean; should legend be included?
 ##' @param col either a vector of color names that will be interpolated, or a color ramp
 ##' 	function that takes an integer (see for example \code{\link{colorRampPalette}})
 ##'	@param includeWorldMap boolean; should a world map be plotted?
@@ -23,7 +23,7 @@
 ##' @examples
 ##' plot(tamiasSpRas)
 ##' 
-##' plot(tamiasSpRas, includeLegend=FALSE, axes=FALSE, box=FALSE)
+##' plot(tamiasSpRas, legend=FALSE, axes=FALSE, box=FALSE)
 ##' addRasterLegend(tamiasSpRas, location = 'top', ramp=c('blue','yellow','red'))
 ##' 
 ##' # Example for how to plot multiple speciesRasters on the same color scale
@@ -40,7 +40,7 @@
 ##' 
 ##' @export
 
-plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, includeLegend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', ...) {
+plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', ...) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('Object must be of class speciesRaster')
@@ -66,12 +66,12 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, includeLeg
 	}
 	if (!log) {
 		raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)
-		if (includeLegend) {
+		if (legend) {
 			addRasterLegend(x[[1]], location = location, ramp = colramp, ncolors = 100, minmax = colorRampRange, ...)
 		}
 	} else {
 		raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)
-		if (includeLegend) {
+		if (legend) {
 			addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, minmax = colorRampRange, ...)
 		}
 	}
