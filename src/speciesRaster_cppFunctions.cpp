@@ -97,6 +97,27 @@ double meanNNdist(NumericVector input) {
 	return mean(na_omit(minVals));
 }
 
+// from vector of values, create pairwise matrix and take minimum
+// [[Rcpp::export(name = minNNdist, rng = false)]]
+double minNNdist(NumericVector input) {
+
+	int n = input.size();
+	
+	// get all pairwise distances
+	NumericVector minVals(n);
+	for (int i = 0; i < n; i++) {
+		NumericVector vec(n, NumericVector::get_na());
+		for (int j = 0; j < n; j++) {
+			if (i != j) {
+				vec[j] = std::abs(input[i] - input[j]);
+			}
+		}
+		minVals[i] = min(na_omit(vec));
+	}
+
+	return min(na_omit(minVals));
+}
+
 
 // return either mean or median value of trait per cell
 // [[Rcpp::export(name = cellAvg, rng = false)]]
@@ -117,8 +138,10 @@ NumericVector cellAvg(List input, NumericVector trait, String stat) {
 				out[i] = double(median(vals));				
 			} else if (stat == "variance") {
 				out[i] = double(var(vals));
-			} else if (stat == "NN_dist") {
+			} else if (stat == "mean_NN_dist") {
 				out[i] = double(meanNNdist(vals));
+			} else if (stat == "min_NN_dist") {
+				out[i] = double(minNNdist(vals));
 			} else if (stat == "range") {
 				out[i] = double(max(vals) - min(vals));
 			}

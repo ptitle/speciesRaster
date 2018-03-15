@@ -17,6 +17,10 @@ meanNNdist <- function(input) {
     .Call('_speciesRaster_meanNNdist', PACKAGE = 'speciesRaster', input)
 }
 
+minNNdist <- function(input) {
+    .Call('_speciesRaster_minNNdist', PACKAGE = 'speciesRaster', input)
+}
+
 cellAvg <- function(input, trait, stat) {
     .Call('_speciesRaster_cellAvg', PACKAGE = 'speciesRaster', input, trait, stat)
 }

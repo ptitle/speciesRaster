@@ -23,7 +23,8 @@
 ##' 		\item{mean}
 ##' 		\item{median}
 ##' 		\item{range}
-##'			\item{NN_dist:} {mean nearest neighbor distance}
+##'			\item{mean_NN_dist:} {mean nearest neighbor distance}
+##'			\item{min_NN_dist:} {minimum nearest neighbor distance}
 ##' 		\item{variance}
 ##' 		\item{arithmeticWeightedMean} (see below)
 ##' 		\item{geometricWeightedMean} (see below)
@@ -33,7 +34,8 @@
 ##'			\item{disparity} 
 ##' 		\item{range}
 ##' 		\item{rangePCA}
-##' 		\item{NN_dist:} {mean nearest neighbor distance}
+##' 		\item{mean_NN_dist:} {mean nearest neighbor distance}
+##'			\item{min_NN_dist:} {minimum nearest neighbor distance}
 ##' 	}
 ##' 	Phylogenetic metrics
 ##' 	\itemize{
@@ -84,7 +86,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		stop('You can only specify one metric.')
 	}
 	
-	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism'))
+	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism'))
 	
 	pairwise <- FALSE
 	
@@ -119,7 +121,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	
 	# Prune species list according to metric of interest
-	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'NN_dist')) {
+	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'mean_NN_dist', 'min_NN_dist')) {
 		
 		if (verbose) cat('\t...dropping species that are not in trait data...\n')
 		# check that there is data in speciesRaster object
@@ -164,7 +166,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	## UNIVARIATE
 	
-	if (metric %in% c('mean', 'median', 'variance', 'range', 'NN_dist') & !pairwise) {
+	if (metric %in% c('mean', 'median', 'variance', 'range', 'mean_NN_dist', 'min_NN_dist') & !pairwise) {
 		if (is.vector(x[['data']]) | !is.vector(x[['data']]) & !is.null(var)) {
 			if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
 			if (is.vector(x[['data']]) & is.null(var)) {
@@ -257,18 +259,20 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		})	
 	}
 	
-	if (metric == 'NN_dist' & is.null(var)) {
+	if (metric == 'mean_NN_dist' & is.null(var)) {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
-			
-		nnDistRes <- pbapply::pblapply(uniqueComm, function(y) nnDist(x[['data']][y, ], Nrep = nreps))	
-				
-		resVal <- sapply(nnDistRes, function(y) {
-			if (!anyNA(y)) {
-				return(mean(y[, 'mean_dist']))
-			} else {
-				return(NA)
-			}
-		})			
+		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+		resVal[sapply(uniqueComm, anyNA)] <- NA
+		ind <- which(sapply(uniqueComm, length) > 1)
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) mean(nnDist(x[['data']][y, ], Nrep = nreps)$mean_dist))
+	}
+
+	if (metric == 'min_NN_dist' & is.null(var)) {
+		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
+		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+		resVal[sapply(uniqueComm, anyNA)] <- NA
+		ind <- which(sapply(uniqueComm, length) > 1)
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) min(nnDist(x[['data']][y, ], Nrep = nreps)$mean_dist))
 	}
 	
 	## ----------------------------------

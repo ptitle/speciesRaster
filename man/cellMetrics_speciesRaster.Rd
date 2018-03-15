@@ -33,7 +33,8 @@ Univariate morphological metrics
 		\item{mean}
 		\item{median}
 		\item{range}
-		\item{NN_dist:} {mean nearest neighbor distance}
+		\item{mean_NN_dist:} {mean nearest neighbor distance}
+		\item{min_NN_dist:} {minimum nearest neighbor distance}
 		\item{variance}
 		\item{arithmeticWeightedMean} (see below)
 		\item{geometricWeightedMean} (see below)
@@ -43,7 +44,8 @@ Univariate morphological metrics
 		\item{disparity} 
 		\item{range}
 		\item{rangePCA}
-		\item{NN_dist:} {mean nearest neighbor distance}
+		\item{mean_NN_dist:} {mean nearest neighbor distance}
+		\item{min_NN_dist:} {minimum nearest neighbor distance}
 	}
 	Phylogenetic metrics
 	\itemize{

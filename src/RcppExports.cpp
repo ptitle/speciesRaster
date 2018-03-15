@@ -47,6 +47,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// minNNdist
+double minNNdist(NumericVector input);
+RcppExport SEXP _speciesRaster_minNNdist(SEXP inputSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type input(inputSEXP);
+    rcpp_result_gen = Rcpp::wrap(minNNdist(input));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cellAvg
 NumericVector cellAvg(List input, NumericVector trait, String stat);
 RcppExport SEXP _speciesRaster_cellAvg(SEXP inputSEXP, SEXP traitSEXP, SEXP statSEXP) {
@@ -655,6 +665,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_sort_", (DL_FUNC) &_speciesRaster_sort_, 2},
     {"_speciesRaster_returnTopIndices", (DL_FUNC) &_speciesRaster_returnTopIndices, 2},
     {"_speciesRaster_meanNNdist", (DL_FUNC) &_speciesRaster_meanNNdist, 1},
+    {"_speciesRaster_minNNdist", (DL_FUNC) &_speciesRaster_minNNdist, 1},
     {"_speciesRaster_cellAvg", (DL_FUNC) &_speciesRaster_cellAvg, 3},
     {"_speciesRaster_intersectList", (DL_FUNC) &_speciesRaster_intersectList, 2},
     {"_speciesRaster_flattenMatrix", (DL_FUNC) &_speciesRaster_flattenMatrix, 1},
