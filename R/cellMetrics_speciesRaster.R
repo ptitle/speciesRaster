@@ -149,6 +149,10 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	} else if (!metric %in% c('weightedEndemism', 'correctedWeightedEndemism')) {
 		stop('Metric not recognized!')
+	} else {
+		# set empty entries to NA
+		emptyEntries <- which(lengths(x[[2]]) == 0)
+		x[[2]][emptyEntries] <- rep(list(NA), length(emptyEntries))
 	}
 	
 	# create a mapping of which set of species are found in each cell
@@ -327,12 +331,13 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		# get inverse range sizes (1 / cell counts)
 		inverseCellCount <- 1 / x[['cellCount']]
 
-		resVal <- pbapply::pbsapply(uniqueComm, function(y) sum(inverseCellCount[y]))
-		resVal[sapply(uniqueComm, anyNA)] <- NA
+		resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		ind <- which(sapply(uniqueComm, anyNA) == FALSE)		
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum(inverseCellCount[y]))
 	
 		# if corrected metric, we will standardize by species richness
 		if (metric == 'correctedWeightedEndemism') {
-			resVal <- resVal / sapply(uniqueComm, length)
+			resVal[ind] <- resVal[ind] / lengths(uniqueComm[ind])
 		}
 	}
 	
