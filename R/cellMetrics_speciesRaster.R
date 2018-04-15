@@ -9,6 +9,7 @@
 ##'
 ##' @param var If a univariate morphological metric is specified, and the 
 ##' 	data in \code{x} are multivariate, which trait should be used?
+##' 	This can also be a vector of column indices used to subset the data.
 ##' 
 ##' @param nreps Number of repetitions for Foote metric distribution.
 ##'
@@ -108,17 +109,49 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	if (is.vector(x[['data']]) & !is.null(var)) {
 		var <- NULL
 	}
-
-	if (metric %in% c('mean', 'median', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean') & class(x[['data']]) %in% c('matrix', 'data.frame') & is.null(var) & !pairwise) {
-		stop('If a univariate metric is requested from a multivariate dataset, a column name must be provided as var.')
-	}
 		
 	if (!is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
-		if (!var %in% colnames(x[['data']])) {
-			stop('var not a valid column name of the data.')
+		if (is.character(var)) {
+			if (!var %in% colnames(x[['data']])) {
+				stop('var not a valid column name of the data.')
+			}
+		} else if (is.numeric(var)) {
+			if (!all(var %in% 1:ncol(x[['data']]))) {
+				stop('Requested data column indices are out of range.')
+			}
 		}
 	}
 	
+	if (class(x[['data']]) %in% c('matrix', 'data.frame') | is.vector(data)) {
+		if (class(x[['data']]) %in% c('matrix', 'data.frame')) {
+			metricType <- 'multiVar'
+			if (!is.null(var) & length(var) == 1) {
+				metricType <- 'uniVar'
+			}
+		} else {
+			metricType == 'uniVar'
+		}
+	} else {
+		metricType <- 'none'
+	}
+	
+	# if a subset of data columns are requested, subset the data table
+	if (!is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
+		if (length(var) > 1) {
+			x[['data']] <- x[['data']][, var]
+		} else {
+			x[['data']] <- setNames(x[['data']][, var], rownames(x[['data']]))
+		}
+		var <- NULL
+	}
+	
+	if (metric %in% c('mean', 'median', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean') & metricType == 'multiVar' & !pairwise) {
+		stop('If a univariate metric is requested from a multivariate dataset, a column name must be provided as var.')
+	}
+	
+	if (metric %in% c('rangePCA', 'disparity') & metricType == 'uniVar' & !pairwise) {
+		stop('A multivariate metric cannot be applied to a univariate dataset.')
+	}
 	
 	# Prune species list according to metric of interest
 	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'mean_NN_dist', 'min_NN_dist')) {
@@ -155,6 +188,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		x[[2]][emptyEntries] <- rep(list(NA), length(emptyEntries))
 	}
 	
+	
 	# create a mapping of which set of species are found in each cell
 	if (verbose) cat('\t...Creating mapping of species combinations to cells...\n')
 	uniqueComm <- unique(x[[2]])
@@ -170,26 +204,16 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	## UNIVARIATE
 	
-	if (metric %in% c('mean', 'median', 'variance', 'range', 'mean_NN_dist', 'min_NN_dist') & !pairwise) {
-		if (is.vector(x[['data']]) | !is.vector(x[['data']]) & !is.null(var)) {
-			if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
-			if (is.vector(x[['data']]) & is.null(var)) {
-				trait <- x[['data']]
-			} else {
-				trait <- setNames(x[['data']][, var], rownames(x[['data']]))
-			}
-			resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
-		}
+	if (metric %in% c('mean', 'median', 'variance', 'range', 'mean_NN_dist', 'min_NN_dist') & !pairwise & metricType == 'uniVar') {
+		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
+		trait <- x[['data']]
+		resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
 	}
 	
-	if (metric %in% c('arithmeticWeightedMean', 'geometricWeightedMean')) {
+	if (metric %in% c('arithmeticWeightedMean', 'geometricWeightedMean') & metricType == 'uniVar') {
 		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
-		if (is.vector(x[['data']])) {
-			trait <- x[['data']]
-		} else {
-			trait <- setNames(x[['data']][, var], rownames(x[['data']]))
-		}
-		
+		trait <- x[['data']]
+			
 		# get inverse range sizes (1 / cell counts)
 		inverseCellCount <- 1 / x[['cellCount']]
 		
@@ -230,7 +254,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 
 	## MULTIVARIATE
 	
-	if (metric == 'disparity') {
+	if (metric == 'disparity' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		# sum of the diagonal of the covariance matrix
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
@@ -239,7 +263,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum(diag(cov(x[['data']][y,]))))
 	}
 	
-	if (metric == 'range' & is.null(var)) {
+	if (metric == 'range' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		# maximum of the distance matrix (0 if one sp)
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
@@ -248,7 +272,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) max(dist(x[['data']][y, ])))
 	}
 	
-	if (metric == 'rangePCA') {
+	if (metric == 'rangePCA' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		pc <- prcomp(x[['data']])
 		# retain 99% of the variation
@@ -263,7 +287,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		})	
 	}
 	
-	if (metric == 'mean_NN_dist' & is.null(var)) {
+	if (metric == 'mean_NN_dist' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
@@ -271,7 +295,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) mean(nnDist(x[['data']][y, ], Nrep = nreps)$mean_dist))
 	}
 
-	if (metric == 'min_NN_dist' & is.null(var)) {
+	if (metric == 'min_NN_dist' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
