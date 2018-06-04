@@ -43,6 +43,7 @@
 ##'			\item{meanPatristic}
 ##'			\item{patristicNN:} {mean nearest neighbor in patristic distance}
 ##'			\item{phyloDisparity:} {sum of squared deviations in patristic distance}
+##'			\item{PSV:} {Phylogenetic Species Variability}
 ##' 	}
 ##' 	Range-weighted metrics
 ##' 	\itemize{
@@ -87,7 +88,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		stop('You can only specify one metric.')
 	}
 	
-	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism'))
+	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism'))
 	
 	pairwise <- FALSE
 	
@@ -122,7 +123,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}
 	}
 	
-	if (class(x[['data']]) %in% c('matrix', 'data.frame') | is.vector(data)) {
+	if (class(x[['data']]) %in% c('matrix', 'data.frame') | is.vector(x[['data']])) {
 		if (class(x[['data']]) %in% c('matrix', 'data.frame')) {
 			metricType <- 'multiVar'
 			if (!is.null(var) & length(var) == 1) {
@@ -169,7 +170,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			x[[2]] <- intersectList(x[[2]], rownames(x[['data']]))
 		}
 		
-	 } else if (all(metric %in% c('meanPatristic', 'patristicNN','phyloDisparity', 'phyloWeightedEndemism'))) {
+	 } else if (all(metric %in% c('meanPatristic', 'patristicNN','phyloDisparity', 'phyloWeightedEndemism', 'PSV'))) {
 	 	
 	 	# check that there is a phylogeny in speciesRaster object
 		if (is.null(x[['phylo']])) {
@@ -306,7 +307,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## ----------------------------------
 	## PHYLOGENY-RELATED METRICS
 	
-	if (metric %in% c('meanPatristic', 'patristicNN', 'phyloDisparity')) {
+	if (metric %in% c('meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV')) {
 		
 		# calculate pairwise patristic distance
 		patdist <- cophenetic(x[['phylo']])
@@ -344,6 +345,20 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			patdist[upper.tri(patdist, diag = TRUE)] <- NA
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum((patdist[y, y] - mean(patdist[y,y], na.rm = TRUE)) ^ 2, na.rm = TRUE) / choose(length(y), 2))
 		}		
+		
+		if (metric == 'PSV') {
+			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
+			# Phylogenetic Species Variability is based on the variance-covariance matrix
+			# measure of phylogenetic diversity, ranges from 0-1, not confounded by species richness
+			
+			vmat <- ape::vcv.phylo(x[['phylo']], corr = TRUE)
+			
+			resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+			resVal[sapply(uniqueComm, anyNA)] <- NA
+			ind <- which(sapply(uniqueComm, length) > 1)
+			
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) (length(y) * sum(diag(vmat[y,y])) - sum(vmat[y,y]))/(length(y) * (length(y) - 1)))
+		}
 	}
 	
 	## ----------------------------------

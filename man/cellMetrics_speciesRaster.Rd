@@ -53,6 +53,7 @@ Univariate morphological metrics
 		\item{meanPatristic}
 		\item{patristicNN:} {mean nearest neighbor in patristic distance}
 		\item{phyloDisparity:} {sum of squared deviations in patristic distance}
+		\item{PSV:} {Phylogenetic Species Variability}
 	}
 	Range-weighted metrics
 	\itemize{
