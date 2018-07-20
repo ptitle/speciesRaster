@@ -130,7 +130,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 				metricType <- 'uniVar'
 			}
 		} else {
-			metricType == 'uniVar'
+			metricType <- 'uniVar'
 		}
 	} else {
 		metricType <- 'none'
