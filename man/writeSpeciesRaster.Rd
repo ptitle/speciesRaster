@@ -19,7 +19,7 @@ Write a speciesRaster object to disk.
 }
 \details{
 This function ensures that the raster data is stored in memory
-and then writes a .rds file. This file can be read back in with \code{\link{readRDS}}.
+and then writes a .rds file with xz compression. This file can be read back in with \code{\link{readRDS}}.
 }
 \examples{
 \dontrun{

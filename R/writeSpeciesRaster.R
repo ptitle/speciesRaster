@@ -6,7 +6,7 @@
 ##' @param filename filename with no extension
 ##'
 ##' @details This function ensures that the raster data is stored in memory
-##' and then writes a .rds file. This file can be read back in with \code{\link{readRDS}}.
+##' and then writes a .rds file with xz compression. This file can be read back in with \code{\link{readRDS}}.
 ##'
 ##' @return Nothing is returned, but object is written to disk.
 ##'
@@ -29,10 +29,10 @@ writeSpeciesRaster <- function(x, filename) {
 		x[[1]] <- raster::setValues(x[[1]], 1:raster::ncell(x[[1]]))
 	}
 	
-	if (!grepl('.rds', filename)) {
+	if (!grepl('\\.rds', filename)) {
 		filename <- paste0(filename, '.rds')
 	}
 	
-	saveRDS(x, file = filename)	
+	saveRDS(x, file = filename, compress = 'xz')	
 }
 
