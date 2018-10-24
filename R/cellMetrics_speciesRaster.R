@@ -165,9 +165,9 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		
 		# prune speciesRaster object down to species shared with data
 		if (is.vector(x[['data']])) {
-			x[[2]] <- intersectList(x[[2]], names(x[['data']]))
+			x[['speciesList']] <- intersectList(x[['speciesList']], names(x[['data']]))
 		} else {
-			x[[2]] <- intersectList(x[[2]], rownames(x[['data']]))
+			x[['speciesList']] <- intersectList(x[['speciesList']], rownames(x[['data']]))
 		}
 		
 	 } else if (all(metric %in% c('meanPatristic', 'patristicNN','phyloDisparity', 'phyloWeightedEndemism', 'PSV'))) {
@@ -179,26 +179,17 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		
 		if (verbose) cat('\t...dropping species that are not in phylo data...\n')
 	 	# prune speciesRaster object down to species shared with phylogeny
-		x[[2]] <- intersectList(x[[2]], x[['phylo']]$tip.label)
+		x[['speciesList']] <- intersectList(x[['speciesList']], x[['phylo']]$tip.label)
 	
 	} else if (!metric %in% c('weightedEndemism', 'correctedWeightedEndemism')) {
 		stop('Metric not recognized!')
 	} else {
 		# set empty entries to NA
 		emptyEntries <- which(lengths(x[[2]]) == 0)
-		x[[2]][emptyEntries] <- rep(list(NA), length(emptyEntries))
+		x[['speciesList']][emptyEntries] <- rep(list(NA), length(emptyEntries))
 	}
 	
-	
-	# create a mapping of which set of species are found in each cell
-	if (verbose) cat('\t...Creating mapping of species combinations to cells...\n')
-	uniqueComm <- unique(x[[2]])
-	allComm <- sapply(x[[2]], function(y) paste(y, collapse='|'))
-	uniqueCommLabels <- sapply(uniqueComm, function(y) paste(y, collapse='|'))
-
-	# cellMap <- lapply(uniqueCommLabels, function(x) which(allComm == x))
-	cellMap <- mapComm(uniqueCommLabels, allComm)
-	names(cellMap) <- uniqueCommLabels	
+	uniqueComm <- x[['speciesList']]
 
 	## ----------------------------------
 	## MORPHOLOGY-RELATED METRICS
@@ -408,18 +399,18 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	
 	if (!is.list(resVal)) {
 		resVal[is.nan(resVal)] <- NA
-		cellVec <- numeric(length = length(allComm))
+		cellVec <- numeric(length = length(x[['cellCommInd']]))
 		for (i in 1:length(resVal)) {
-			cellVec[cellMap[[i]]] <- resVal[i]
+			cellVec[which(x[['cellCommInd']] == i)] <- resVal[i]
 		}
 		resRas <- raster::raster(x[[1]])
 		raster::values(resRas) <- cellVec
 	} else {
 		resRas <- replicate(length(resVal), raster::raster(x[[1]]))
 		for (i in 1:length(resVal)) {
-			cellVec <- numeric(length = length(allComm))
+			cellVec <- numeric(length = length(x[['cellCommInd']]))
 			for (j in 1:length(resVal[[i]])) {
-				cellVec[cellMap[[j]]] <- resVal[[i]][j]
+				cellVec[which(x[['cellCommInd']] == j)] <- resVal[[i]][j]
 			}
 			raster::values(resRas[[i]]) <- cellVec
 		}

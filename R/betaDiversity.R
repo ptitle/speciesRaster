@@ -86,6 +86,12 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	if (!metric %in% c('sorensen', 'RWTurnover', 'phyloRWTurnover', 'phylosor')) {
 		stop('Invalid metric.')
 	}
+
+	# for now, expand speciesList back to full for compatibility with code
+	spList2 <- sapply(x[['cellCommInd']], function(y) x[['speciesList']][[y]])
+	x[['speciesList']] <- spList2
+	rm(spList2)
+
 	
 	# if phylogenetic, there must be a phylo object
 	# check that there is a phylogeny in speciesRaster object

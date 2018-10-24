@@ -19,7 +19,7 @@
 
 identify.speciesRaster <- function(x, returnCell = FALSE) {
 	
-	if (raster::ncell(x[[1]]) != length(x[[2]])) {
+	if (raster::ncell(x[[1]]) != length(x[['cellCommInd']])) {
 		stop('There is a mismatch between the raster and the species cell list. Different number of elements!')
 	}
 	grid <- raster::xyFromCell(x[[1]], 1:raster::ncell(x[[1]]))
@@ -27,6 +27,6 @@ identify.speciesRaster <- function(x, returnCell = FALSE) {
 	if (returnCell) {
 		return(cell)
 	} else {
-		return(x[[2]][[cell]])
+		return(x[['speciesList']][[x[['cellCommInd']][cell]]])
 	}
 }

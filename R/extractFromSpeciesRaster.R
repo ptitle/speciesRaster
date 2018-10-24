@@ -69,7 +69,7 @@ extractFromSpeciesRaster <- function(x, spatial, collapse=TRUE) {
 	}
 	
 	# extract species from speciesRaster
-	res <- sapply(cells, function(y) x[[2]][[y]])
+	res <- sapply(x[['cellCommInd']][cells], function(y) x[['speciesList']][[y]])
 	names(res) <- paste0('cell', cells)
 	
 	if (collapse) {

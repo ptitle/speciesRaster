@@ -8,7 +8,8 @@
 ##' @param ranges Either a RasterStack, RasterBrick, or species by cell matrix. If 
 ##' 	raster objects, cell values can either be binary presence/absence, or probabilities.
 ##'
-##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate ##' must be provided. Cells with a value of 1 will be processed, cells with a value 
+##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate 
+##' must be provided. Cells with a value of 1 will be processed, cells with a value 
 ##' of 0 will be ommitted. Therefore, all cells must have a value of 0/1.
 ##'
 ##' @param verbose Primarily intended for debugging, print progress to the console.
@@ -64,8 +65,8 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 	}
 		
 	# prepare output object
-	obj <- vector('list', length = 6)
-	names(obj) <- c('raster', 'speciesList', 'geogSpecies', 'cellCount', 'data', 'phylo')
+	obj <- vector('list', length = 7)
+	names(obj) <- c('raster', 'speciesList', 'cellCommInd', 'geogSpecies', 'cellCount', 'data', 'phylo')
 	
 	
 	# if rasterstack as input
@@ -88,6 +89,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		# prepare result objects
 		ras <- raster::raster(ranges[[1]])
 		raster::values(ras) <- 0
+		cellCommVec <- integer(length = raster::ncell(ranges))
 		spByCell <- vector('list', length = raster::ncell(ranges))
 		
 		# determine the size of rasterStack that can be processed in memory	
@@ -187,12 +189,24 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 			spByCell[sapply(spByCell, length) == 0] <- NA
 
 		}
-				
+		
+		
+		# reduce spByCell to unique communities and track
+		if (verbose) cat('\t...Reducing species list to unique sets...')
+		uniqueComm <- unique(spByCell)
+		spByCell2 <- sapply(spByCell, function(y) paste(y, collapse = '|'))
+		uniqueComm2 <- sapply(uniqueComm, function(y) paste(y, collapse = '|'))
+		for (i in 1:length(uniqueComm2)) {
+			cellCommVec[which(spByCell2 == uniqueComm2[i])] <- i
+		}		
+		if (verbose) cat('done\n')		
+		
 		#remove zero cells
 		ras[ras == 0] <- NA
 		names(ras) <- 'spRichness'
 		obj[['raster']] <- ras		
-		obj[['speciesList']] <- spByCell
+		obj[['speciesList']] <- uniqueComm
+		obj[['cellCommInd']] <- cellCommVec
 		obj[['geogSpecies']] <- sort(unique(names(ranges)))
 		
 		# calculate range area for each species ( = number of cells)
@@ -235,23 +249,41 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		}
 		rasterTemplate[rasterTemplate == 0] <- NA
 		
+		names(rasterTemplate) <- 'spRichness'
+		
 		if (verbose) cat('\t...Indexing species in cells...\n')
 		obj[['raster']] <- rasterTemplate
-		obj[['speciesList']] <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
+		
+		spByCell <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
 		emptyInd <- which(sapply(obj[['speciesList']], length) == 0)
 		if (length(dropCells) > 0) {
 			emptyInd <- union(emptyInd, dropCells)
 		}
 		emptyList <- rep(list(NA), length(emptyInd))
-		obj[['speciesList']][emptyInd] <- emptyList
+		spByCell[emptyInd] <- emptyList
+
+		# reduce spByCell to unique communities and track
+		uniqueComm <- unique(spByCell)
+		spByCell2 <- sapply(spByCell, function(y) paste(y, collapse = '|'))
+		uniqueComm2 <- sapply(uniqueComm, function(y) paste(y, collapse = '|'))
+		
+		cellCommVec <- integer(length = length(spByCell))
+		
+		for (i in 1:length(uniqueComm2)) {
+			cellCommVec[which(spByCell2 == uniqueComm2[i])] <- i
+		}
+		
+		obj[['speciesList']] <- uniqueComm
+		
+		obj[['cellCommInd']] <- cellCommVec
+		
 		obj[['geogSpecies']] <- sort(rownames(ranges))
 		
 		# calculate range area for each species ( = number of cells)
 		if (verbose) cat('\t...Calculating species cell counts...\n\n')
 		obj[['cellCount']] <- rowSums(ranges)
-		
-		names(obj[['raster']]) <- 'spRichness'
-	}	
+		 
+	}
 	
 	if (class(obj[[1]]) != 'RasterLayer') {
 		stop('Input type not supported.')
