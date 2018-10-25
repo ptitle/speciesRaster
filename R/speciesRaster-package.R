@@ -18,7 +18,7 @@
 ##' @import methods
 ##' 
 ##' 
-##' @importFrom graphics axis grconvertX grconvertY identify par rect
+##' @importFrom graphics axis grconvertX grconvertY par identify rect
 ##' @importFrom stats cophenetic cov dist prcomp runif sd setNames
 ##' @importFrom utils setTxtProgressBar txtProgressBar
 ##' @importFrom ape drop.tip
