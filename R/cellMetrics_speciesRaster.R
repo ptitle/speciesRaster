@@ -83,6 +83,10 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	if (!'speciesRaster' %in% class(x)) {
 		stop('x must be of class speciesRaster.')
 	}
+	
+	if (!identical(names(x), c('raster', 'speciesList', 'cellCommInd', 'geogSpecies', 'cellCount', 'data', 'phylo'))) {
+		stop('speciesRaster object is missing some components.')
+	}
 
 	if (length(metric) > 1) {
 		stop('You can only specify one metric.')
