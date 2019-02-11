@@ -253,8 +253,9 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	if (metric == 'disparity' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		# sum of the diagonal of the covariance matrix
-		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
-		resVal[sapply(uniqueComm, anyNA)] <- NA
+		# resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+		resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		# resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum(diag(cov(x[['data']][y,]))))
 	}
