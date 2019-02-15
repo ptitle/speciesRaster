@@ -211,7 +211,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		
 		# calculate range area for each species ( = number of cells)
 		if (verbose) cat('\t...Calculating species cell counts...\n\n')
-		obj[['cellCount']] <- countCells(convertNAtoEmpty(obj[['speciesList']]), obj[['geogSpecies']])
+		obj[['cellCount']] <- countCells(convertNAtoEmpty(spByCell), obj[['geogSpecies']])
 		names(obj[['cellCount']]) <- obj[['geogSpecies']]
 	}
 		
