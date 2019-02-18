@@ -496,13 +496,11 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 
 
 convertNAtoEmpty <- function(spCellList) {
-	for (i in 1:length(spCellList)) {
-		if (all(is.na(spCellList[[i]]))) {
-			spCellList[[i]] <- 'empty'
-		}
-	}
+	ind <- which(sapply(spCellList, anyNA) == TRUE)
+	spCellList[ind] <- rep(list('empty'), length(ind))
 	return(spCellList)
 }
+
 
 
 # # phylo2 <- x[['phylo']]
