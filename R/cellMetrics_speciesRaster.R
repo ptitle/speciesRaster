@@ -174,7 +174,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			x[['speciesList']] <- intersectList(x[['speciesList']], rownames(x[['data']]))
 		}
 		
-	 } else if (all(metric %in% c('meanPatristic', 'patristicNN','phyloDisparity', 'phyloWeightedEndemism', 'PSV'))) {
+	 } else if (metric %in% c('meanPatristic', 'patristicNN','phyloDisparity', 'phyloWeightedEndemism', 'PSV')) {
 	 	
 	 	# check that there is a phylogeny in speciesRaster object
 		if (is.null(x[['phylo']])) {
@@ -381,7 +381,10 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		spEdges <- getRootToTipEdges(x[['phylo']])
 		if (!'edgeArea' %in% names(x)) {
 			if (verbose) cat('\t...calculating branch-specific range sizes...\n')
-			x[['edgeArea']] <- do.call(cbind, phyloBranchRanges(x[['phylo']], convertNAtoEmpty(x[['speciesList']]), spEdges))
+
+			# phylo branch ranges must be based on full list of cell communities, therefore we need to expand the speciesList
+			fullSpList <- expandSpeciesCellList(x)
+			x[['edgeArea']] <- do.call(cbind, phyloBranchRanges(x[['phylo']], convertNAtoEmpty(fullSpList), spEdges))
 		}
 		tipIndVec <- sapply(x[['phylo']]$tip.label, function(z) which(x[['phylo']]$tip.label == z))
 		resVal <- rep(NA, length(uniqueComm)) # set up with NA
