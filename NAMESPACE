@@ -2,6 +2,7 @@
 
 S3method(identify,speciesRaster)
 S3method(print,speciesRaster)
+export(identify.speciesRaster)
 export(addPhylo_speciesRaster)
 export(addRasterLegend)
 export(addTraits_speciesRaster)

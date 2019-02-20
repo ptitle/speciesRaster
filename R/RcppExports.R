@@ -61,6 +61,10 @@ whichCpp <- function(x) {
     .Call('_speciesRaster_whichCpp', PACKAGE = 'speciesRaster', x)
 }
 
+uniqueCommResToFullList <- function(resVal, cellCommInd) {
+    .Call('_speciesRaster_uniqueCommResToFullList', PACKAGE = 'speciesRaster', resVal, cellCommInd)
+}
+
 characterUnlist <- function(list) {
     .Call('_speciesRaster_characterUnlist', PACKAGE = 'speciesRaster', list)
 }

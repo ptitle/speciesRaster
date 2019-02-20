@@ -333,6 +333,22 @@ IntegerVector whichCpp(NumericVector x) {
 	return wrap(y);
 }
 
+// convert values assigned to unique cell communities, to vector of all grid cells
+// [[Rcpp::export(name = uniqueCommResToFullList, rng = false)]]
+NumericVector uniqueCommResToFullList(NumericVector resVal, IntegerVector cellCommInd) {
+
+	NumericVector out(cellCommInd.size());
+
+	for (int i = 0; i < resVal.size(); i++) {
+		for (int j = 0; j < cellCommInd.size(); j++) {
+			if (cellCommInd[j] == (i + 1)) {
+				out[j] = resVal[i];
+			}
+		}
+	}
+
+	return out;
+}
 
 
 

@@ -164,6 +164,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// uniqueCommResToFullList
+NumericVector uniqueCommResToFullList(NumericVector resVal, IntegerVector cellCommInd);
+RcppExport SEXP _speciesRaster_uniqueCommResToFullList(SEXP resValSEXP, SEXP cellCommIndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type resVal(resValSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type cellCommInd(cellCommIndSEXP);
+    rcpp_result_gen = Rcpp::wrap(uniqueCommResToFullList(resVal, cellCommInd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // characterUnlist
 StringVector characterUnlist(const List& list);
 RcppExport SEXP _speciesRaster_characterUnlist(SEXP listSEXP) {
@@ -676,6 +687,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_ListIsEmpty", (DL_FUNC) &_speciesRaster_ListIsEmpty, 1},
     {"_speciesRaster_ListIsEmptyR", (DL_FUNC) &_speciesRaster_ListIsEmptyR, 1},
     {"_speciesRaster_whichCpp", (DL_FUNC) &_speciesRaster_whichCpp, 1},
+    {"_speciesRaster_uniqueCommResToFullList", (DL_FUNC) &_speciesRaster_uniqueCommResToFullList, 2},
     {"_speciesRaster_characterUnlist", (DL_FUNC) &_speciesRaster_characterUnlist, 1},
     {"_speciesRaster_naomit", (DL_FUNC) &_speciesRaster_naomit, 1},
     {"_speciesRaster_dropNeg", (DL_FUNC) &_speciesRaster_dropNeg, 1},
