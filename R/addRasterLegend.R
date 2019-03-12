@@ -44,7 +44,8 @@
 ##'	@param minmax min and max values from which the color ramp will be derived. If left
 ##'		as \code{NULL}, the min and max of the raster will be used.
 
-##'	@param locs locations of tick marks, if \code{NULL} automatically placed
+##'	@param locs locations of tick marks, if \code{NULL} automatically placed. If this is supplied
+##'		as a character vector, then the labels will be plotted verbatim.
 
 ##'	@param cex.axis size of axis labels
 

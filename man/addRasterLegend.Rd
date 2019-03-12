@@ -53,7 +53,8 @@ those color breaks here. This overrides the minmax option.}
 \item{minmax}{min and max values from which the color ramp will be derived. If left
 as \code{NULL}, the min and max of the raster will be used.}
 
-\item{locs}{locations of tick marks, if \code{NULL} automatically placed}
+\item{locs}{locations of tick marks, if \code{NULL} automatically placed. If this is supplied
+as a character vector, then the labels will be plotted verbatim.}
 
 \item{cex.axis}{size of axis labels}
 
