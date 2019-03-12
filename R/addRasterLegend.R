@@ -339,19 +339,39 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 	#if tick locations are supplied, use them, otherwise generate regularly spaced tick locations
 	if (!is.null(locs)) {
 		# if max value is included, add in manually
-		tol <- 1e-10
+		# tol <- 1e-10
+		tickLabels <- as.character(locs)
+		if (is.character(locs)) {
+			locs <- as.numeric(locs)
+		}
+		tol <- (diff(raster::cellStats(r, stat=range)) / n)
 		maxValueIncluded <- FALSE
+		minValueIncluded <- FALSE
 		if (any(abs(raster::maxValue(r) - locs) < tol)) {
 			locs <- locs[which(abs(raster::maxValue(r) - locs) >= tol)]
 			maxValueIncluded <- TRUE
 		}
-		tickLocs <- x[sapply(locs, function(x) which((x >= z[,1] & x < z[,2]) == TRUE)),1]
+
+		if (any(abs(raster::minValue(r) - locs) < tol)) {
+			locs <- locs[which(abs(raster::minValue(r) - locs) >= tol)]
+			minValueIncluded <- TRUE
+		}
+
+		tickLocs <- x[sapply(locs, function(x) which((x >= z[,1] & x < z[,2]) == TRUE)), 1]
 		if (maxValueIncluded) {
 			tickLocs <- c(tickLocs, max(x[,2]))
 			locs <- c(locs, max(colorbreaks))
 		}
+
+		if (minValueIncluded) {
+			tickLocs <- c(min(x[,1]), tickLocs)
+			locs <- c(min(colorbreaks), locs)
+		}
+		
 		tx <- locs
+		
 	} else {
+		tickLabels <- NULL
 		tx <- trunc(seq(from = 1, to = nrow(x), length.out = nTicks + 2))
 		tickLocs <- x[tx,1]
 		tx <- z[tx,1]
@@ -385,18 +405,22 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 		digitLength <- digitLength - 1
 	}
 	
+	if (is.null(tickLabels)) {
+		signif(tx, digitLength)
+	} 
+	
 	#add tickmarks
 	if (side == 1) { #bottom
-		axis(side, at = tickLocs, pos = location[3] - axisOffset, labels = signif(tx, digitLength), xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
+		axis(side, at = tickLocs, pos = location[3] - axisOffset, labels = tickLabels, xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
 	} 
 	if (side == 3) { #top
-		axis(side, at = tickLocs, pos = location[4] + axisOffset, labels = signif(tx, digitLength), xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
+		axis(side, at = tickLocs, pos = location[4] + axisOffset, labels = tickLabels, xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
 	}
 	if (side == 2) { #left
-		axis(side, at = tickLocs, pos = location[1] - axisOffset, labels = signif(tx, digitLength), xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
+		axis(side, at = tickLocs, pos = location[1] - axisOffset, labels = tickLabels, xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
 	}
 	if (side == 4) { #right
-		axis(side, at = tickLocs, pos = location[2] + axisOffset, labels = signif(tx, digitLength), xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
+		axis(side, at = tickLocs, pos = location[2] + axisOffset, labels = tickLabels, xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
 	}
 	
 }
