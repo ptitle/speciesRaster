@@ -78,7 +78,6 @@
 ##'		\item{width} {Coordinates for the short dimension of the legend.}
 ##'		\item{pal} {the color ramp}
 ##'		\item{tickLocs} {the tick mark locations in plotting units}
-##'		\item{labels} {the values associated with those tick locations.}
 ##' }
 
 ##' @author Pascal Title
@@ -345,29 +344,44 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 		if (is.character(locs)) {
 			locs <- as.numeric(locs)
 		}
-		tol <- (diff(raster::cellStats(r, stat=range)) / n)
-		maxValueIncluded <- FALSE
-		minValueIncluded <- FALSE
-		if (any(abs(raster::maxValue(r) - locs) < tol)) {
-			locs <- locs[which(abs(raster::maxValue(r) - locs) >= tol)]
-			maxValueIncluded <- TRUE
-		}
+		# tol <- (diff(raster::cellStats(r, stat=range)) / n)
+		# maxValueIncluded <- FALSE
+		# minValueIncluded <- FALSE
+		# if (any(abs(raster::maxValue(r) - locs) < tol)) {
+			# locs <- locs[which(abs(raster::maxValue(r) - locs) >= tol)]
+			# maxValueIncluded <- TRUE
+		# }
 
-		if (any(abs(raster::minValue(r) - locs) < tol)) {
-			locs <- locs[which(abs(raster::minValue(r) - locs) >= tol)]
-			minValueIncluded <- TRUE
-		}
+		# if (any(abs(raster::minValue(r) - locs) < tol)) {
+			# locs <- locs[which(abs(raster::minValue(r) - locs) >= tol)]
+			# minValueIncluded <- TRUE
+		# }
 
-		tickLocs <- x[sapply(locs, function(x) which((x >= z[,1] & x < z[,2]) == TRUE)), 1]
-		if (maxValueIncluded) {
-			tickLocs <- c(tickLocs, max(x[,2]))
-			locs <- c(locs, max(colorbreaks))
+		# tickLocs <- x[sapply(locs, function(x) which((x >= z[,1] & x < z[,2]) == TRUE)), 1]
+		tickLocs <- numeric(length(locs))
+		for (i in 1:length(locs)) {
+			if (any(locs[i] >= z[1,1])) {
+				binSearch1 <- which(locs[i] >= z[,1])
+			} else {
+				binSearch1 <- 1
+			}
+			if (any(locs[i] < z[,2])) {
+				binSearch2 <- which(locs[i] < z[,2])
+			} else {
+				binSearch2 <- nrow(z)
+			}
+			tickLocs[i] <- x[intersect(binSearch1, binSearch2), 1]
 		}
+		
+		# if (maxValueIncluded) {
+			# tickLocs <- c(tickLocs, max(x[,2]))
+			# locs <- c(locs, max(colorbreaks))
+		# }
 
-		if (minValueIncluded) {
-			tickLocs <- c(min(x[,1]), tickLocs)
-			locs <- c(min(colorbreaks), locs)
-		}
+		# if (minValueIncluded) {
+			# tickLocs <- c(min(x[,1]), tickLocs)
+			# locs <- c(min(colorbreaks), locs)
+		# }
 		
 		tx <- locs
 		
@@ -407,7 +421,7 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 	}
 	
 	if (is.null(tickLabels)) {
-		signif(tx, digitLength)
+		tickLabels <- signif(tx, digitLength)
 	} 
 	
 	#add tickmarks
@@ -424,6 +438,12 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 		axis(side, at = tickLocs, pos = location[2] + axisOffset, labels = tickLabels, xpd = NA, las = 1, cex.axis = cex.axis, mgp = c(3, labelDist, 0), ...)
 	}
 	
+	invisible(list(
+		coords = x,
+		width = width,
+		pal = pal,
+		tickLocs = tickLocs))
+
 }
 
 	

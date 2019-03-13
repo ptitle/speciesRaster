@@ -71,7 +71,6 @@ Invisibly returns a list with the following components.
 	\item{width} {Coordinates for the short dimension of the legend.}
 	\item{pal} {the color ramp}
 	\item{tickLocs} {the tick mark locations in plotting units}
-	\item{labels} {the values associated with those tick locations.}
 }
 }
 \description{
