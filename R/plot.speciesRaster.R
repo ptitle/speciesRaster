@@ -14,8 +14,14 @@
 ##' @param box boolean; should box be drawn around plot?
 ##' @param axes boolean; should axes be included?
 ##' @param location location of legend, if included. See \code{\link{addRasterLegend}}.
+##' @param singleSpCol color for single-species cells. See details.
 ##' @param ... additional parameters will be passed to the \code{\link{addRasterLegend}} function.
 ##'
+##'
+##' @details If \code{x} is a metric as generated with \code{cellMetrics_speciesRaster} that returns 0 
+##' 	for single-species cells, then those cells (that have a value of 0) will be plotted in gray (or any color
+##' 	as specified with \code{singleSpCol}).
+##' 
 ##' @return Nothing is returned. 
 ##'
 ##' @author Pascal Title
@@ -40,18 +46,35 @@
 ##' 
 ##' @export
 
-plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', ...) {
+plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', singleSpCol = gray(0.9), ...) {
 	
 	if (!'speciesRaster' %in% class(x)) {
 		stop('Object must be of class speciesRaster')
 	}
+	
+	# if x is a speciesRaster that represents a metric that only makes sense for communities with multiple species, 
+	# then single species cells have a value of zero, and we will plot those cells as gray.
+	if (names(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA')) {
+		# determine which cells have just 1 species
+		singleSp <- which(lengths(x[['speciesList']]) == 1 & sapply(x[['speciesList']], anyNA) == FALSE)
+		# singleSp <- which(lengths(x[['speciesList']]) == 1)
+		# singleSp <- setdiff(singleSp, which(sapply(x[['speciesList']], anyNA)))
+		singleSpCells <- which(x[['cellCommInd']] %in% singleSp)
+		x[[1]][singleSpCells] <- NA
+		singleSpRas <- raster::raster(x[[1]])
+		singleSpRas[] <- NA
+		singleSpRas[singleSpCells] <- 1
+		plotSingleCells <- TRUE
+	} else {
+		plotSingleCells <- FALSE
+	}	
 	
 	if (!is.null(colorRampRange)) {
 		if (class(colorRampRange) != 'numeric' | length(colorRampRange) != 2) {
 			stop('colorRampRange must be a vector of length 2: min and max.')
 		}
 	} else {
-		colorRampRange <- c(raster::minValue(x[[1]]), raster::maxValue(x[[1]]))
+		colorRampRange <- raster::cellStats(x[[1]], stat=range)
 		if (log) {
 			colorRampRange <- log(colorRampRange)
 		}	
@@ -63,19 +86,26 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 		if (class(col) == 'character') {
 			colramp <- grDevices::colorRampPalette(col)
 		}
-	}
+	}	
+	
 	if (!log) {
-		raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)
-		if (legend) {
-			addRasterLegend(x[[1]], location = location, ramp = colramp, ncolors = 100, minmax = colorRampRange, ...)
-		}
+		raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)		
 	} else {
-		raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)
-		if (legend) {
-			addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, minmax = colorRampRange, ...)
-		}
+		raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)			
 	}
 	
+	if (plotSingleCells) {
+		raster::plot(singleSpRas, col = singleSpCol, box = FALSE, axes = FALSE, legend = FALSE, add = TRUE)
+	}
+	
+	if (legend) {
+		if (!log) {
+			addRasterLegend(x[[1]], location = location, ramp = colramp, ncolors = 100, minmax = colorRampRange, ...)
+		} else {
+			addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, minmax = colorRampRange, ...)
+		}		
+	}
+
 	if (includeWorldMap) {
 		# add map for context
 		wrld <- sp::spTransform(worldmap, sp::CRS(raster::projection(x[[1]])))

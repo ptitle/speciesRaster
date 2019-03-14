@@ -158,6 +158,12 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		stop('A multivariate metric cannot be applied to a univariate dataset.')
 	}
 	
+	if (metric == 'geometricWeightedMean') {
+		if (any(x[['data']] < 0)) {
+			stop('Negative trait values cannot be supplied to geometricWeightedMean because the log of a negative number is NA.')
+		}
+	}
+	
 	# Prune species list according to metric of interest
 	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'mean_NN_dist', 'min_NN_dist')) {
 		
@@ -204,6 +210,12 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
 		trait <- x[['data']]
 		resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
+		
+		# to be consistent with other metrics, we will have 'variance' return 0 for single-species cells
+		if (metric == 'variance') {
+			ind <- which(lengths(uniqueComm) == 1 & sapply(uniqueComm, anyNA) == FALSE)
+			resVal[ind] <- 0
+		}
 	}
 	
 	if (metric %in% c('arithmeticWeightedMean', 'geometricWeightedMean') & metricType == 'uniVar') {
@@ -215,7 +227,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
-		ind <- which(sapply(uniqueComm, length) > 0 & sapply(uniqueComm, anyNA) == FALSE)
+		ind <- which(lengths(uniqueComm) > 0 & sapply(uniqueComm, anyNA) == FALSE)
 
 		if (metric == 'arithmeticWeightedMean') {
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
@@ -245,6 +257,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) stats::median(unlist(x[['data']][y, y]), na.rm = TRUE))
 		} else if (metric == 'variance') {
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) stats::var(unlist(x[['data']][y, y]), na.rm = TRUE))
+			ind <- which(lengths(uniqueComm) == 1 & sapply(uniqueComm, anyNA) == FALSE)
+			resVal[ind] <- 0
 		}
 	}
 
@@ -253,9 +267,9 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	if (metric == 'disparity' & metricType == 'multiVar') {
 		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
 		# sum of the diagonal of the covariance matrix
-		# resVal <- numeric(length = length(uniqueComm)) # set up with zeros
-		resVal <- rep(NA, length(uniqueComm)) # set up with NA
-		# resVal[sapply(uniqueComm, anyNA)] <- NA
+		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+		# resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) sum(diag(cov(x[['data']][y,]))))
 	}
@@ -405,26 +419,13 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## ----------------------------------
 	## REMAP RESULTS TO RELEVANT CELLS AND ASSIGN TO RASTERS
 	
-	if (!is.list(resVal)) {
-		resVal[is.nan(resVal)] <- NA
-		cellVec <- numeric(length = length(x[['cellCommInd']]))
-		for (i in 1:length(resVal)) {
-			cellVec[which(x[['cellCommInd']] == i)] <- resVal[i]
-		}
-		resRas <- raster::raster(x[[1]])
-		raster::values(resRas) <- cellVec
-	} else {
-		resRas <- replicate(length(resVal), raster::raster(x[[1]]))
-		for (i in 1:length(resVal)) {
-			cellVec <- numeric(length = length(x[['cellCommInd']]))
-			for (j in 1:length(resVal[[i]])) {
-				cellVec[which(x[['cellCommInd']] == j)] <- resVal[[i]][j]
-			}
-			raster::values(resRas[[i]]) <- cellVec
-		}
-		resRas <- raster::stack(resRas)
-		names(resRas) <- names(resVal)
+	resVal[is.nan(resVal)] <- NA
+	cellVec <- numeric(length = length(x[['cellCommInd']]))
+	for (i in 1:length(resVal)) {
+		cellVec[x[['cellCommInd']] == i] <- resVal[i]
 	}
+	resRas <- raster::raster(x[[1]])
+	raster::values(resRas) <- cellVec
 	names(resRas) <- metric
 	
 	# prepare output object

@@ -81,20 +81,25 @@ List returnTopIndices(NumericMatrix input, IntegerVector cutoff) {
 double meanNNdist(NumericVector input) {
 
 	int n = input.size();
-	
-	// get all pairwise distances
-	NumericVector minVals(n);
-	for (int i = 0; i < n; i++) {
-		NumericVector vec(n, NumericVector::get_na());
-		for (int j = 0; j < n; j++) {
-			if (i != j) {
-				vec[j] = std::abs(input[i] - input[j]);
-			}
-		}
-		minVals[i] = min(na_omit(vec));
-	}
 
-	return mean(na_omit(minVals));
+	if (n == 1) {
+		return 0;
+	} else {
+	
+		// get all pairwise distances
+		NumericVector minVals(n);
+		for (int i = 0; i < n; i++) {
+			NumericVector vec(n, NumericVector::get_na());
+			for (int j = 0; j < n; j++) {
+				if (i != j) {
+					vec[j] = std::abs(input[i] - input[j]);
+				}
+			}
+			minVals[i] = min(na_omit(vec));
+		}
+
+		return mean(na_omit(minVals));
+	}
 }
 
 // from vector of values, create pairwise matrix and take minimum
@@ -102,20 +107,25 @@ double meanNNdist(NumericVector input) {
 double minNNdist(NumericVector input) {
 
 	int n = input.size();
-	
-	// get all pairwise distances
-	NumericVector minVals(n);
-	for (int i = 0; i < n; i++) {
-		NumericVector vec(n, NumericVector::get_na());
-		for (int j = 0; j < n; j++) {
-			if (i != j) {
-				vec[j] = std::abs(input[i] - input[j]);
-			}
-		}
-		minVals[i] = min(na_omit(vec));
-	}
 
-	return min(na_omit(minVals));
+	if (n == 1) {
+		return 0;
+	} else {
+		
+		// get all pairwise distances
+		NumericVector minVals(n);
+		for (int i = 0; i < n; i++) {
+			NumericVector vec(n, NumericVector::get_na());
+			for (int j = 0; j < n; j++) {
+				if (i != j) {
+					vec[j] = std::abs(input[i] - input[j]);
+				}
+			}
+			minVals[i] = min(na_omit(vec));
+		}
+
+		return min(na_omit(minVals));
+	}
 }
 
 

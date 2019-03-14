@@ -39,6 +39,10 @@ Nothing is returned.
 \description{
 Plot a speciesRaster object.
 }
+\details{
+If \code{x} is a metric as generated with \code{cellMetrics_speciesRaster} that returns 0 
+	for single-species cells, then those cells (that have a value of 0) will be plotted in gray.
+}
 \examples{
 plot(tamiasSpRas)
 
