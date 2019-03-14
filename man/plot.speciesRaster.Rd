@@ -7,7 +7,7 @@
 plot.speciesRaster(x, log = FALSE, colorRampRange = NULL,
   legend = TRUE, col = c("blue", "yellow", "red"),
   includeWorldMap = TRUE, box = TRUE, axes = TRUE,
-  location = "right", ...)
+  location = "right", singleSpCol = gray(0.9), ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -31,6 +31,8 @@ function that takes an integer (see for example \code{\link{colorRampPalette}})}
 
 \item{location}{location of legend, if included. See \code{\link{addRasterLegend}}.}
 
+\item{singleSpCol}{color for single-species cells. See details.}
+
 \item{...}{additional parameters will be passed to the \code{\link{addRasterLegend}} function.}
 }
 \value{
@@ -41,7 +43,8 @@ Plot a speciesRaster object.
 }
 \details{
 If \code{x} is a metric as generated with \code{cellMetrics_speciesRaster} that returns 0 
-	for single-species cells, then those cells (that have a value of 0) will be plotted in gray.
+	for single-species cells, then those cells (that have a value of 0) will be plotted in gray (or any color
+	as specified with \code{singleSpCol}).
 }
 \examples{
 plot(tamiasSpRas)
