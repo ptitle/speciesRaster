@@ -17,10 +17,11 @@
 
 getExtentOfList <- function(shapes) {
 	
-	if (class(shapes[[1]]) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {	
-		x <- lapply(shapes, function(x) sp::bbox(x))
-		x <- lapply(x, function(y) c(xmin = y[1,1], ymin = y[2,1], xmax = y[1,2], ymax = y[2,2]))
-	} else if ('sf' %in% class(shapes[[1]])) {
+	if (inherits(shapes[[1]], c('SpatialPolygons', 'SpatialPolygonsDataFrame'))) {	
+		shapes <- lapply(shapes, function(x) sf::st_as_sf(x))
+	} 
+	
+	if (inherits(shapes[[1]], c('sf', 'sfc'))) {
 		x <- lapply(shapes, function(x) sf::st_bbox(x))
 	} else {
 		stop('shapes object not recognized.')

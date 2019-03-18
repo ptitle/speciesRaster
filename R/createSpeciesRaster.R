@@ -40,7 +40,7 @@
 ##'
 ##' @examples
 ##' library(raster)
-##' library(maptools)
+##' library(sf)
 ##' # example dataset: a list of 24 chipmunk distributions as polygons
 ##' head(tamiasPolyList)
 ##' 

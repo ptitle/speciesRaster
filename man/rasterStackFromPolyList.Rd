@@ -5,11 +5,10 @@
 \title{Polygon List to rasterStack}
 \usage{
 rasterStackFromPolyList(polyList, resolution = 50000,
-  retainSmallRanges = TRUE, extent = "auto", dropEmptyRasters = TRUE,
-  nthreads = 1)
+  retainSmallRanges = TRUE, extent = "auto", dropEmptyRasters = TRUE)
 }
 \arguments{
-\item{polyList}{a list of SpatialPolygon objects, named with taxon names}
+\item{polyList}{a list of polygons objects (sf or sp), named with taxon names}
 
 \item{resolution}{vertical and horizontal size of raster cell, in units 
 of the polygons' projection}
@@ -18,16 +17,14 @@ of the polygons' projection}
 See details.}
 
 \item{extent}{if 'auto', then the maximal extent of the polygons will be used. 
-If not auto, can be a SpatialPolygon object, in which case the resulting rasterStack
-will be cropped and masked with respect to the polygon, or a SpatialPoints object, 
+If not auto, can be a SpatialPolygon or sf object, in which case the resulting rasterStack
+will be cropped and masked with respect to the polygon, or a spatial coordinates object, 
 from which an extent object will be generated, or a numeric vector of length 4 
 with minLong, maxLong, minLat, maxLat. If 'interactive', then an interactive plot
 will appear in which the user can draw the desired polygon extent.}
 
 \item{dropEmptyRasters}{if \code{TRUE}, then species that have no presence cells will be dropped.
 If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}.}
-
-\item{nthreads}{number of threads to use for parallelization of the function.}
 }
 \value{
 an object of class \code{RasterStack} where all rasters contain values of 
@@ -41,21 +38,25 @@ In the rasterization process, all cells for which the polygon covers the midpoin
 	considered as present and receive a value of 1. If \code{retainSmallRanges = FALSE}, 
 	then species whose ranges are so small that no cell registers as present will be 
 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
-	is found in will be considered as present.
+	is found in will be considered as present, even if it's a small percent of the cell.
 
 	If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 	that will be dropped are those that are outside of the requested extent (which in that
 	case would be specified explicitly).  
 
 	In interactive mode for defining the extent, the user can draw a bounding polygon on a 
-	map. A function call will then be printed to the console so that the user can hard-code 
+	map. The drawn polygon will then be printed to the console so that the user can hard-code 
 	that bounding polygon in future calls to this function.
+
+	Any SpatialPolygon or SpatialPoints objects are converted to objects of class \code{sf}.
+
+	This function uses the \code{fasterize} package for conversion from polygon to raster.
 
 	In interactive mode, the basemap is from \url{www.naturalearthdata.com}.
 }
 \examples{
 library(raster)
-library(maptools)
+library(sf)
 # example dataset: a list of 24 chipmunk distributions as polygons
 head(tamiasPolyList)
 

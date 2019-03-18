@@ -4,6 +4,7 @@
 require(cleangeo)
 require(maptools)
 require(rgeos)
+require(sf)
 
 worldmap <- readShapeSpatial('~/Dropbox/speciesRaster/wrldmap/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp', force_ring=T, delete_null_obj=T, repair=T, proj4string=CRS('+proj=longlat +datum=WGS84'))
 
@@ -17,6 +18,10 @@ clgeo_SummaryReport(clgeo_CollectionReport(worldmap))
 worldmap <- gSimplify(worldmap, tol=0.1)
 
 plot(worldmap, lwd=0.5)
+
+# convert to sf object
+worldmap <- st_combine(st_geometry(st_as_sf(worldmap)))
+
 
 # save as sysdata.rda
 

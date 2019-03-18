@@ -44,11 +44,12 @@
 ##' plot(spRas1, colorRampRange = log(minmax), log = TRUE, location='right')
 ##' plot(spRas2, colorRampRange = log(minmax), log = TRUE, location='left')
 ##' 
+##' @rdname plot
 ##' @export
 
 plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', singleSpCol = gray(0.9), ...) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('Object must be of class speciesRaster')
 	}
 	
@@ -57,8 +58,6 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	if (names(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA')) {
 		# determine which cells have just 1 species
 		singleSp <- which(lengths(x[['speciesList']]) == 1 & sapply(x[['speciesList']], anyNA) == FALSE)
-		# singleSp <- which(lengths(x[['speciesList']]) == 1)
-		# singleSp <- setdiff(singleSp, which(sapply(x[['speciesList']], anyNA)))
 		singleSpCells <- which(x[['cellCommInd']] %in% singleSp)
 		x[[1]][singleSpCells] <- NA
 		singleSpRas <- raster::raster(x[[1]])
@@ -108,7 +107,7 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 
 	if (includeWorldMap) {
 		# add map for context
-		wrld <- sp::spTransform(worldmap, sp::CRS(raster::projection(x[[1]])))
-		plot(wrld, add = TRUE, lwd = 0.5)		
+		wrld <- sf::st_transform(worldmap, crs = sf::st_crs(x[[1]]))
+		graphics::plot(wrld, add = TRUE, lwd = 0.5)
 	}
 }

@@ -4,7 +4,7 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-plot.speciesRaster(x, log = FALSE, colorRampRange = NULL,
+\method{plot}{speciesRaster}(x, log = FALSE, colorRampRange = NULL,
   legend = TRUE, col = c("blue", "yellow", "red"),
   includeWorldMap = TRUE, box = TRUE, axes = TRUE,
   location = "right", singleSpCol = gray(0.9), ...)

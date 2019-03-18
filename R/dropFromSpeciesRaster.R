@@ -44,24 +44,9 @@ dropFromSpeciesRaster <- function(x, sp) {
 			}		
 		}
 		
-		raster::values(x[[1]]) <- lengths(fullList)
-		raster::values(x[[1]])[which(sapply(fullList, anyNA) == TRUE)] <- NA
+		return(rebuildSpeciesRaster(x, fullList))
 		
-		# reduce spByCell to unique communities and track
-		cellCommVec <- integer(length = raster::ncell(x[[1]]))
-		uniqueComm <- unique(fullList)
-		fullList2 <- sapply(fullList, function(y) paste(y, collapse = '|'))
-		uniqueComm2 <- sapply(uniqueComm, function(y) paste(y, collapse = '|'))
-		for (i in 1:length(uniqueComm2)) {
-			cellCommVec[which(fullList2 == uniqueComm2[i])] <- i
-		}
-		
-		x[['geogSpecies']] <- setdiff(x[['geogSpecies']], sp)
-		x[['cellCount']] <- x[['cellCount']][x[['geogSpecies']]]
-	
-		x[['speciesList']] <- uniqueComm
-		x[['cellCommInd']] <- cellCommVec
+	} else {
+		return(x)
 	}
-
-	return(x)
 }

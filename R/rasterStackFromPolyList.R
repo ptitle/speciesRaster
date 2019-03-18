@@ -3,7 +3,7 @@
 ##' @description Takes a list of polygons and creates a rasterStack.
 ##'
 ##'
-##' @param polyList a list of SpatialPolygon objects, named with taxon names
+##' @param polyList a list of polygons objects (sf or sp), named with taxon names
 ##'
 ##' @param resolution vertical and horizontal size of raster cell, in units 
 ##'		of the polygons' projection
@@ -12,8 +12,8 @@
 ##'		See details.
 ##'
 ##' @param extent if 'auto', then the maximal extent of the polygons will be used. 
-##' 	If not auto, can be a SpatialPolygon object, in which case the resulting rasterStack
-##'		will be cropped and masked with respect to the polygon, or a SpatialPoints object, 
+##' 	If not auto, can be a SpatialPolygon or sf object, in which case the resulting rasterStack
+##'		will be cropped and masked with respect to the polygon, or a spatial coordinates object, 
 ##' 	from which an extent object will be generated, or a numeric vector of length 4 
 ##' 	with minLong, maxLong, minLat, maxLat. If 'interactive', then an interactive plot
 ##'		will appear in which the user can draw the desired polygon extent.
@@ -21,22 +21,25 @@
 ##' @param dropEmptyRasters if \code{TRUE}, then species that have no presence cells will be dropped.
 ##'		If \code{FALSE}, then rasters will remain, filled entirely with \code{NA}. 
 ##'
-##' @param nthreads number of threads to use for parallelization of the function. 
 ##'
 ##' @details 
 ##' 	In the rasterization process, all cells for which the polygon covers the midpoint are
 ##' 	considered as present and receive a value of 1. If \code{retainSmallRanges = FALSE}, 
 ##' 	then species whose ranges are so small that no cell registers as present will be 
 ##' 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
-##' 	is found in will be considered as present.
+##' 	is found in will be considered as present, even if it's a small percent of the cell.
 ##' 
 ##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 ##' 	that will be dropped are those that are outside of the requested extent (which in that
 ##' 	case would be specified explicitly).  
 ##'
 ##'		In interactive mode for defining the extent, the user can draw a bounding polygon on a 
-##'		map. A function call will then be printed to the console so that the user can hard-code 
+##'		map. The drawn polygon will then be printed to the console so that the user can hard-code 
 ##'		that bounding polygon in future calls to this function.
+##'
+##'		Any SpatialPolygon or SpatialPoints objects are converted to objects of class \code{sf}.
+##'	
+##'		This function uses the \code{fasterize} package for conversion from polygon to raster.
 ##' 
 ##' 	In interactive mode, the basemap is from \url{www.naturalearthdata.com}. 
 ##' 
@@ -47,7 +50,7 @@
 ##'
 ##' @examples
 ##' library(raster)
-##' library(maptools)
+##' library(sf)
 ##' # example dataset: a list of 24 chipmunk distributions as polygons
 ##' head(tamiasPolyList)
 ##' 
@@ -56,14 +59,17 @@
 ##' 
 ##' @export
 
-rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE, nthreads = 1) {
+rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE) {
 	
-	if (class(polyList) == 'list') {
-		if (!class(polyList[[1]]) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
-			stop('Input must be a list of SpatialPolygons.')
+	if (is.list(polyList)) {
+		if (inherits(polyList[[1]], c('SpatialPolygons', 'SpatialPolygonsDataFrame'))) {
+			# if class SpatialPolygons, convert to sf
+			for (i in 1:length(polyList)) {
+				polyList[[i]] <- sf::st_as_sf(polyList[[i]])
+			}
 		}
-	} else {
-		stop('polyList must be a list of SpatialPolygons.')
+	} else if (!inherits(polyList[[1]], c('SpatialPolygons', 'SpatialPolygonsDataFrame', 'sf', 'sfc'))) {
+		stop('polyList must be a list of SpatialPolygons or Simple Features.')
 	}
 
 	if (is.null(names(polyList))) {
@@ -71,105 +77,80 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	}
 
 	# test that all have same CRS
-	if (length(unique(sapply(polyList, sp::proj4string))) != 1) {
-		stop('proj4string of all polygons must match.')
+	if (!any(sapply(polyList, function(x) identical(sf::st_crs(polyList[[1]]), sf::st_crs(x))))) {
+		stop('proj4string or EPSG of all polygons must match.')
 	}
-	proj <- sp::proj4string(polyList[[1]])
+	proj <- sf::st_crs(polyList[[1]])
+	
+	# if WKT string, then convert to sf polygon
+	if (inherits(extent, 'character')) {
+		if (grepl('POLYGON \\(', extent)) {
+			extent <- sf::st_sf(sf::st_as_sfc(extent))
+		}
+	}
 
-	if (class(extent) == 'character') {
+	if (inherits(extent, 'character')) {
 		
-		#get overall extent
-		masterExtent <- getExtentOfList(polyList)
-		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
+		if (!extent %in% c('auto', 'interactive')) {
+			stop("If extent is a character vector, it can only be 'auto' or 'interactive'.")
+		}
 		
+		if (extent == 'auto') {
+		
+			#get overall extent
+			masterExtent <- getExtentOfList(polyList)
+			masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
+		}
 	} else if (is.numeric(extent) & length(extent) == 4) {
 		# use user-specified bounds
 		masterExtent <- list(minLong = extent[1], maxLong = extent[2], minLat = extent[3], maxLat = extent[4])
 		
-	} else if (class(extent) %in% c('SpatialPoints', 'SpatialPointsDataFrame')) {
-		# get extent from points
+	} else if (inherits(extent, c('SpatialPolygons', 'SpatialPolygonsDataFrame', 'SpatialPoints', 'SpatialPointsDataFrame', 'sf', 'sfc'))) {
+		
+		if (inherits(extent, c('SpatialPolygons', 'SpatialPolygonsDataFrame', 'SpatialPoints', 'SpatialPointsDataFrame'))) {
+			extent <- sf::st_as_sf(extent)
+		}
+			
+		if (!is.na(sf::st_crs(extent))) {
+			if (!identical(sf::st_crs(extent), proj)) {
+				extent <- sf::st_transform(extent, crs = proj)
+			}
+		} else {
+			sf::st_crs(extent) <- proj
+		}
+		
+		# get extent from spatial object
 		masterExtent <- raster::extent(extent)
 		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 
-	} else if ("Extent" %in% class(extent)) {
+	} else if (inherits(extent, 'Extent')) {
 		
 		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 		
-	} else if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
-		
-		# use extent polygon
-		if (!is.na(sp::proj4string(extent))) {
-			if (!identical(sp::proj4string(extent), proj)) {
-				stop('extent must have same projection as polyList.')
-			}
-		} else {
-			sp::proj4string(extent) <- proj
-		}
-		
-		masterExtent <- raster::extent(extent)
-		masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
 	} else {
-		stop("extent must be 'auto', a SpatialPolygon or a vector with minLong, maxLong, minLat, maxLat.")
+		stop("extent must be 'auto', a spatial object or a vector with minLong, maxLong, minLat, maxLat.")
 	}
 	
 	# interactive extent: if this option is selected, a coarse richness raster
 	# will be plotted, so that the user can designate an extent polygon
-	# at this point, masterExtent is a the maximal extent
 	wkt <- NULL
-	if (class(extent) == 'character') {
+	if (inherits(extent, 'character')) {
 		if (extent == 'interactive') {
-			
-			# coarse template
-			# if projected, use 100km, if not, use 20 degrees
-			quickRes <- ifelse(sp::is.projected(polyList[[1]]), 100000, 20)
-			quickTemplate <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(quickRes, 2), crs = proj)
-			quick <- lapply(polyList, function(x) raster::rasterize(x, quickTemplate))
-			rich <- raster::calc(raster::stack(quick), fun=sum, na.rm = TRUE)
-			
-			# add map for context
-			if (sp::is.projected(polyList[[1]])) {
-				wrld <- sp::spTransform(worldmap, sp::CRS(proj))
-			} else {
-				wrld <- worldmap
-			}
-			
-			plot(rich, legend = FALSE)
-			cat('\n\tAn interactive coarse-grain map has been displayed.\n')
-			cat('\n\tPlease wait until plot is completed......')
-			
-			plot(wrld, add = TRUE, lwd = 0.5)
-			cat('done!\n')
-			graphics::title(main = 'Define your extent polygon.')
-		
-			cat('\tClick on the map to create a polygon that will define the extent of the rasterStack.')
-			cat('\tRight-clicking will close the polygon and terminate the interactive plot.\n\n')
-			
-			userPoly <- raster::drawPoly(sp = TRUE, col='red', xpd=NA)
-			proj4string(userPoly) <- proj
-			masterExtent <- raster::extent(userPoly)
+
+			interactive <- interactiveExtent(polyList)
+			extent <- interactive$poly
+			wkt <- interactive$wkt
+
+			masterExtent <- raster::extent(extent)
 			masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
-			extent <- userPoly
-			
-			# display call so user can use this extent in the future
-			wkt <- rgeos::writeWKT(userPoly)
-			
-			grDevices::dev.off()
 		}
 	}
 
-
 	#create template raster
-	ras <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(resolution, 2), crs = proj)
+	ras <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(resolution, 2), crs = proj$proj4string)
 	
-	if (nthreads > 1) {
-		cl <- parallel::makePSOCKcluster(nthreads)
-		parallel::clusterExport(cl = cl, varlist = c('polyList', 'ras', 'rasterize'), envir = environment())
-		rasList <- pbapply::pblapply(polyList, function(x) raster::rasterize(x, ras), cl = cl)
-		parallel::stopCluster(cl)
-	} else {
-		rasList <- pbapply::pblapply(polyList, function(x) raster::rasterize(x, ras))
-	}
-	
+	rasList <- pbapply::pblapply(polyList, function(x) fasterize::fasterize(x, ras, fun = 'sum'))
+		
 	# force non-NA values to be 1
 	for (i in 1:length(rasList)) {
 		raster::values(rasList[[i]])[!is.na(raster::values(rasList[[i]]))] <- 1
@@ -178,18 +159,17 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	ret <- raster::stack(rasList)
 		
 	# if extent was polygon, then mask rasterStack
-	if (class(extent) %in% c('SpatialPolygons', 'SpatialPolygonsDataFrame')) {
-
-		ret <- raster::mask(ret, extent)
+	if (inherits(masterExtent, c('sf', 'sfc'))) {
+		ret <- raster::mask(ret, masterExtent)
 	}
 	
-	# if user wants to retain species that would otherwise be dropped
-	# sample some random points in the range and identify cells
 	valCheck <- raster::minValue(ret)
 	smallSp <- which(is.na(valCheck))
 
+	# if user wants to retain species that would otherwise be dropped
+	# we will use the getCover argument in raster::rasterize to find cells that are at all covered by polygon
 	if (retainSmallRanges) {
-		
+				
 		if (length(smallSp) > 0) {
 			for (i in 1:length(smallSp)) {
 				
@@ -210,7 +190,6 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	
 	# if requested, drop rasters that are entirely NA (and print to screen for reference)
 	if (dropEmptyRasters) {
-		valCheck <- raster::minValue(ret)
 		badEntries <- which(is.na(valCheck))
 		badEntriesInd <- badEntries
 		badEntries <- sort(names(ret)[badEntries])
@@ -226,10 +205,56 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	}
 
 	if (!is.null(wkt)) {
-		cat('\n\tUse the same extent in the future by supplying the following to the extent argument:\n\n')
-		cat(paste0('\trgeos::readWKT("', wkt, '")'), '\n\n')
+		cat('\n\tUse the same extent in the future by supplying the following string to the extent argument:\n\n')
+		cat(paste0('\t"', wkt, '"'), '\n\n')
 	}
 
 	return(ret)
 }	
 
+
+
+
+interactiveExtent <- function(polyList) {
+	
+	#get overall extent
+	masterExtent <- getExtentOfList(polyList)
+	masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
+	
+	# coarse template
+	# if projected, use 100km, if not, use 20 degrees
+	quickRes <- ifelse(sf::st_is_longlat(polyList[[1]]), 20, 100000)
+	proj <- sf::st_crs(polyList[[1]])
+	quickTemplate <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(quickRes, 2), crs = proj$proj4string)
+	quick <- lapply(polyList, function(x) fasterize::fasterize(x, quickTemplate))
+	rich <- raster::calc(raster::stack(quick), fun=sum, na.rm = TRUE)
+	
+	# add map for context
+	if (!sf::st_is_longlat(polyList[[1]])) {
+		wrld <- sf::st_transform(worldmap, crs = sf::st_crs(polyList[[1]]))
+	} else {
+		wrld <- worldmap
+	}
+	
+	raster::plot(rich, legend = FALSE)
+	cat('\n\tAn interactive coarse-grain map has been displayed.\n')
+	cat('\n\tPlease wait until plot is completed......')
+	
+	graphics::plot(wrld, add = TRUE, lwd = 0.5)
+	cat('done!\n')
+	graphics::title(main = 'Define your extent polygon.')
+
+	cat('\tClick on the map to create a polygon that will define the extent of the rasterStack.')
+	cat('\tRight-clicking will close the polygon and terminate the interactive plot.\n\n')
+	
+	userPoly <- raster::drawPoly(sp = TRUE, col = 'red', xpd = NA)
+	userPoly <- sf::st_as_sf(userPoly)
+	sf::st_crs(userPoly) <- sf::st_crs(polyList[[1]])
+	
+	# display call so user can use this extent in the future
+	wkt <- sf::st_as_text(sf::st_geometry(userPoly))
+	
+	grDevices::dev.off()
+	
+	return(list(poly = userPoly, wkt = wkt))
+}

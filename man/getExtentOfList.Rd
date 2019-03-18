@@ -7,7 +7,7 @@
 getExtentOfList(shapes)
 }
 \arguments{
-\item{shapes}{a list of SpatialPolygons}
+\item{shapes}{a list of SpatialPolygons or simple features}
 }
 \value{
 An object of class \code{extent}.
