@@ -17,11 +17,11 @@
 
 getData_speciesRaster <- function(x) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 		
-	if (!class(x[['data']]) %in% c('numeric', 'matrix', 'data.frame')) {
+	if (!inherits(x[['data']], c('numeric', 'matrix', 'data.frame'))) {
 		stop('Data not present.')
 	}
 	

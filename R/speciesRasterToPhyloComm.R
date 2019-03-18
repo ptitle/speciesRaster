@@ -31,14 +31,14 @@
 
 speciesRasterToPhyloComm <- function(x, sites) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 	
 	# depending on input, make sites a vector of cell indices
-	if (class(sites) %in% c('matrix', 'data.frame')) {
+	if (inherits(sites, c('matrix', 'data.frame'))) {
 		sites <- raster::cellFromXY(x[[1]], sites)
-	} else if (class(sites) == 'character') {
+	} else if (is.character(sites)) {
 		sites <- 1:raster::ncell(x[[1]])
 	}
 	

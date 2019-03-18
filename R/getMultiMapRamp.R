@@ -19,7 +19,7 @@
 
 getMultiMapRamp <- function(x) {
 	
-	if (class(x) == 'list') {
+	if (is.list(x)) {
 		if (!all(unique(sapply(x, class)) %in% c('RasterLayer','speciesRaster'))) {
 			stop('Input must be list of speciesRaster or RasterLayer objects.')
 		}

@@ -25,7 +25,7 @@
 
 dropFromSpeciesRaster <- function(x, sp) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 	

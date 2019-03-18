@@ -26,15 +26,15 @@
 
 addPhylo_speciesRaster <- function(x, tree, replace = FALSE) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 	
-	if (!'phylo' %in% class(tree)) {
+	if (!inherits(tree, 'phylo')) {
 		stop('tree must be a phylo object.')
 	}
 	
-	if (class(x[['phylo']]) %in% 'phylo' & !replace) {
+	if (inherits(x[['phylo']], 'phylo') & !replace) {
 		stop('Phylogeny already present. If phylogeny is to be replaced, set replace = TRUE')
 	}
 	

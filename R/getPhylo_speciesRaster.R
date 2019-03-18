@@ -16,11 +16,11 @@
 
 getPhylo_speciesRaster <- function(x) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 		
-	if (!class(x[['phylo']]) %in% 'phylo') {
+	if (!inherits(x[['phylo']], 'phylo')) {
 		stop('Phylogeny not present.')
 	}
 	
