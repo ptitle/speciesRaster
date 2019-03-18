@@ -29,7 +29,7 @@
 
 coarsen_speciesRaster <- function(x, fact) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 	
@@ -42,22 +42,19 @@ coarsen_speciesRaster <- function(x, fact) {
 	
 	eList <- lapply(1:raster::ncell(template), function(y) which(e == y))
 	
+	# unroll condensed sp x cell list
+	spCellList <- expandSpeciesCellList(x)
+	
 	# for each new cell, find the unioned set of species found in all included cells
 	# for each set of cells, keep those species that are found in 50% or more of the cells
 	newSpList <- vector('list', length = raster::ncell(template))
 	for (i in 1:length(eList)) {
-		newSpList[[i]] <- keepMajoritySpecies(x[['speciesList']][eList[[i]]])		
+		newSpList[[i]] <- keepMajoritySpecies(spCellList[eList[[i]]])		
 	}
 	
-	# newSpList[which(sapply(newSpList, length) == 0)] <- NA
-		
-	res <- x
-	res[[1]] <- template
-	raster::values(res[[1]]) <- sapply(newSpList, length)
-	raster::values(res[[1]])[sapply(newSpList, anyNA)] <- NA
-	res[[2]] <- newSpList
+	newSpRas <- rebuildSpeciesRaster(x, newSpList, template)
 	
-	return(res)
+	return(newSpRas)
 
 }
 
