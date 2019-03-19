@@ -61,7 +61,7 @@ summary.speciesRaster <- function(object, ...) {
 	cat(paste0('\tnumber of unique species: ', lengthUniqueSp, ' (richness range: ', minSp, ' - ', maxSp, ')'), '\n')
 	cat('\tdata present:', ifelse(is.na(data), 'No', 'Yes'), '\n')
 	if (!is.na(data)) {
-		cat('\tnumber of species shared between data and raster:', data)
+		cat('\tnumber of species shared between data and raster:', data, '\n')
 	}
 
 	cat('\tphylogeny present:', ifelse(is.na(phylo), 'No', 'Yes'), '\n')
