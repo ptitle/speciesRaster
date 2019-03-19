@@ -55,10 +55,9 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	
 	# if x is a speciesRaster that represents a metric that only makes sense for communities with multiple species, 
 	# then single species cells have a value of zero, and we will plot those cells as gray.
-	if (names(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA')) {
+	if (names(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV')) {
 		# determine which cells have just 1 species
-		singleSp <- which(lengths(x[['speciesList']]) == 1 & sapply(x[['speciesList']], anyNA) == FALSE)
-		singleSpCells <- which(x[['cellCommInd']] %in% singleSp)
+		singleSpCells <- singleSpCellIndex(x)
 		x[[1]][singleSpCells] <- NA
 		singleSpRas <- raster::raster(x[[1]])
 		singleSpRas[] <- NA
