@@ -118,6 +118,10 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 		} else {
 			sf::st_crs(extent) <- proj
 		}
+	  
+	  if (inherits(extent, 'sfc')) {
+	    extent <- sf::st_sf(extent)
+	  }
 		
 		# get extent from spatial object
 		masterExtent <- raster::extent(extent)
