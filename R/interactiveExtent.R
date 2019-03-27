@@ -36,15 +36,15 @@ interactiveExtent <- function(polyList) {
 	}
 	
 	raster::plot(rich, legend = FALSE)
-	cat('\n\tAn interactive coarse-grain map has been displayed.\n')
-	cat('\n\tPlease wait until plot is completed......')
+	message('\n\tAn interactive coarse-grain map has been displayed.\n')
+	message('\n\tPlease wait until plot is completed......')
 	
 	graphics::plot(wrld, add = TRUE, lwd = 0.5)
-	cat('done!\n')
+	message('done!\n')
 	graphics::title(main = 'Define your extent polygon.')
 
-	cat('\tClick on the map to create a polygon that will define the extent of the rasterStack.')
-	cat('\tRight-clicking will close the polygon and terminate the interactive plot.\n\n')
+	message('\tClick on the map to create a polygon that will define the extent of the rasterStack.')
+	message('\tRight-clicking will close the polygon and terminate the interactive plot.\n\n')
 	
 	userPoly <- raster::drawPoly(sp = TRUE, col = 'red', xpd = NA)
 	userPoly <- sf::st_as_sf(userPoly)

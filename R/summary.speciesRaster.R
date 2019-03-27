@@ -22,12 +22,12 @@
 
 summary.speciesRaster <- function(object, ...) {
 	
-	if (!'speciesRaster' %in% class(object)) {
+	if (!inherits(object, 'speciesRaster')) {
 		stop('Object must be of class speciesRaster.')
 	}
 	
 	# if data present in object, then report info
-	if (class(object[['data']]) %in% c('numeric', 'matrix', 'data.frame')) {
+	if (inherits(object[['data']], c('numeric', 'matrix', 'data.frame'))) {
 		if (is.vector(object[['data']])) {
 			data <- length(intersect(object[['geogSpecies']], names(object[['data']])))
 		} else {
@@ -38,7 +38,7 @@ summary.speciesRaster <- function(object, ...) {
 	}
 	
 	# if phylogeny present in object, then report info
-	if (class(object[['phylo']]) %in% 'phylo') {
+	if (inherits(object[['phylo']], 'phylo')) {
 		phylo <- length(intersect(object[['geogSpecies']], object[['phylo']]$tip.label))
 	} else {
 		phylo <- NA

@@ -100,7 +100,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 			stop('speciesRaster object does not contain a phylo object!')
 		}
 		
-		if (verbose) cat('\t...dropping species that are not in phylo data...\n')
+		if (verbose) message('\t...dropping species that are not in phylo data...\n')
  		# prune speciesRaster object down to species shared with phylogeny
 		x[['speciesList']] <- intersectList(x[['speciesList']], x[['phylo']]$tip.label)
 		raster::values(x[[1]]) <- lengths(x[['speciesList']])
@@ -110,7 +110,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 			spEdges <- getRootToTipEdges(x[['phylo']])
 		
 			if (!'edgeArea' %in% names(x)) {
-				if (verbose) cat('\t...calculating branch-specific range sizes...\n')
+				if (verbose) message('\t...calculating branch-specific range sizes...\n')
 				x[['edgeArea']] <- do.call(cbind, phyloBranchRanges(x[['phylo']], convertNAtoEmpty(x[['speciesList']]), spEdges))
 			}
 		}		
@@ -120,7 +120,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	nonNAcells <- which(!is.na(raster::values(x[[1]])))
 
 	# return neighbor cells for each cell	
-	if (verbose) cat('\t...identifying valid cell neighbors...\n')
+	if (verbose) message('\t...identifying valid cell neighbors...\n')
 	all_nb <- raster::adjacent(x[[1]], cells = nonNAcells, target = nonNAcells, directions = 8)
 	
 	# remove any cells that have no neighbors (isolated cells)
@@ -138,7 +138,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	}
 
 	# remap the cell numbers to the list with empty cells removed
-	if (verbose) cat('\t...remapping cell indexing...\n')
+	if (verbose) message('\t...remapping cell indexing...\n')
 	cellMap <- x[[1]]
 	cellMap <- rep(-1, raster::ncell(x[[1]]))
 	cellMap[nonNAcells] <- 0:(length(nonNAcells) - 1)
@@ -147,7 +147,7 @@ betaDiversity_speciesRaster <- function(x, radius = 3, metric, verbose = FALSE) 
 	#showProgress <- length(spCellList) > 100000
 	showProgress <- TRUE
 	
-	if (verbose) cat(paste0('\t...calculating metric ', metric, '\n'))
+	if (verbose) message('\t...calculating metric ', metric, '\n')
 	if (metric == 'sorensen') {
 		cellBeta <- calcRWTurnover_taxonomic(spCellList, radius, rasterNRow = nrow(x[[1]]), rasterNCol = ncol(x[[1]]), cellMap, nonNAcells, showProgress = showProgress)
 	} else if (metric == 'RWTurnover') {

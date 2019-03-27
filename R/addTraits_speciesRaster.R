@@ -73,9 +73,9 @@ addTraits_speciesRaster <- function(x, data, replace = FALSE) {
 	}
 	
 	if (length(inDataNotGeog) > 0) {
-		cat('Warning: The following species were dropped from the trait data because they lacked geographic data:\n')
+		warning('The following species were dropped from the trait data because they lacked geographic data:\n')
 		for (i in 1:length(inDataNotGeog)) {
-			cat('\t', inDataNotGeog[i], '\n')
+			message('\t', inDataNotGeog[i], '\n')
 		}
 	}
 	

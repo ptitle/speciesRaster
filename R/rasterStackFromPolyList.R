@@ -198,9 +198,9 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 		badEntriesInd <- badEntries
 		badEntries <- sort(names(ret)[badEntries])
 		if (length(badEntries) > 0) {
-			cat('The following rasters have no non-NA cells:\n\n')
+			message('The following rasters have no non-NA cells:\n\n')
 			for (i in 1:length(badEntries)) {
-				cat('\t', badEntries[i], '\n')
+				message('\t', badEntries[i], '\n')
 			}
 			
 			# drop empty rasters
@@ -209,56 +209,9 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	}
 
 	if (!is.null(wkt)) {
-		cat('\n\tUse the same extent in the future by supplying the following string to the extent argument:\n\n')
-		cat(paste0('\t"', wkt, '"'), '\n\n')
+		message('\n\tUse the same extent in the future by supplying the following string to the extent argument:\n\n')
+		message(paste0('\t"', wkt, '"'), '\n\n')
 	}
 
 	return(ret)
 }	
-
-
-
-
-interactiveExtent <- function(polyList) {
-	
-	#get overall extent
-	masterExtent <- getExtentOfList(polyList)
-	masterExtent <- list(minLong = masterExtent@xmin, maxLong = masterExtent@xmax, minLat = masterExtent@ymin, maxLat = masterExtent@ymax)
-	
-	# coarse template
-	# if projected, use 100km, if not, use 20 degrees
-	quickRes <- ifelse(sf::st_is_longlat(polyList[[1]]), 20, 100000)
-	proj <- sf::st_crs(polyList[[1]])
-	quickTemplate <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(quickRes, 2), crs = proj$proj4string)
-	quick <- lapply(polyList, function(x) fasterize::fasterize(x, quickTemplate))
-	rich <- raster::calc(raster::stack(quick), fun=sum, na.rm = TRUE)
-	
-	# add map for context
-	if (!sf::st_is_longlat(polyList[[1]])) {
-		wrld <- sf::st_transform(worldmap, crs = sf::st_crs(polyList[[1]]))
-	} else {
-		wrld <- worldmap
-	}
-	
-	raster::plot(rich, legend = FALSE)
-	cat('\n\tAn interactive coarse-grain map has been displayed.\n')
-	cat('\n\tPlease wait until plot is completed......')
-	
-	graphics::plot(wrld, add = TRUE, lwd = 0.5)
-	cat('done!\n')
-	graphics::title(main = 'Define your extent polygon.')
-
-	cat('\tClick on the map to create a polygon that will define the extent of the rasterStack.')
-	cat('\tRight-clicking will close the polygon and terminate the interactive plot.\n\n')
-	
-	userPoly <- raster::drawPoly(sp = TRUE, col = 'red', xpd = NA)
-	userPoly <- sf::st_as_sf(userPoly)
-	sf::st_crs(userPoly) <- sf::st_crs(polyList[[1]])
-	
-	# display call so user can use this extent in the future
-	wkt <- sf::st_as_text(sf::st_geometry(userPoly))
-	
-	grDevices::dev.off()
-	
-	return(list(poly = userPoly, wkt = wkt))
-}
