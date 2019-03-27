@@ -9,7 +9,7 @@
 ##'
 ##' @param var If a univariate morphological metric is specified, and the 
 ##' 	data in \code{x} are multivariate, which trait should be used?
-##' 	This can also be a vector of column indices used to subset the data.
+##' 	This can also specify which subset of columns a multivariate metric should be applied to.
 ##' 
 ##' @param nreps Number of repetitions for Foote metric distribution.
 ##'
@@ -80,7 +80,7 @@
 
 cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose = FALSE) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 	
@@ -97,9 +97,9 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	pairwise <- FALSE
 	
 	# if data is pairwise matrix, then set flag appropriately
-	if (class(x[['data']]) %in% c('matrix', 'data.frame')) {
+	if (inherits(x[['data']], c('matrix', 'data.frame'))) {
 		if (identical(rownames(x[['data']]), colnames(x[['data']]))) {
-			if (verbose) cat('\t...detected pairwise distance matrix...\n') 
+			if (verbose) message('\t...detected pairwise distance matrix...\n') 
 			var <- NULL
 			pairwise <- TRUE
 			# make the diagonal and lower triangle NA
@@ -115,20 +115,20 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		var <- NULL
 	}
 		
-	if (!is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
+	if (!is.null(var) & inherits(x[['data']], c('matrix', 'data.frame'))) {
 		if (is.character(var)) {
-			if (!var %in% colnames(x[['data']])) {
+			if (any(!var %in% colnames(x[['data']]))) {
 				stop('var not a valid column name of the data.')
 			}
 		} else if (is.numeric(var)) {
-			if (!all(var %in% 1:ncol(x[['data']]))) {
+			if (any(!all(var %in% 1:ncol(x[['data']])))) {
 				stop('Requested data column indices are out of range.')
 			}
 		}
 	}
 	
-	if (class(x[['data']]) %in% c('matrix', 'data.frame') | is.vector(x[['data']])) {
-		if (class(x[['data']]) %in% c('matrix', 'data.frame')) {
+	if (inherits(x[['data']], c('matrix', 'data.frame')) | is.vector(x[['data']])) {
+		if (inherits(x[['data']], c('matrix', 'data.frame'))) {
 			metricType <- 'multiVar'
 			if (!is.null(var) & length(var) == 1) {
 				metricType <- 'uniVar'
@@ -141,7 +141,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 	
 	# if a subset of data columns are requested, subset the data table
-	if (!is.null(var) & class(x[['data']]) %in% c('matrix', 'data.frame')) {
+	if (!is.null(var) & inherits(x[['data']], c('matrix', 'data.frame'))) {
 		if (length(var) > 1) {
 			x[['data']] <- x[['data']][, var]
 		} else {
@@ -167,7 +167,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	# Prune species list according to metric of interest
 	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'mean_NN_dist', 'min_NN_dist')) {
 		
-		if (verbose) cat('\t...dropping species that are not in trait data...\n')
+		if (verbose) message('\t...dropping species that are not in trait data...\n')
 		# check that there is data in speciesRaster object
 		if (is.null(x[['data']])) {
 			stop('speciesRaster object does not contain trait data!')
@@ -187,7 +187,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			stop('speciesRaster object does not contain a phylo object!')
 		}
 		
-		if (verbose) cat('\t...dropping species that are not in phylo data...\n')
+		if (verbose) message('\t...dropping species that are not in phylo data...\n')
 	 	# prune speciesRaster object down to species shared with phylogeny
 		x[['speciesList']] <- intersectList(x[['speciesList']], x[['phylo']]$tip.label)
 	
@@ -207,7 +207,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## UNIVARIATE
 	
 	if (metric %in% c('mean', 'median', 'variance', 'range', 'mean_NN_dist', 'min_NN_dist') & !pairwise & metricType == 'uniVar') {
-		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating univariate metric: ', metric, '...\n')
 		trait <- x[['data']]
 		resVal <- cellAvg(uniqueComm, trait = trait, stat = metric)
 		
@@ -219,7 +219,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 	
 	if (metric %in% c('arithmeticWeightedMean', 'geometricWeightedMean') & metricType == 'uniVar') {
-		if (verbose) cat('\t...calculating univariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating univariate metric: ', metric, '...\n')
 		trait <- x[['data']]
 			
 		# get inverse range sizes (1 / cell counts)
@@ -244,7 +244,8 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	if (metric %in% c('mean', 'median', 'variance') & pairwise) {
 	
 		# if pairwise matrix
-	
+		if (verbose) message('\t...calculating pairwise metric: ', metric, '...\n')
+		
 		resVal <- rep(NA, length(uniqueComm)) # set up with NA
 		
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
@@ -265,7 +266,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## MULTIVARIATE
 	
 	if (metric == 'disparity' & metricType == 'multiVar') {
-		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating multivariate metric: ', metric, '...\n')
 		# sum of the diagonal of the covariance matrix
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		# resVal <- rep(NA, length(uniqueComm)) # set up with NA
@@ -275,7 +276,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 	
 	if (metric == 'range' & metricType == 'multiVar') {
-		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating multivariate metric: ', metric, '...\n')
 		# maximum of the distance matrix (0 if one sp)
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
@@ -284,7 +285,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 	
 	if (metric == 'rangePCA' & metricType == 'multiVar') {
-		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating multivariate metric: ', metric, '...\n')
 		pc <- prcomp(x[['data']])
 		# retain 99% of the variation
 		keep <- 1:which(cumsum(((pc$sdev)^2) / sum(pc$sdev^2)) >= 0.99)[1]
@@ -299,7 +300,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 	
 	if (metric == 'mean_NN_dist' & metricType == 'multiVar') {
-		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating multivariate metric: ', metric, '...\n')
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
@@ -307,7 +308,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 
 	if (metric == 'min_NN_dist' & metricType == 'multiVar') {
-		if (verbose) cat('\t...calculating multivariate metric:', metric, '...\n')
+		if (verbose) message('\t...calculating multivariate metric: ', metric, '...\n')
 		resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 		resVal[sapply(uniqueComm, anyNA)] <- NA
 		ind <- which(sapply(uniqueComm, length) > 1)
@@ -324,7 +325,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		diag(patdist) <- NA
 		
 		if (metric == 'meanPatristic') {
-			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
 			# meanPatristic is 0 if 1 species, NA if no species
 			patdist[upper.tri(patdist, diag = TRUE)] <- NA
 			resVal <- pbapply::pbsapply(uniqueComm, function(y) mean(unlist(patdist[y, y]), na.rm = TRUE))
@@ -333,7 +334,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}
 		
 		if (metric == 'patristicNN') {
-			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
 			# the mean of the minimum patristic distance for each species present
 			resVal <- numeric(length = length(uniqueComm)) # set up with zeros
 			resVal[sapply(uniqueComm, anyNA)] <- NA
@@ -344,7 +345,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}
 
 		if (metric == 'phyloDisparity') {
-			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
 			# the sum of the squared deviations from the mean
 			# value of 0 if 1 species, NA if no species
 			
@@ -357,7 +358,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}		
 		
 		if (metric == 'PSV') {
-			if (verbose) cat('\t...calculating phylo metric:', metric, '...\n')
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
 			# Phylogenetic Species Variability is based on the variance-covariance matrix
 			# measure of phylogenetic diversity, ranges from 0-1, not confounded by species richness
 			
@@ -375,7 +376,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## RANGE-WEIGHTED METRICS
 	
 	if (metric %in% c('weightedEndemism', 'correctedWeightedEndemism')) {
-		if (verbose) cat('\t...calculating weighted endemism metric...\n')
+		if (verbose) message('\t...calculating weighted endemism metric...\n')
 		
 		# get inverse range sizes (1 / cell counts)
 		inverseCellCount <- 1 / x[['cellCount']]
@@ -391,10 +392,10 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	}
 	
 	if (metric == 'phyloWeightedEndemism') {
-		if (verbose) cat('\t...calculating phylogenetic weighted endemism...\n')
+		if (verbose) message('\t...calculating phylogenetic weighted endemism...\n')
 		spEdges <- getRootToTipEdges(x[['phylo']])
 		if (!'edgeArea' %in% names(x)) {
-			if (verbose) cat('\t...calculating branch-specific range sizes...\n')
+			if (verbose) message('\t...calculating branch-specific range sizes...\n')
 
 			# phylo branch ranges must be based on full list of cell communities, therefore we need to expand the speciesList
 			fullSpList <- expandSpeciesCellList(x)
@@ -407,7 +408,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
 			commEdges <- unique(unlist(spEdges[tipIndVec[y]])) + 1
 			sub <- x[['edgeArea']][commEdges,]
-			if (class(sub) == 'numeric') {
+			if (inherits(sub, 'numeric')) {
 				sub <- matrix(sub, nrow = 1)
 			}
 			sum(sub[,1] / sub[,2])
