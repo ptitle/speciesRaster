@@ -45,6 +45,7 @@
 ##' plot(spRas2, colorRampRange = log(minmax), log = TRUE, location='left')
 ##' 
 ##' @rdname plot
+##' @aliases plot.speciesRaster
 ##' @export
 
 plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', singleSpCol = gray(0.9), ...) {
@@ -55,7 +56,7 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	
 	# if x is a speciesRaster that represents a metric that only makes sense for communities with multiple species, 
 	# then single species cells have a value of zero, and we will plot those cells as gray.
-	if (names(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV')) {
+	if (raster::labels(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV')) {
 		# determine which cells have just 1 species
 		singleSpCells <- singleSpCellIndex(x)
 		x[[1]][singleSpCells] <- NA

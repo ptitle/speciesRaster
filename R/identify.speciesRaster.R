@@ -17,6 +17,7 @@
 ##' @author Pascal Title
 ##' 
 ##' @rdname identify
+##' @aliases identify.speciesRaster
 ##' @export
 
 identify.speciesRaster <- function(x, ..., returnCell = FALSE) {

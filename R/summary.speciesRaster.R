@@ -18,6 +18,7 @@
 ##' attr
 ##' 
 ##' @rdname summary
+##' @aliases summary.speciesRaster
 ##' @export
 
 summary.speciesRaster <- function(object, ...) {
