@@ -4,10 +4,12 @@
 \alias{summary.speciesRaster}
 \title{speciesRaster summary}
 \usage{
-summary.speciesRaster(object)
+\method{summary}{speciesRaster}(object, ...)
 }
 \arguments{
 \item{object}{object of class \code{speciesRaster}}
+
+\item{...}{further arguments passed to \code{\link{summary}}}
 }
 \value{
 A list containing the summary information is returned invisibly.

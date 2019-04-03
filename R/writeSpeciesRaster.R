@@ -24,6 +24,10 @@
 
 writeSpeciesRaster <- function(x, filename) {
 	
+	if (!inherits(x, 'speciesRaster')) {
+		stop('x must be of class speciesRaster.')
+	}
+
 	# check if raster values are in memory, and if not, move them to memory
 	if (!raster::inMemory(x[[1]])) {
 		x[[1]] <- raster::setValues(x[[1]], 1:raster::ncell(x[[1]]))

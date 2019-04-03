@@ -29,15 +29,15 @@
 
 addTraits_speciesRaster <- function(x, data, replace = FALSE) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('x must be of class speciesRaster.')
 	}
 	
-	if (!class(data) %in% c('numeric', 'matrix', 'data.frame')) {
+	if (!inherits(data, c('numeric', 'matrix', 'data.frame'))) {
 		stop('data must be either a numeric vector, matrix or dataframe.')
 	}
 	
-	if (class(x[['data']]) %in% c('numeric', 'matrix', 'data.frame') & !replace) {
+	if (inherits(x[['data']], c('numeric', 'matrix', 'data.frame')) & !replace) {
 		stop('Data already present. If data are to be replaced, set replace = TRUE')
 	}
 	
@@ -73,9 +73,9 @@ addTraits_speciesRaster <- function(x, data, replace = FALSE) {
 	}
 	
 	if (length(inDataNotGeog) > 0) {
-		cat('Warning: The following species were dropped from the trait data because they lacked geographic data:\n')
+		warning('The following species were dropped from the trait data because they lacked geographic data:\n')
 		for (i in 1:length(inDataNotGeog)) {
-			cat('\t', inDataNotGeog[i], '\n')
+			message('\t', inDataNotGeog[i], '\n')
 		}
 	}
 	

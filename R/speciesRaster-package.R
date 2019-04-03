@@ -14,7 +14,6 @@
 ##' @importFrom Rcpp evalCpp
 ##' @importFrom Rcpp sourceCpp
 ##'
-##' @import sp
 ##' @import methods
 ##' 
 ##' 
@@ -22,6 +21,7 @@
 ##' @importFrom stats cophenetic cov dist prcomp runif sd setNames
 ##' @importFrom utils setTxtProgressBar txtProgressBar
 ##' @importFrom ape drop.tip
+##' @importFrom grDevices gray
 ##' 
 ##' 
 ##' 

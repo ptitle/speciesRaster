@@ -4,10 +4,12 @@
 \alias{identify.speciesRaster}
 \title{Identify species in speciesRaster}
 \usage{
-\method{identify}{speciesRaster}(x, returnCell = FALSE)
+\method{identify}{speciesRaster}(x, ..., returnCell = FALSE)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
+
+\item{...}{further arguments passed to \code{\link{identify}}}
 
 \item{returnCell}{boolean; if FALSE, then species names are returned,
 if TRUE, then cell numbers are returned.}

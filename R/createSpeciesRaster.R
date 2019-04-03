@@ -40,7 +40,7 @@
 ##'
 ##' @examples
 ##' library(raster)
-##' library(maptools)
+##' library(sf)
 ##' # example dataset: a list of 24 chipmunk distributions as polygons
 ##' head(tamiasPolyList)
 ##' 
@@ -73,7 +73,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 	if (all(class(ranges) %in% c('RasterStack', 'RasterBrick'))) {
 		
 		#check that all rasters have values
-		if (verbose) cat('\t...Checking for empty rasters...\n')
+		if (verbose) message('\t...Checking for empty rasters...\n')
 		valCheck <- raster::minValue(ranges)
 		badEntries <- which(is.na(valCheck))
 		badEntriesRet <- badEntries
@@ -93,10 +93,10 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		spByCell <- vector('list', length = raster::ncell(ranges))
 		
 		# determine the size of rasterStack that can be processed in memory	
-		if (verbose) cat('\t...Determining if rasterstack can be processed in memory...')
+		if (verbose) message('\t...Determining if rasterstack can be processed in memory...')
 		if (raster::canProcessInMemory(ranges)) {
 
-			if (verbose) cat('yes\n')
+			if (verbose) message('yes\n')
 			mat <- matrix(nrow=raster::ncell(ranges), ncol=raster::nlayers(ranges))
 			colnames(mat) <- names(ranges)
 
@@ -125,14 +125,14 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		} else {
 			
 			# data too big. Split into subsets of rows
-			if (verbose) cat('no\n')
-			if (verbose) cat('\t...Determining how many rasters can be processed in memory...')	
+			if (verbose) message('no\n')
+			if (verbose) message('\t...Determining how many rasters can be processed in memory...')	
 			n <- 1
 			while (raster::canProcessInMemory(ranges[[1:n]])) {
 				n <- n + 1
 			}
 			
-			if (verbose) cat(n, '\n')
+			if (verbose) message(n, '\n')
 					
 			indList <- split(1:raster::nlayers(ranges), ceiling(1:raster::nlayers(ranges)/n))
 			
@@ -174,7 +174,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 			raster::pbClose(pb, timer = FALSE)
 		
 			# combine pieces
-			if (verbose) cat('\t...Assembling speciesRaster...\n')	
+			if (verbose) message('\t...Assembling speciesRaster...\n')	
 			raster::values(ras) <- rowSums(do.call(cbind, cellVals))
 			# for now, replace all NA with 'empty'
 			for (i in 1:length(SpByCellList)) {
@@ -192,14 +192,14 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		
 		
 		# reduce spByCell to unique communities and track
-		if (verbose) cat('\t...Reducing species list to unique sets...')
+		if (verbose) message('\t...Reducing species list to unique sets...')
 		uniqueComm <- unique(spByCell)
 		spByCell2 <- sapply(spByCell, function(y) paste(y, collapse = '|'))
 		uniqueComm2 <- sapply(uniqueComm, function(y) paste(y, collapse = '|'))
 		for (i in 1:length(uniqueComm2)) {
 			cellCommVec[which(spByCell2 == uniqueComm2[i])] <- i
 		}		
-		if (verbose) cat('done\n')		
+		if (verbose) message('done\n')		
 		
 		#remove zero cells
 		ras[ras == 0] <- NA
@@ -210,7 +210,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		obj[['geogSpecies']] <- sort(unique(names(ranges)))
 		
 		# calculate range area for each species ( = number of cells)
-		if (verbose) cat('\t...Calculating species cell counts...\n\n')
+		if (verbose) message('\t...Calculating species cell counts...\n\n')
 		obj[['cellCount']] <- countCells(convertNAtoEmpty(spByCell), obj[['geogSpecies']])
 		names(obj[['cellCount']]) <- obj[['geogSpecies']]
 	}
@@ -240,8 +240,8 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		if (!identical(as.numeric(range(raster::values(rasterTemplate))), c(0, 1))) {
 			stop('rasterTemplate can only have values of 0 or 1.')
 		}
-		if (verbose) cat('\t...Using species by cell matrix...\n')
-		if (verbose) cat('\t...Calculating species richness...\n')
+		if (verbose) message('\t...Using species by cell matrix...\n')
+		if (verbose) message('\t...Calculating species richness...\n')
 		dropCells <- which(raster::values(rasterTemplate) == 0)
 		raster::values(rasterTemplate) <- colSums(ranges)
 		if (length(dropCells) > 0) {
@@ -251,7 +251,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		
 		names(rasterTemplate) <- 'spRichness'
 		
-		if (verbose) cat('\t...Indexing species in cells...\n')
+		if (verbose) message('\t...Indexing species in cells...\n')
 		obj[['raster']] <- rasterTemplate
 		
 		spByCell <- apply(ranges, 2, function(x) names(x[which(x == 1)]))
@@ -280,7 +280,7 @@ createSpeciesRaster <- function(ranges, rasterTemplate = NULL, verbose = FALSE) 
 		obj[['geogSpecies']] <- sort(rownames(ranges))
 		
 		# calculate range area for each species ( = number of cells)
-		if (verbose) cat('\t...Calculating species cell counts...\n\n')
+		if (verbose) message('\t...Calculating species cell counts...\n\n')
 		obj[['cellCount']] <- rowSums(ranges)
 		 
 	}

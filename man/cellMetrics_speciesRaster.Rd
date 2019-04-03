@@ -14,7 +14,7 @@ cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20,
 
 \item{var}{If a univariate morphological metric is specified, and the 
 data in \code{x} are multivariate, which trait should be used?
-This can also be a vector of column indices used to subset the data.}
+This can also specify which subset of columns a multivariate metric should be applied to.}
 
 \item{nreps}{Number of repetitions for Foote metric distribution.}
 

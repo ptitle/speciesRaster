@@ -2,12 +2,12 @@
 
 print.speciesRaster <- function(x, ...) {
 	
-	if (!'speciesRaster' %in% class(x)) {
+	if (!inherits(x, 'speciesRaster')) {
 		stop('Object must be of class speciesRaster.')
 	}
 	
 	# if data present in object, then report info
-	if (class(x[['data']]) %in% c('numeric', 'matrix', 'data.frame')) {
+	if (inherits(x[['data']], c('numeric', 'matrix', 'data.frame'))) {
 		if (is.vector(x[['data']])) {
 			data <- length(intersect(x[['geogSpecies']], names(x[['data']])))
 		} else {
@@ -18,7 +18,7 @@ print.speciesRaster <- function(x, ...) {
 	}
 	
 	# if phylogeny present in object, then report info
-	if (class(x[['phylo']]) %in% 'phylo') {
+	if (inherits(x[['phylo']], 'phylo')) {
 		phylo <- length(intersect(x[['geogSpecies']], x[['phylo']]$tip.label))
 	} else {
 		phylo <- NA
@@ -28,7 +28,7 @@ print.speciesRaster <- function(x, ...) {
 	ncells <- raster::ncell(x[[1]])
 	rasterExtent <- raster::extent(x[[1]])
 	resolution <- raster::res(x[[1]])
-	proj <- raster::projection(x[[1]])
+	proj <- sf::st_crs(x[[1]])
 	lengthUniqueSp <- length(x[['geogSpecies']])
 	minSp <- min(sapply(x[['speciesList']], length))
 	maxSp <- max(sapply(x[['speciesList']], length))
@@ -37,11 +37,11 @@ print.speciesRaster <- function(x, ...) {
 	cat('\tMetric:', metric, '\n')
 	cat('\tnumber of raster cells:', ncells, '\n')
 	cat('\traster resolution:', resolution[1], 'by', resolution[2], '\n')
-	cat('\traster projection:', proj, '\n\n')
+	cat('\traster projection:', proj$proj4string, '\n\n')
 	cat(paste0('\tnumber of unique species: ', lengthUniqueSp, ' (richness range: ', minSp, ' - ', maxSp, ')'), '\n')
 	cat('\tdata present:', ifelse(is.na(data), 'No', 'Yes'), '\n')
 	if (!is.na(data)) {
-		cat('\tnumber of species shared between data and raster:', data)
+		cat('\tnumber of species shared between data and raster:', data, '\n')
 	}
 
 	cat('\tphylogeny present:', ifelse(is.na(phylo), 'No', 'Yes'), '\n')
