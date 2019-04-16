@@ -48,10 +48,8 @@ addPhylo_speciesRaster <- function(x, tree, replace = FALSE) {
 	x[['phylo']] <- tree
 	
 	if (length(inPhyloNotGeog) > 0) {
-		warning('The following species were pruned from the phylogeny because they lack geographic data:\n')
-		for (i in 1:length(inPhyloNotGeog)) {
-			message('\t', inPhyloNotGeog[i], '\n')
-		}
+		msg <- paste0('The following species were pruned from the phylogeny because they lack geographic data:\n\t', paste(inPhyloNotGeog, collapse='\n\t'))
+		warning(msg)
 	}
 	
 	return(x)
