@@ -5,6 +5,128 @@
 
 using namespace Rcpp;
 
+// getComponentA
+std::vector<std::string> getComponentA(std::vector<std::string> commI, std::vector<std::string> commJ);
+RcppExport SEXP _speciesRaster_getComponentA(SEXP commISEXP, SEXP commJSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type commI(commISEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type commJ(commJSEXP);
+    rcpp_result_gen = Rcpp::wrap(getComponentA(commI, commJ));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getComponentB
+std::vector<std::string> getComponentB(std::vector<std::string> commI, std::vector<std::string> commJ);
+RcppExport SEXP _speciesRaster_getComponentB(SEXP commISEXP, SEXP commJSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type commI(commISEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type commJ(commJSEXP);
+    rcpp_result_gen = Rcpp::wrap(getComponentB(commI, commJ));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getComponentC
+std::vector<std::string> getComponentC(std::vector<std::string> commI, std::vector<std::string> commJ);
+RcppExport SEXP _speciesRaster_getComponentC(SEXP commISEXP, SEXP commJSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type commI(commISEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type commJ(commJSEXP);
+    rcpp_result_gen = Rcpp::wrap(getComponentC(commI, commJ));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_which_int
+int c_which_int(std::vector<int> vec, int x);
+RcppExport SEXP _speciesRaster_c_which_int(SEXP vecSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type vec(vecSEXP);
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_which_int(vec, x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_which_char
+int c_which_char(std::vector<std::string> vec, std::string x);
+RcppExport SEXP _speciesRaster_c_which_char(SEXP vecSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type vec(vecSEXP);
+    Rcpp::traits::input_parameter< std::string >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_which_char(vec, x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// setdiff_int
+std::vector<int> setdiff_int(std::vector<int> vec1, std::vector<int> vec2);
+RcppExport SEXP _speciesRaster_setdiff_int(SEXP vec1SEXP, SEXP vec2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type vec1(vec1SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type vec2(vec2SEXP);
+    rcpp_result_gen = Rcpp::wrap(setdiff_int(vec1, vec2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// intersect_int
+std::vector<int> intersect_int(std::vector<int> vec1, std::vector<int> vec2);
+RcppExport SEXP _speciesRaster_intersect_int(SEXP vec1SEXP, SEXP vec2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type vec1(vec1SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type vec2(vec2SEXP);
+    rcpp_result_gen = Rcpp::wrap(intersect_int(vec1, vec2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getLeavesForNodes
+List getLeavesForNodes(List phylo);
+RcppExport SEXP _speciesRaster_getLeavesForNodes(SEXP phyloSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    rcpp_result_gen = Rcpp::wrap(getLeavesForNodes(phylo));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getRootToTipEdges
+List getRootToTipEdges(List phylo);
+RcppExport SEXP _speciesRaster_getRootToTipEdges(SEXP phyloSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    rcpp_result_gen = Rcpp::wrap(getRootToTipEdges(phylo));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getMRCA_from_nodeLeaves
+int getMRCA_from_nodeLeaves(List nodeLeaves, std::vector<std::string> taxa);
+RcppExport SEXP _speciesRaster_getMRCA_from_nodeLeaves(SEXP nodeLeavesSEXP, SEXP taxaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type nodeLeaves(nodeLeavesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type taxa(taxaSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMRCA_from_nodeLeaves(nodeLeaves, taxa));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FaithPD_branchIndices
+std::vector<int> FaithPD_branchIndices(std::vector<std::string> a, List phylo, List nodeLeaves, List spEdges, bool includeRoot);
+RcppExport SEXP _speciesRaster_FaithPD_branchIndices(SEXP aSEXP, SEXP phyloSEXP, SEXP nodeLeavesSEXP, SEXP spEdgesSEXP, SEXP includeRootSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type a(aSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< List >::type nodeLeaves(nodeLeavesSEXP);
+    Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
+    Rcpp::traits::input_parameter< bool >::type includeRoot(includeRootSEXP);
+    rcpp_result_gen = Rcpp::wrap(FaithPD_branchIndices(a, phylo, nodeLeaves, spEdges, includeRoot));
+    return rcpp_result_gen;
+END_RCPP
+}
 // spListPerCell
 List spListPerCell(NumericMatrix input);
 RcppExport SEXP _speciesRaster_spListPerCell(SEXP inputSEXP) {
@@ -332,27 +454,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// c_which_int
-int c_which_int(std::vector<int> vec, int x);
-RcppExport SEXP _speciesRaster_c_which_int(SEXP vecSEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::vector<int> >::type vec(vecSEXP);
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_which_int(vec, x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getRootToTipEdges
-List getRootToTipEdges(List phylo);
-RcppExport SEXP _speciesRaster_getRootToTipEdges(SEXP phyloSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
-    rcpp_result_gen = Rcpp::wrap(getRootToTipEdges(phylo));
-    return rcpp_result_gen;
-END_RCPP
-}
 // phyloBranchRanges
 List phyloBranchRanges(List phylo, List speciesList, List tipEdges);
 RcppExport SEXP _speciesRaster_phyloBranchRanges(SEXP phyloSEXP, SEXP speciesListSEXP, SEXP tipEdgesSEXP) {
@@ -383,50 +484,6 @@ BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< List >::type input(inputSEXP);
     rcpp_result_gen = Rcpp::wrap(mergeLists(input));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getComponentA
-std::vector<std::string> getComponentA(std::vector<std::string> commI, std::vector<std::string> commJ);
-RcppExport SEXP _speciesRaster_getComponentA(SEXP commISEXP, SEXP commJSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type commI(commISEXP);
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type commJ(commJSEXP);
-    rcpp_result_gen = Rcpp::wrap(getComponentA(commI, commJ));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getComponentB
-std::vector<std::string> getComponentB(std::vector<std::string> commI, std::vector<std::string> commJ);
-RcppExport SEXP _speciesRaster_getComponentB(SEXP commISEXP, SEXP commJSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type commI(commISEXP);
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type commJ(commJSEXP);
-    rcpp_result_gen = Rcpp::wrap(getComponentB(commI, commJ));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getComponentC
-std::vector<std::string> getComponentC(std::vector<std::string> commI, std::vector<std::string> commJ);
-RcppExport SEXP _speciesRaster_getComponentC(SEXP commISEXP, SEXP commJSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type commI(commISEXP);
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type commJ(commJSEXP);
-    rcpp_result_gen = Rcpp::wrap(getComponentC(commI, commJ));
-    return rcpp_result_gen;
-END_RCPP
-}
-// c_which_char
-int c_which_char(std::vector<std::string> vec, std::string x);
-RcppExport SEXP _speciesRaster_c_which_char(SEXP vecSEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type vec(vecSEXP);
-    Rcpp::traits::input_parameter< std::string >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_which_char(vec, x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -607,40 +664,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// getLeavesForNodes
-List getLeavesForNodes(List phylo);
-RcppExport SEXP _speciesRaster_getLeavesForNodes(SEXP phyloSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
-    rcpp_result_gen = Rcpp::wrap(getLeavesForNodes(phylo));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getMRCA_from_nodeLeaves
-int getMRCA_from_nodeLeaves(List nodeLeaves, std::vector<std::string> taxa);
-RcppExport SEXP _speciesRaster_getMRCA_from_nodeLeaves(SEXP nodeLeavesSEXP, SEXP taxaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< List >::type nodeLeaves(nodeLeavesSEXP);
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type taxa(taxaSEXP);
-    rcpp_result_gen = Rcpp::wrap(getMRCA_from_nodeLeaves(nodeLeaves, taxa));
-    return rcpp_result_gen;
-END_RCPP
-}
-// FaithPD_branchIndices
-std::vector<int> FaithPD_branchIndices(std::vector<std::string> a, List phylo, List nodeLeaves, List spEdges);
-RcppExport SEXP _speciesRaster_FaithPD_branchIndices(SEXP aSEXP, SEXP phyloSEXP, SEXP nodeLeavesSEXP, SEXP spEdgesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type a(aSEXP);
-    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
-    Rcpp::traits::input_parameter< List >::type nodeLeaves(nodeLeavesSEXP);
-    Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
-    rcpp_result_gen = Rcpp::wrap(FaithPD_branchIndices(a, phylo, nodeLeaves, spEdges));
-    return rcpp_result_gen;
-END_RCPP
-}
 // calcPhylosor
 NumericVector calcPhylosor(List spByCell, int radius, int rasterNRow, int rasterNCol, NumericVector rasterValuesR, NumericVector nonNAcellsR, List phylo, bool showProgress);
 RcppExport SEXP _speciesRaster_calcPhylosor(SEXP spByCellSEXP, SEXP radiusSEXP, SEXP rasterNRowSEXP, SEXP rasterNColSEXP, SEXP rasterValuesRSEXP, SEXP nonNAcellsRSEXP, SEXP phyloSEXP, SEXP showProgressSEXP) {
@@ -670,8 +693,89 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// calcTaxonomicTurnoverFromPair
+NumericVector calcTaxonomicTurnoverFromPair(StringVector vec1, StringVector vec2);
+RcppExport SEXP _speciesRaster_calcTaxonomicTurnoverFromPair(SEXP vec1SEXP, SEXP vec2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< StringVector >::type vec1(vec1SEXP);
+    Rcpp::traits::input_parameter< StringVector >::type vec2(vec2SEXP);
+    rcpp_result_gen = Rcpp::wrap(calcTaxonomicTurnoverFromPair(vec1, vec2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcPairwiseTaxonomicSorensen
+NumericMatrix calcPairwiseTaxonomicSorensen(List allComm, String component);
+RcppExport SEXP _speciesRaster_calcPairwiseTaxonomicSorensen(SEXP allCommSEXP, SEXP componentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type allComm(allCommSEXP);
+    Rcpp::traits::input_parameter< String >::type component(componentSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcPairwiseTaxonomicSorensen(allComm, component));
+    return rcpp_result_gen;
+END_RCPP
+}
+// uniqueBranchesForSet
+std::vector<int> uniqueBranchesForSet(std::vector<std::string> a, std::vector<std::string> tipLabels, List spEdges);
+RcppExport SEXP _speciesRaster_uniqueBranchesForSet(SEXP aSEXP, SEXP tipLabelsSEXP, SEXP spEdgesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type a(aSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type tipLabels(tipLabelsSEXP);
+    Rcpp::traits::input_parameter< List >::type spEdges(spEdgesSEXP);
+    rcpp_result_gen = Rcpp::wrap(uniqueBranchesForSet(a, tipLabels, spEdges));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcPairwisePhylosor
+NumericMatrix calcPairwisePhylosor(List allComm, List phylo, String component);
+RcppExport SEXP _speciesRaster_calcPairwisePhylosor(SEXP allCommSEXP, SEXP phyloSEXP, SEXP componentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type allComm(allCommSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< String >::type component(componentSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcPairwisePhylosor(allComm, phylo, component));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calcPairwisePhylosor2
+NumericMatrix calcPairwisePhylosor2(List allComm, List phylo, String component);
+RcppExport SEXP _speciesRaster_calcPairwisePhylosor2(SEXP allCommSEXP, SEXP phyloSEXP, SEXP componentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< List >::type allComm(allCommSEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< String >::type component(componentSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcPairwisePhylosor2(allComm, phylo, component));
+    return rcpp_result_gen;
+END_RCPP
+}
+// faith
+List faith(StringVector vec1, StringVector vec2, List phylo);
+RcppExport SEXP _speciesRaster_faith(SEXP vec1SEXP, SEXP vec2SEXP, SEXP phyloSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< StringVector >::type vec1(vec1SEXP);
+    Rcpp::traits::input_parameter< StringVector >::type vec2(vec2SEXP);
+    Rcpp::traits::input_parameter< List >::type phylo(phyloSEXP);
+    rcpp_result_gen = Rcpp::wrap(faith(vec1, vec2, phylo));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_speciesRaster_getComponentA", (DL_FUNC) &_speciesRaster_getComponentA, 2},
+    {"_speciesRaster_getComponentB", (DL_FUNC) &_speciesRaster_getComponentB, 2},
+    {"_speciesRaster_getComponentC", (DL_FUNC) &_speciesRaster_getComponentC, 2},
+    {"_speciesRaster_c_which_int", (DL_FUNC) &_speciesRaster_c_which_int, 2},
+    {"_speciesRaster_c_which_char", (DL_FUNC) &_speciesRaster_c_which_char, 2},
+    {"_speciesRaster_setdiff_int", (DL_FUNC) &_speciesRaster_setdiff_int, 2},
+    {"_speciesRaster_intersect_int", (DL_FUNC) &_speciesRaster_intersect_int, 2},
+    {"_speciesRaster_getLeavesForNodes", (DL_FUNC) &_speciesRaster_getLeavesForNodes, 1},
+    {"_speciesRaster_getRootToTipEdges", (DL_FUNC) &_speciesRaster_getRootToTipEdges, 1},
+    {"_speciesRaster_getMRCA_from_nodeLeaves", (DL_FUNC) &_speciesRaster_getMRCA_from_nodeLeaves, 2},
+    {"_speciesRaster_FaithPD_branchIndices", (DL_FUNC) &_speciesRaster_FaithPD_branchIndices, 5},
     {"_speciesRaster_spListPerCell", (DL_FUNC) &_speciesRaster_spListPerCell, 1},
     {"_speciesRaster_sort_", (DL_FUNC) &_speciesRaster_sort_, 2},
     {"_speciesRaster_returnTopIndices", (DL_FUNC) &_speciesRaster_returnTopIndices, 2},
@@ -703,15 +807,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_calcBetaMultiSite", (DL_FUNC) &_speciesRaster_calcBetaMultiSite, 3},
     {"_speciesRaster_calcBetaMultiSiteBlock", (DL_FUNC) &_speciesRaster_calcBetaMultiSiteBlock, 3},
     {"_speciesRaster_mapComm", (DL_FUNC) &_speciesRaster_mapComm, 2},
-    {"_speciesRaster_c_which_int", (DL_FUNC) &_speciesRaster_c_which_int, 2},
-    {"_speciesRaster_getRootToTipEdges", (DL_FUNC) &_speciesRaster_getRootToTipEdges, 1},
     {"_speciesRaster_phyloBranchRanges", (DL_FUNC) &_speciesRaster_phyloBranchRanges, 3},
     {"_speciesRaster_countCells", (DL_FUNC) &_speciesRaster_countCells, 2},
     {"_speciesRaster_mergeLists", (DL_FUNC) &_speciesRaster_mergeLists, 1},
-    {"_speciesRaster_getComponentA", (DL_FUNC) &_speciesRaster_getComponentA, 2},
-    {"_speciesRaster_getComponentB", (DL_FUNC) &_speciesRaster_getComponentB, 2},
-    {"_speciesRaster_getComponentC", (DL_FUNC) &_speciesRaster_getComponentC, 2},
-    {"_speciesRaster_c_which_char", (DL_FUNC) &_speciesRaster_c_which_char, 2},
     {"_speciesRaster_weightedPhylo", (DL_FUNC) &_speciesRaster_weightedPhylo, 5},
     {"_speciesRaster_calcRWTurnover_taxonomic_old", (DL_FUNC) &_speciesRaster_calcRWTurnover_taxonomic_old, 2},
     {"_speciesRaster_calcRWTurnover_rangeWeighted_old", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted_old, 3},
@@ -725,11 +823,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_speciesRaster_calcRWTurnover_rangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_rangeWeighted, 8},
     {"_speciesRaster_calcRWTurnover_phyloRangeWeighted", (DL_FUNC) &_speciesRaster_calcRWTurnover_phyloRangeWeighted, 10},
     {"_speciesRaster_getUnion", (DL_FUNC) &_speciesRaster_getUnion, 2},
-    {"_speciesRaster_getLeavesForNodes", (DL_FUNC) &_speciesRaster_getLeavesForNodes, 1},
-    {"_speciesRaster_getMRCA_from_nodeLeaves", (DL_FUNC) &_speciesRaster_getMRCA_from_nodeLeaves, 2},
-    {"_speciesRaster_FaithPD_branchIndices", (DL_FUNC) &_speciesRaster_FaithPD_branchIndices, 4},
     {"_speciesRaster_calcPhylosor", (DL_FUNC) &_speciesRaster_calcPhylosor, 8},
     {"_speciesRaster_calcPhylosor2", (DL_FUNC) &_speciesRaster_calcPhylosor2, 3},
+    {"_speciesRaster_calcTaxonomicTurnoverFromPair", (DL_FUNC) &_speciesRaster_calcTaxonomicTurnoverFromPair, 2},
+    {"_speciesRaster_calcPairwiseTaxonomicSorensen", (DL_FUNC) &_speciesRaster_calcPairwiseTaxonomicSorensen, 2},
+    {"_speciesRaster_uniqueBranchesForSet", (DL_FUNC) &_speciesRaster_uniqueBranchesForSet, 3},
+    {"_speciesRaster_calcPairwisePhylosor", (DL_FUNC) &_speciesRaster_calcPairwisePhylosor, 3},
+    {"_speciesRaster_calcPairwisePhylosor2", (DL_FUNC) &_speciesRaster_calcPairwisePhylosor2, 3},
+    {"_speciesRaster_faith", (DL_FUNC) &_speciesRaster_faith, 3},
     {NULL, NULL, 0}
 };
 

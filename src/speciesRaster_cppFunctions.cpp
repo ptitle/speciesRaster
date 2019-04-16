@@ -7,6 +7,311 @@
 #include <progress_bar.hpp>
 using namespace Rcpp;
 
+// return intersect of two species vectors
+// [[Rcpp::export(name = getComponentA, rng = false)]]
+std::vector<std::string> getComponentA(std::vector<std::string> commI, std::vector<std::string> commJ) {
+
+	// intersect(cellI, cellJ)
+	std::vector<std::string> a;
+	// for each species in cellI, is it present in cellJ?
+	for (int k = 0; k < commI.size(); k++) { 
+		if (std::find(commJ.begin(), commJ.end(), commI[k]) != commJ.end()) {
+			a.push_back(commI[k]);
+		}
+	}
+
+	return a;
+}
+
+
+// return species in commJ but not commI
+// [[Rcpp::export(name = getComponentB, rng = false)]]
+std::vector<std::string> getComponentB(std::vector<std::string> commI, std::vector<std::string> commJ) {
+
+	// setdiff(cellI, cellJ)
+	std::vector<std::string> diffIJ;
+
+	sort(commI.begin(), commI.end());
+	sort(commJ.begin(), commJ.end());
+	set_difference(
+		commI.begin(),
+	    commI.end(),
+	    commJ.begin(),
+	    commJ.end(),
+	    back_inserter(diffIJ));
+	
+	return diffIJ;
+}
+
+
+// return species in commI but not commJ
+// [[Rcpp::export(name = getComponentC, rng = false)]]
+std::vector<std::string> getComponentC(std::vector<std::string> commI, std::vector<std::string> commJ) {
+
+	// setdiff(cellJ, cellI)
+	std::vector<std::string> diffJI;
+
+	sort(commI.begin(), commI.end());
+	sort(commJ.begin(), commJ.end());
+	set_difference(
+		commJ.begin(),
+	    commJ.end(),
+	    commI.begin(),
+	    commI.end(),
+	    back_inserter(diffJI));
+	
+	return diffJI;
+}
+
+// return index of x in integer vec
+// [[Rcpp::export(name = c_which_int, rng = false)]]
+int c_which_int(std::vector<int> vec, int x) {
+	int nx = vec.size();
+	for (int i = 0; i < nx; i++) {
+		if (vec[i] == x) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+// return index of x in character vec
+// [[Rcpp::export(name = c_which_char, rng = false)]]
+int c_which_char(std::vector<std::string> vec, std::string x) {
+	int nx = vec.size();
+	for (int i = 0; i < nx; i++) {
+		if (vec[i] == x) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+// setdiff for integers
+// [[Rcpp::export(name = setdiff_int, rng = false)]]
+std::vector<int> setdiff_int(std::vector<int> vec1, std::vector<int> vec2) {
+
+	// setdiff(vec1, vec2)
+	std::vector<int> out;
+
+	sort(vec1.begin(), vec1.end());
+	sort(vec2.begin(), vec2.end());
+	set_difference(
+		vec1.begin(),
+	    vec1.end(),
+	    vec2.begin(),
+	    vec2.end(),
+	    back_inserter(out));
+	
+	return out;
+}
+
+// return intersect of two integer vectors
+// [[Rcpp::export(name = intersect_int, rng = false)]]
+std::vector<int> intersect_int(std::vector<int> vec1, std::vector<int> vec2) {
+
+	// intersect(vec1, vec2)
+	std::vector<int> out;
+	for (int k = 0; k < vec1.size(); k++) { 
+		if (std::find(vec2.begin(), vec2.end(), vec1[k]) != vec2.end()) {
+			out.push_back(vec1[k]);
+		}
+	}
+
+	return out;
+}
+
+
+// return a list of all nodes, containing tiplabels that are descendant from each
+// [[Rcpp::export(name = getLeavesForNodes, rng = false)]]
+List getLeavesForNodes(List phylo) {
+
+	// extract components from phylo list
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
+	NumericVector edge1a = edge(_, 0);
+	NumericVector edge2a = edge(_, 1);
+  
+	std::vector<int> edge1 = as< std::vector<int> >(edge1a);
+	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
+	int rootnode = tipLabels.size() + 1;
+	int nodemax = *std::max_element(std::begin(edge2), std::end(edge2));
+	std::vector<int> allnodes(nodemax);
+	std::iota(allnodes.begin(), allnodes.end(), 1);
+
+	// create list of tips, containing root-to-tip nodes
+	List rootToTipNodes(tipLabels.size());
+	for (int i = 0; i < tipLabels.size(); i++) {
+		std::vector<int> nodes;
+		int childnode = i + 1;
+		while (childnode != rootnode) {
+			int parentnode = edge1[c_which_int(edge2, childnode)];
+			nodes.push_back(childnode);
+			childnode = parentnode;
+		}
+		nodes.push_back(rootnode);
+		rootToTipNodes[i] = nodes;
+	}
+
+	// create list of all nodes, and for each node, list the descendant taxa
+	List nodeLeaves(allnodes.size());
+	for (int i = 0; i < allnodes.size(); i++) {
+		std::vector<std::string> foundLeaves;
+		for (int j = 0; j < rootToTipNodes.size(); j++) {
+			std::vector<int> tmp = as< std::vector<int> >(rootToTipNodes[j]);
+			if (std::find(tmp.begin(), tmp.end(), allnodes[i]) != tmp.end()) {
+				foundLeaves.push_back(tipLabels[j]);
+			}
+		}
+		nodeLeaves[i] = foundLeaves;
+	}
+
+
+	return nodeLeaves;
+}
+
+// return edge indices
+// [[Rcpp::export(name = getRootToTipEdges, rng = false)]]
+List getRootToTipEdges(List phylo) {
+
+	// extract components from phylo list
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
+	NumericVector edge1a = edge(_, 0);
+	NumericVector edge2a = edge(_, 1);
+  
+	std::vector<int> edge1 = as< std::vector<int> >(edge1a);
+	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
+	int rootnode = tipLabels.size() + 1;
+
+	List out = tipLabels.size();
+	
+	for (int i = 0; i < tipLabels.size(); i++) {
+		std::vector<int> nodes;
+		int childnode = i + 1;
+		while (childnode != rootnode) {
+			int parentnode = edge1[c_which_int(edge2, childnode)];
+			nodes.push_back(childnode);
+			childnode = parentnode;
+		}
+
+		std::vector<int> edgesInd(nodes.size());
+		for (int j = 0; j < nodes.size(); j++) {
+			edgesInd[j] = c_which_int(edge2, nodes[j]);
+		}
+
+		out[i] = edgesInd;
+	}
+
+
+	return out;
+}
+
+
+
+
+// function to receive the nodeLeaves list and a set of tiplabels, to return the MRCA
+// [[Rcpp::export(name = getMRCA_from_nodeLeaves, rng = false)]]
+int getMRCA_from_nodeLeaves(List nodeLeaves, std::vector<std::string> taxa) {
+
+//	std::vector<std::string> taxa = as< std::vector<std::string> >(tip);
+
+	// for each node, does it contain all target taxa downstream?
+	std::vector<int> commonNodes;
+	for (int i = 0; i < nodeLeaves.size(); i++) {
+		std::vector<std::string> node = as< std::vector<std::string> >(nodeLeaves[i]);
+		int counter = 0;
+
+		for (int j = 0; j < taxa.size(); j++) {
+			if (std::find(node.begin(), node.end(), taxa[j]) != node.end()) {
+				counter = counter + 1;
+			}
+		}
+
+		// if node contained all taxa downstream, then counter should be equal to number of taxa
+		if (counter == taxa.size()) {
+			commonNodes.push_back(i + 1);
+		}
+	}
+
+	// most recent common ancestor will be max node number
+	// if just one tip, then it will be the minimum
+
+	int mrca;
+
+	if (taxa.size() > 1) {
+	 	mrca = *std::max_element(std::begin(commonNodes), std::end(commonNodes));
+	} else {
+		mrca = *std::min_element(std::begin(commonNodes), std::end(commonNodes));
+	}
+
+	return mrca;
+}
+
+
+// [[Rcpp::export(name = FaithPD_branchIndices, rng = false)]]
+std::vector<int> FaithPD_branchIndices(std::vector<std::string> a, List phylo, List nodeLeaves, List spEdges, bool includeRoot = false) {
+	
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
+
+	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
+	NumericVector edge2a = edge(_, 1);
+  
+	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
+
+	std::vector<int> branchIndices;
+
+	// get mrca node of taxon set a
+	if (a.size() > 1) {
+		int mrca = getMRCA_from_nodeLeaves(nodeLeaves, a);
+
+		// get mrca index in edge2 (= edge index)
+		int mrcaInd = c_which_int(edge2, mrca);
+		
+		// get index of species labels and get branch indices from spEdges
+		// only keep branch if branch index is greater than MRCA index
+		for (int i = 0; i < a.size(); i++) {
+			
+			int tmpInd = c_which_char(tipLabels, a[i]);
+			std::vector<int> branchInd = as< std::vector<int> >(spEdges[tmpInd]);
+			
+			for (int j = 0; j < branchInd.size(); j++) {
+				if (std::find(branchIndices.begin(), branchIndices.end(), branchInd[j]) == branchIndices.end()) {
+					if (branchInd[j] > mrcaInd) {
+						branchIndices.push_back(branchInd[j]);
+					}
+				}
+			}
+		}
+
+	} else {
+		// if 1 species, return terminal branch length
+		int spInd = c_which_char(tipLabels, a[0]);
+		branchIndices.push_back(c_which_int(edge2, spInd + 1));
+	}
+
+	if (includeRoot) {
+		// get the index of one of the species
+		int spInd = c_which_char(tipLabels, a[0]);
+
+		// get root-to-tip edge indices for this species
+		std::vector<int> branchInd = as< std::vector<int> >(spEdges[spInd]);
+
+		// add these indices to edge indices is not already present
+		for (int i = 0; i < branchInd.size(); i++) {
+			if (std::find(branchIndices.begin(), branchIndices.end(), branchInd[i]) == branchIndices.end()) {
+				branchIndices.push_back(branchInd[i]);
+			}
+		}
+	}
+
+	return branchIndices;
+}
+
+
+
+
 // return list of species per cell
 // [[Rcpp::export(name = spListPerCell, rng = false)]]
 List spListPerCell(NumericMatrix input) {
@@ -825,58 +1130,6 @@ List mapComm(CharacterVector uniqueCommLabels, CharacterVector allComm) {
 }
 
 
-
-// return index of x in integer vec
-// [[Rcpp::export(name = c_which_int, rng = false)]]
-int c_which_int(std::vector<int> vec, int x) {
-	int nx = vec.size();
-	for (int i = 0; i < nx; i++) {
-		if (vec[i] == x) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-
-// return edge indices
-// [[Rcpp::export(name = getRootToTipEdges, rng = false)]]
-List getRootToTipEdges(List phylo) {
-
-	// extract components from phylo list
-	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
-	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
-	NumericVector edge1a = edge(_, 0);
-	NumericVector edge2a = edge(_, 1);
-  
-	std::vector<int> edge1 = as< std::vector<int> >(edge1a);
-	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
-	int rootnode = tipLabels.size() + 1;
-
-	List out = tipLabels.size();
-	
-	for (int i = 0; i < tipLabels.size(); i++) {
-		std::vector<int> nodes;
-		int childnode = i + 1;
-		while (childnode != rootnode) {
-			int parentnode = edge1[c_which_int(edge2, childnode)];
-			nodes.push_back(childnode);
-			childnode = parentnode;
-		}
-
-		std::vector<int> edgesInd(nodes.size());
-		for (int j = 0; j < nodes.size(); j++) {
-			edgesInd[j] = c_which_int(edge2, nodes[j]);
-		}
-
-		out[i] = edgesInd;
-	}
-
-
-	return out;
-}
-
-
 // function to determine the number of geographic cells for every branch in phylogeny
 // [[Rcpp::export(name = phyloBranchRanges, rng = false)]]
 List phyloBranchRanges(List phylo, List speciesList, List tipEdges) {
@@ -1025,75 +1278,6 @@ List mergeLists(List input) {
 	return out;
 }
 
-
-// return intersect of two species vectors
-// [[Rcpp::export(name = getComponentA, rng = false)]]
-std::vector<std::string> getComponentA(std::vector<std::string> commI, std::vector<std::string> commJ) {
-
-	// intersect(cellI, cellJ)
-	std::vector<std::string> a;
-	// for each species in cellI, is it present in cellJ?
-	for (int k = 0; k < commI.size(); k++) { 
-		if (std::find(commJ.begin(), commJ.end(), commI[k]) != commJ.end()) {
-			a.push_back(commI[k]);
-		}
-	}
-
-	return a;
-}
-
-
-// return species in commJ but not commI
-// [[Rcpp::export(name = getComponentB, rng = false)]]
-std::vector<std::string> getComponentB(std::vector<std::string> commI, std::vector<std::string> commJ) {
-
-	// setdiff(cellI, cellJ)
-	std::vector<std::string> diffIJ;
-
-	sort(commI.begin(), commI.end());
-	sort(commJ.begin(), commJ.end());
-	set_difference(
-		commI.begin(),
-	    commI.end(),
-	    commJ.begin(),
-	    commJ.end(),
-	    back_inserter(diffIJ));
-	
-	return diffIJ;
-}
-
-
-// return species in commI but not commJ
-// [[Rcpp::export(name = getComponentC, rng = false)]]
-std::vector<std::string> getComponentC(std::vector<std::string> commI, std::vector<std::string> commJ) {
-
-	// setdiff(cellJ, cellI)
-	std::vector<std::string> diffJI;
-
-	sort(commI.begin(), commI.end());
-	sort(commJ.begin(), commJ.end());
-	set_difference(
-		commJ.begin(),
-	    commJ.end(),
-	    commI.begin(),
-	    commI.end(),
-	    back_inserter(diffJI));
-	
-	return diffJI;
-}
-
-
-// return index of x in character vec
-// [[Rcpp::export(name = c_which_char, rng = false)]]
-int c_which_char(std::vector<std::string> vec, std::string x) {
-	int nx = vec.size();
-	for (int i = 0; i < nx; i++) {
-		if (vec[i] == x) {
-			return i;
-		}
-	}
-	return -1;
-}
 
 
 
@@ -1791,93 +1975,6 @@ std::vector<std::string> getUnion(std::vector<std::string> vec1, std::vector<std
 }
 
 
-// return a list of all nodes, containing tiplabels that are descendant from each
-// [[Rcpp::export(name = getLeavesForNodes, rng = false)]]
-List getLeavesForNodes(List phylo) {
-
-	// extract components from phylo list
-	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
-	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
-	NumericVector edge1a = edge(_, 0);
-	NumericVector edge2a = edge(_, 1);
-  
-	std::vector<int> edge1 = as< std::vector<int> >(edge1a);
-	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
-	int rootnode = tipLabels.size() + 1;
-	int nodemax = *std::max_element(std::begin(edge2), std::end(edge2));
-	std::vector<int> allnodes(nodemax);
-	std::iota(allnodes.begin(), allnodes.end(), 1);
-
-	// create list of tips, containing root-to-tip nodes
-	List rootToTipNodes(tipLabels.size());
-	for (int i = 0; i < tipLabels.size(); i++) {
-		std::vector<int> nodes;
-		int childnode = i + 1;
-		while (childnode != rootnode) {
-			int parentnode = edge1[c_which_int(edge2, childnode)];
-			nodes.push_back(childnode);
-			childnode = parentnode;
-		}
-		nodes.push_back(rootnode);
-		rootToTipNodes[i] = nodes;
-	}
-
-	// create list of all nodes, and for each node, list the descendant taxa
-	List nodeLeaves(allnodes.size());
-	for (int i = 0; i < allnodes.size(); i++) {
-		std::vector<std::string> foundLeaves;
-		for (int j = 0; j < rootToTipNodes.size(); j++) {
-			std::vector<int> tmp = as< std::vector<int> >(rootToTipNodes[j]);
-			if (std::find(tmp.begin(), tmp.end(), allnodes[i]) != tmp.end()) {
-				foundLeaves.push_back(tipLabels[j]);
-			}
-		}
-		nodeLeaves[i] = foundLeaves;
-	}
-
-
-	return nodeLeaves;
-}
-
-
-// function to receive the nodeLeaves list and a set of tiplabels, to return the MRCA
-// [[Rcpp::export(name = getMRCA_from_nodeLeaves, rng = false)]]
-int getMRCA_from_nodeLeaves(List nodeLeaves, std::vector<std::string> taxa) {
-
-//	std::vector<std::string> taxa = as< std::vector<std::string> >(tip);
-
-	// for each node, does it contain all target taxa downstream?
-	std::vector<int> commonNodes;
-	for (int i = 0; i < nodeLeaves.size(); i++) {
-		std::vector<std::string> node = as< std::vector<std::string> >(nodeLeaves[i]);
-		int counter = 0;
-
-		for (int j = 0; j < taxa.size(); j++) {
-			if (std::find(node.begin(), node.end(), taxa[j]) != node.end()) {
-				counter = counter + 1;
-			}
-		}
-
-		// if node contained all taxa downstream, then counter should be equal to number of taxa
-		if (counter == taxa.size()) {
-			commonNodes.push_back(i + 1);
-		}
-	}
-
-	// most recent common ancestor will be max node number
-	// if just one tip, then it will be the minimum
-
-	int mrca;
-
-	if (taxa.size() > 1) {
-	 	mrca = *std::max_element(std::begin(commonNodes), std::end(commonNodes));
-	} else {
-		mrca = *std::min_element(std::begin(commonNodes), std::end(commonNodes));
-	}
-
-	return mrca;
-}
-
 // // function to return the terminal branch length, given a species name
 // // [[Rcpp::export(name = returnTerminalBranch, rng = false)]]
 // std::vector<int> returnTerminalBranch(std::vector<std::string> tip, List phylo) {
@@ -1902,51 +1999,6 @@ int getMRCA_from_nodeLeaves(List nodeLeaves, std::vector<std::string> taxa) {
 // }
 
 
-// return geog area of phylo branches, given species
-// [[Rcpp::export(name = FaithPD_branchIndices, rng = false)]]
-std::vector<int> FaithPD_branchIndices(std::vector<std::string> a, List phylo, List nodeLeaves, List spEdges) {
-	
-	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
-	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
-
-	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
-	NumericVector edge2a = edge(_, 1);
-  
-	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
-
-	std::vector<int> branchIndices;
-
-	// get mrca node of taxon set a
-	if (a.size() > 1) {
-		int mrca = getMRCA_from_nodeLeaves(nodeLeaves, a);
-
-		// get mrca index in edge2 (= edge index)
-		int mrcaInd = c_which_int(edge2, mrca);
-		
-		// get index of species labels and get branch indices from spEdges
-		// only keep branch if branch index is greater than MRCA index
-		for (int i = 0; i < a.size(); i++) {
-			
-			int tmpInd = c_which_char(tipLabels, a[i]);
-			std::vector<int> branchInd = as< std::vector<int> >(spEdges[tmpInd]);
-			
-			for (int j = 0; j < branchInd.size(); j++) {
-				if (std::find(branchIndices.begin(), branchIndices.end(), branchInd[j]) == branchIndices.end()) {
-					if (branchInd[j] > mrcaInd) {
-						branchIndices.push_back(branchInd[j]);
-					}
-				}
-			}
-		}
-
-	} else {
-		// if 1 species, return terminal branch length
-		int spInd = c_which_char(tipLabels, a[0]);
-		branchIndices.push_back(c_which_int(edge2, spInd + 1));
-	}
-
-	return branchIndices;
-}
 
 
 
@@ -2134,3 +2186,518 @@ NumericVector calcPhylosor2(List spByCell, List phylo, bool showProgress) {
 	return cellVec;
 
 }
+
+
+
+
+
+
+////////////////////// NEW FUNCTIONS FOR BETA DIVERSITY ////////////////////
+
+
+
+// Calculate taxonomic beta diversity for two communities
+// [[Rcpp::export(name = calcTaxonomicTurnoverFromPair, rng = false)]]
+NumericVector calcTaxonomicTurnoverFromPair(StringVector vec1, StringVector vec2) {
+	
+	std::vector<std::string> commI = as< std::vector<std::string> >(vec1);
+	std::vector<std::string> commJ = as< std::vector<std::string> >(vec2);
+
+ 	std::vector<std::string> a = getComponentA(commI, commJ);
+
+ 	double out = 0;
+
+	if (commI.size() == commJ.size() && commI.size() == a.size()) {
+		out = 0.0;
+	} else if (a.size() == 0) {
+		out = 1.0;
+	} else {
+
+		std::vector<std::string> b = getComponentB(commI, commJ);
+		std::vector<std::string> c = getComponentC(commI, commJ);
+
+		// Simpson's beta diversity index
+		// cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+		
+		// Sorenson metric
+		out = 1.0 - 2 * double(a.size()) / (2 * double(a.size()) + double(b.size()) + double(c.size()));
+	
+		// Jaccard metric
+		//cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size() + double(c.size())));
+	
+	}
+
+	return wrap(out);
+}
+
+// Calculate taxonomic turnover for all pairwise communities
+// This will be 1 - sorensen
+// [[Rcpp::export(name = calcPairwiseTaxonomicSorensen, rng = false)]]
+NumericMatrix calcPairwiseTaxonomicSorensen(List allComm, String component) {
+
+	int nComm = allComm.size();
+	NumericMatrix out(nComm, nComm);
+
+	for (int i = 0; i < nComm; i++) {
+		for (int j = 0; j < nComm; j++) {
+			if (i <= j) {
+
+				Rcpp::checkUserInterrupt();
+				std::vector<std::string> commI = as< std::vector<std::string> >(allComm[i]);
+				std::vector<std::string> commJ = as< std::vector<std::string> >(allComm[j]);
+
+				// if a community is empty, there is no distance
+				if (commI[0] == "empty" | commJ[0] == "empty") {
+					out(i,j) = -1.0;
+					out(j,i) = -1.0;
+				} else {
+
+					std::vector<std::string> a = getComponentA(commI, commJ);
+
+					// if the intersect is the same as the sizes of both I and J, then
+					// the communities are identical, so 0 turnover
+					// if (commI.size() == commJ.size() && commI.size() == a.size()) {
+					// 	out(i,j) = 0.0;
+					// 	out(j,i) = 0.0;
+
+					// // if intersect is of length 0, then there is complete turnover, so 1.0
+					// } else if (a.size() == 0) {
+					// 	out(i,j) = 1.0;
+					// 	out(j,i) = 1.0;
+					// } else {
+
+						std::vector<std::string> b = getComponentB(commI, commJ);
+						std::vector<std::string> c = getComponentC(commI, commJ);
+
+						double nA = double(a.size());
+						double nB = double(b.size());
+						double nC = double(c.size());
+
+						// Simpson's beta diversity index
+						// cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + std::min(double(b.size()), double(c.size())));
+						
+						// Sorenson metric
+						if (component == "turnover") {
+							// calculate beta SIM
+							out(i,j) = std::min(nB, nC) / (nA + std::min(nB, nC));
+							
+						} else if (component == "nestedness") {
+							// calculate beta SNE
+							out(i,j) = ((std::max(nB, nC) - std::min(nB, nC)) / (2 * nA + nB + nC)) * (nA / (nA + std::min(nB, nC)));
+
+
+						} else if (component == "full") {
+							// calculate beta SOR
+							out(i,j) = (nB + nC) / (2 * nA + nB + nC);
+						}
+
+						out(j,i) = out(i,j);
+					
+						// Jaccard metric
+						//cellVec[j] = 1.0 - double(a.size()) / (double(a.size()) + double(b.size() + double(c.size())));
+					//}
+				}
+			}
+		}
+	}
+	return out;
+}
+
+// given:
+// a list of species names: a,
+// the full vector of species names: tipLabels,
+// a list of edge indices that trace the path from the root to each tip: spEdges,
+// find the union of branch indices for all species in a.
+// [[Rcpp::export(name = uniqueBranchesForSet, rng = false)]]
+std::vector<int> uniqueBranchesForSet(std::vector<std::string> a, std::vector<std::string> tipLabels, List spEdges) {
+
+	//std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+
+	std::vector<int> out;
+
+	for (int i = 0; i < a.size(); i++) {
+		
+		int spInd = c_which_char(tipLabels, a[i]);
+		std::vector<int> branchInd = as< std::vector<int> >(spEdges[spInd]);
+
+		for (int j = 0; j < branchInd.size(); j++) {
+			if (std::find(out.begin(), out.end(), branchInd[j]) == out.end()) {
+				out.push_back(branchInd[j]);
+			}
+		}
+	}
+
+	return out;
+
+}
+
+
+
+
+
+// Calculate phylogenetic beta diversity for each pair of communities in list
+// [[Rcpp::export(name = calcPairwisePhylosor, rng = false)]]
+NumericMatrix calcPairwisePhylosor(List allComm, List phylo, String component) {
+
+	// extract relevant info from input tree for function FaithPD_branchIndices
+	// 		tip labels, branch lengths, and tipward nodes vector
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
+	NumericMatrix edge = as<NumericMatrix>(phylo["edge"]);
+	NumericVector edge2a = edge(_, 1);
+	std::vector<int> edge2 = as< std::vector<int> >(edge2a);
+
+
+	// get leaves for all nodes as well as tip edges
+	List nodeLeaves = getLeavesForNodes(phylo);
+	List spEdges = getRootToTipEdges(phylo);
+
+
+	int nComm = allComm.size();
+	NumericMatrix out(nComm, nComm);
+
+	// Rcout << "Starting pairwise matrix..." << std::endl;
+//	Progress p(nComm, true);
+
+	for (int i = 0; i < nComm; i++) {
+		// Rcout << "row " << i << std::endl;
+//		p.increment(); 
+
+		for (int j = 0; j < nComm; j++) {
+			if (i <= j) {
+
+				// Rcout << "\tcol " << j << std::endl;
+
+				Rcpp::checkUserInterrupt();
+				std::vector<std::string> commI = as< std::vector<std::string> >(allComm[i]);
+				std::vector<std::string> commJ = as< std::vector<std::string> >(allComm[j]);
+
+				if (commI[0] == "empty" | commJ[0] == "empty") {
+					out(i,j) = -1.0;
+					out(j,i) = -1.0;
+				} else {
+
+					// get intersection of commI and J
+					// std::vector<std::string> a = getComponentA(commI, commJ);
+
+					double a_pd = 0;
+					double b_pd = 0;
+					double c_pd = 0;
+
+					// get branches that contribute to commI PD
+					std::vector<int> edgesCommI = FaithPD_branchIndices(commI, phylo, nodeLeaves, spEdges, true);
+
+					// get branches that contribute to commJ PD
+					std::vector<int> edgesCommJ = FaithPD_branchIndices(commJ, phylo, nodeLeaves, spEdges, true);
+
+					// identify branches that are part of both commI and commJ
+					std::vector<int> edgesCommIJ = intersect_int(edgesCommI, edgesCommJ);
+
+					// identify branches that are part of commI PD, but not commJ PD
+					std::vector<int> edgesInotJ = setdiff_int(edgesCommI, edgesCommJ);
+
+					// identify branches that are part of commJ PD, but not commI PD
+					std::vector<int> edgesJnotI = setdiff_int(edgesCommJ, edgesCommI);
+
+					// sum the branch lengths for a
+					for (int k = 0; k < edgesCommIJ.size(); k++) {
+						a_pd = a_pd + edgeLengths[edgesCommIJ[k]];
+					}
+
+					// sum the branch lengths for b
+					for (int k = 0; k < edgesInotJ.size(); k++) {
+						b_pd = b_pd + edgeLengths[edgesInotJ[k]];
+					}
+
+					// sum the branch lengths for c
+					for (int k = 0; k < edgesJnotI.size(); k++) {
+						c_pd = c_pd + edgeLengths[edgesJnotI[k]];
+					}
+
+					// Rcout << "a_pd " << a_pd << std::endl;
+					// Rcout << "b_pd " << b_pd << std::endl;
+					// Rcout << "c_pd " << c_pd << std::endl;
+
+					if (component == "turnover") {
+						// calculate beta SIM
+						out(i,j) = std::min(b_pd, c_pd) / (a_pd + std::min(b_pd, c_pd));
+
+					} else if (component == "nestedness") {
+						// calculate beta SNE
+						out(i,j) = ((std::max(b_pd, c_pd) - std::min(b_pd, c_pd)) / (2 * a_pd + b_pd + c_pd)) * (a_pd / (a_pd + std::min(b_pd, c_pd)));
+
+					} else if (component == "full") {
+						// calculate beta SOR
+						out(i,j) = (b_pd + c_pd) / (2 * a_pd + b_pd + c_pd);
+					}
+					
+					out(j,i) = out(i,j);
+				}
+			}
+		}
+	}
+	return out;
+}
+			
+
+
+// Calculate phylogenetic beta diversity for each pair of communities in list
+// [[Rcpp::export(name = calcPairwisePhylosor2, rng = false)]]
+NumericMatrix calcPairwisePhylosor2(List allComm, List phylo, String component) {
+
+	// extract relevant info from input tree for function FaithPD_branchIndices
+	// 		tip labels, branch lengths, and tipward nodes vector
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
+
+	// get leaves for all nodes as well as tip edges
+//	List nodeLeaves = getLeavesForNodes(phylo);
+	List spEdges = getRootToTipEdges(phylo);
+
+
+	int nComm = allComm.size();
+	NumericMatrix out(nComm, nComm);
+
+	// Rcout << "Starting pairwise matrix..." << std::endl;
+	Progress p(nComm, true);
+
+	for (int i = 0; i < nComm; i++) {
+		// Rcout << "row " << i << std::endl;
+		p.increment(); 
+
+		for (int j = 0; j < nComm; j++) {
+			if (i <= j) {
+
+				// Rcout << "\tcol " << j << std::endl;
+
+				Rcpp::checkUserInterrupt();
+				std::vector<std::string> commI = as< std::vector<std::string> >(allComm[i]);
+				std::vector<std::string> commJ = as< std::vector<std::string> >(allComm[j]);
+
+				if (commI[0] == "empty" | commJ[0] == "empty") {
+					out(i,j) = -1.0;
+					out(j,i) = -1.0;
+				} else {
+
+					// get intersection of commI and J
+					// std::vector<std::string> a = getComponentA(commI, commJ);
+
+					double a_pd = 0;
+					double b_pd = 0;
+					double c_pd = 0;
+
+					// get branches that contribute to commI PD
+					std::vector<int> edgesCommI = uniqueBranchesForSet(commI, tipLabels, spEdges);
+
+					// get branches that contribute to commJ PD
+					std::vector<int> edgesCommJ = uniqueBranchesForSet(commJ, tipLabels, spEdges);
+
+					// identify branches that are part of both commI and commJ
+					std::vector<int> edgesCommIJ = intersect_int(edgesCommI, edgesCommJ);
+
+					// identify branches that are part of commI PD, but not commJ PD
+					std::vector<int> edgesInotJ = setdiff_int(edgesCommI, edgesCommJ);
+
+					// identify branches that are part of commJ PD, but not commI PD
+					std::vector<int> edgesJnotI = setdiff_int(edgesCommJ, edgesCommI);
+
+					// sum the branch lengths for a
+					for (int k = 0; k < edgesCommIJ.size(); k++) {
+						a_pd = a_pd + edgeLengths[edgesCommIJ[k]];
+					}
+
+					// sum the branch lengths for b
+					for (int k = 0; k < edgesInotJ.size(); k++) {
+						b_pd = b_pd + edgeLengths[edgesInotJ[k]];
+					}
+
+					// sum the branch lengths for c
+					for (int k = 0; k < edgesJnotI.size(); k++) {
+						c_pd = c_pd + edgeLengths[edgesJnotI[k]];
+					}
+
+					// Rcout << "a_pd " << a_pd << std::endl;
+					// Rcout << "b_pd " << b_pd << std::endl;
+					// Rcout << "c_pd " << c_pd << std::endl;
+
+					if (component == "turnover") {
+						// calculate beta SIM
+						out(i,j) = std::min(b_pd, c_pd) / (a_pd + std::min(b_pd, c_pd));
+
+					} else if (component == "nestedness") {
+						// calculate beta SNE
+						out(i,j) = ((std::max(b_pd, c_pd) - std::min(b_pd, c_pd)) / (2 * a_pd + b_pd + c_pd)) * (a_pd / (a_pd + std::min(b_pd, c_pd)));
+
+					} else if (component == "full") {
+						// calculate beta SOR
+						out(i,j) = (b_pd + c_pd) / (2 * a_pd + b_pd + c_pd);
+					}
+					
+					out(j,i) = out(i,j);
+				}
+			}
+		}
+	}
+	return out;
+}
+
+
+
+// test function for phylosor from dist matrix
+// first, implement so that FaithPD_branchIndices can be returned to R
+
+// [[Rcpp::export(name = faith, rng = false)]]
+List faith(StringVector vec1, StringVector vec2, List phylo) {
+
+	// extract relevant info from input data
+	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
+
+	// get leaves for all nodes as well as tip edges
+	List nodeLeaves = getLeavesForNodes(phylo);
+	List spEdges = getRootToTipEdges(phylo);
+
+	std::vector<std::string> commI = as< std::vector<std::string> >(vec1);
+	std::vector<std::string> commJ = as< std::vector<std::string> >(vec2);
+
+	// get intersection of commI and J
+	std::vector<std::string> a = getComponentA(commI, commJ);
+
+	double a_pd = 0;
+	double b_pd = 0;
+	double c_pd = 0;
+
+	// get branches that contribute to commI PD
+	std::vector<int> edgesCommI = FaithPD_branchIndices(commI, phylo, nodeLeaves, spEdges, true);
+
+	// get branches that contribute to commJ PD
+	std::vector<int> edgesCommJ = FaithPD_branchIndices(commJ, phylo, nodeLeaves, spEdges, true);
+
+	// identify branches that are part of both commI and commJ
+	std::vector<int> edgesCommIJ = intersect_int(edgesCommI, edgesCommJ);
+
+	// identify branches that are part of commI PD, but not commJ PD
+	std::vector<int> edgesInotJ = setdiff_int(edgesCommI, edgesCommJ);
+
+	// identify branches that are part of commJ PD, but not commI PD
+	std::vector<int> edgesJnotI = setdiff_int(edgesCommJ, edgesCommI);
+
+	// sum the branch lengths for a
+	for (int k = 0; k < edgesCommIJ.size(); k++) {
+		a_pd = a_pd + edgeLengths[edgesCommIJ[k]];
+	}
+
+	// sum the branch lengths for b
+	for (int k = 0; k < edgesInotJ.size(); k++) {
+		b_pd = b_pd + edgeLengths[edgesInotJ[k]];
+	}
+
+	// sum the branch lengths for c
+	for (int k = 0; k < edgesJnotI.size(); k++) {
+		c_pd = c_pd + edgeLengths[edgesJnotI[k]];
+	}
+
+	List out(8);
+
+	out[0] = wrap(a_pd);
+	out[1] = wrap(b_pd);
+	out[2] = wrap(c_pd);
+	out[3] = wrap(edgesCommI);
+	out[4] = wrap(edgesCommJ);
+	out[5] = wrap(edgesCommIJ);
+	out[6] = wrap(edgesInotJ);
+	out[7] = wrap(edgesJnotI);
+
+	return out;
+}
+
+// // [[Rcpp::export(name = phyloSorTest, rng = false)]]
+// NumericVector phyloSorTest(List allComm, List phylo, String component) {
+
+// 	// extract relevant info from input data
+// 	std::vector<std::string> tipLabels = as< std::vector<std::string> >(phylo["tip.label"]);
+// 	std::vector<double> edgeLengths = as< std::vector<double> >(phylo["edge.length"]);
+
+// 	// get leaves for all nodes as well as tip edges
+// 	Rcout << "Getting extra info from phylo..." << std::endl;
+// 	List nodeLeaves = getLeavesForNodes(phylo);
+// 	List spEdges = getRootToTipEdges(phylo);
+// 	Rcout << "Done with phylo..." << std::endl;
+
+// 	double out = 0;
+
+// 	Rcpp::checkUserInterrupt();
+// 	std::vector<std::string> commI = as< std::vector<std::string> >(allComm[0]);
+// 	std::vector<std::string> commJ = as< std::vector<std::string> >(allComm[1]);
+
+// 	if (commI[0] == "empty" | commJ[0] == "empty") {
+// 		out = -1.0;
+// 		out = -1.0;
+// 	} else {
+
+// 		// get intersection of commI and J
+// 		std::vector<std::string> a = getComponentA(commI, commJ);
+
+// 		double a_pd = 0;
+// 		double b_pd = 0;
+// 		double c_pd = 0;
+
+// 		// get branches that contribute to commI PD
+// 		std::vector<int> edgesCommI = FaithPD_branchIndices(commI, phylo, nodeLeaves, spEdges, true);
+
+// 		Rcout << "Done with edgesCommI..." << std::endl;
+
+// 		// get branches that contribute to commJ PD
+// 		std::vector<int> edgesCommJ = FaithPD_branchIndices(commJ, phylo, nodeLeaves, spEdges, true);
+// 		Rcout << "Done with edgesCommJ..." << std::endl;
+
+// 		// identify branches that are part of both commI and commJ
+// 		std::vector<int> edgesCommIJ = intersect_int(edgesCommI, edgesCommJ);
+// 		Rcout << "Done with edgesCommIJ..." << std::endl;
+
+// 		// identify branches that are part of commI PD, but not commJ PD
+// 		std::vector<int> edgesInotJ = setdiff_int(edgesCommI, edgesCommJ);
+// 		Rcout << "Done with edgesInotJ..." << std::endl;
+
+// 		// identify branches that are part of commJ PD, but not commI PD
+// 		std::vector<int> edgesJnotI = setdiff_int(edgesCommJ, edgesCommI);
+// 		Rcout << "Done with edgesJnotI..." << std::endl;
+
+// 		// sum the branch lengths for a
+// 		for (int k = 0; k < edgesCommIJ.size(); k++) {
+// 			a_pd = a_pd + edgeLengths[edgesCommIJ[k]];
+// 		}
+
+// 		// sum the branch lengths for b
+// 		for (int k = 0; k < edgesInotJ.size(); k++) {
+// 			b_pd = b_pd + edgeLengths[edgesInotJ[k]];
+// 		}
+
+// 		// sum the branch lengths for c
+// 		for (int k = 0; k < edgesJnotI.size(); k++) {
+// 			c_pd = c_pd + edgeLengths[edgesJnotI[k]];
+// 		}
+
+// 		Rcout << "a_pd " << a_pd << std::endl;
+// 		Rcout << "b_pd " << b_pd << std::endl;
+// 		Rcout << "c_pd " << c_pd << std::endl;
+
+// 		if (component == "turnover") {
+// 			// calculate beta SIM
+// 			out = std::min(b_pd, c_pd) / (a_pd + std::min(b_pd, c_pd));
+
+// 		} else if (component == "nestedness") {
+// 			// calculate beta SNE
+// 			out = ((std::max(b_pd, c_pd) - std::min(b_pd, c_pd)) / (2 * a_pd + b_pd + c_pd)) * (a_pd / (a_pd + std::min(b_pd, c_pd)));
+
+// 		} else if (component == "full") {
+// 			// calculate beta SOR
+// 			out = (b_pd + c_pd) / (2 * a_pd + b_pd + c_pd);
+// 		}
+
+// 	}
+// 	return wrap(out);
+// }
+
+
+
