@@ -163,8 +163,8 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	ret <- raster::stack(rasList)
 		
 	# if extent was polygon, then mask rasterStack
-	if (inherits(masterExtent, c('sf', 'sfc'))) {
-		ret <- raster::mask(ret, masterExtent)
+	if (inherits(extent, c('sf', 'sfc'))) {
+		ret <- raster::mask(ret, extent)
 	}
 	
 	valCheck <- raster::minValue(ret)
