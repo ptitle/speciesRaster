@@ -194,6 +194,7 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	
 	# if requested, drop rasters that are entirely NA (and print to screen for reference)
 	if (dropEmptyRasters) {
+		valCheck <- raster::minValue(ret)
 		badEntries <- which(is.na(valCheck))
 		badEntriesInd <- badEntries
 		badEntries <- sort(names(ret)[badEntries])
