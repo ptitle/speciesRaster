@@ -5,13 +5,16 @@
 \title{Polygon List to rasterStack}
 \usage{
 rasterStackFromPolyList(polyList, resolution = 50000,
-  retainSmallRanges = TRUE, extent = "auto", dropEmptyRasters = TRUE)
+  coverCutoff = 0.1, retainSmallRanges = TRUE, extent = "auto",
+  dropEmptyRasters = TRUE)
 }
 \arguments{
-\item{polyList}{a list of polygons objects (sf or sp), named with taxon names}
+\item{polyList}{a list of polygons objects (sf or sp), named with taxon names.}
 
 \item{resolution}{vertical and horizontal size of raster cell, in units 
-of the polygons' projection}
+of the polygons' projection.}
+
+\item{coverCutoff}{the percent that a species range must cover a grid cell to be considered present.}
 
 \item{retainSmallRanges}{boolean; should small ranged species be dropped or preserved.
 See details.}
@@ -34,11 +37,12 @@ either NA or 1.
 Takes a list of polygons and creates a rasterStack.
 }
 \details{
-In the rasterization process, all cells for which the polygon covers the midpoint are
-	considered as present and receive a value of 1. If \code{retainSmallRanges = FALSE}, 
-	then species whose ranges are so small that no cell registers as present will be 
-	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
-	is found in will be considered as present, even if it's a small percent of the cell.
+In the rasterization process, all cells that are covered by the polygon by at least
+	\code{coverCutoff} percent are considered as present and receive a value of 1. 
+	If \code{retainSmallRanges = FALSE}, then species whose ranges are so small that no 
+	cell registers as present will be dropped. If \code{retainSmallRanges = TRUE}, then the 
+	cells that the small polygon is found in will be considered as present, even if it's a 
+	small percent of the cell.
 
 	If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 	that will be dropped are those that are outside of the requested extent (which in that

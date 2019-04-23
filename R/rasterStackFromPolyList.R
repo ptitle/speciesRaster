@@ -3,10 +3,12 @@
 ##' @description Takes a list of polygons and creates a rasterStack.
 ##'
 ##'
-##' @param polyList a list of polygons objects (sf or sp), named with taxon names
+##' @param polyList a list of polygons objects (sf or sp), named with taxon names.
 ##'
 ##' @param resolution vertical and horizontal size of raster cell, in units 
-##'		of the polygons' projection
+##'		of the polygons' projection.
+##'
+##' @param coverCutoff the percent that a species range must cover a grid cell to be considered present.
 ##'
 ##' @param retainSmallRanges boolean; should small ranged species be dropped or preserved.
 ##'		See details.
@@ -23,11 +25,12 @@
 ##'
 ##'
 ##' @details 
-##' 	In the rasterization process, all cells for which the polygon covers the midpoint are
-##' 	considered as present and receive a value of 1. If \code{retainSmallRanges = FALSE}, 
-##' 	then species whose ranges are so small that no cell registers as present will be 
-##' 	dropped. If \code{retainSmallRanges = TRUE}, then the cells that the small polygon
-##' 	is found in will be considered as present, even if it's a small percent of the cell.
+##' 	In the rasterization process, all cells that are covered by the polygon by at least
+##' 	\code{coverCutoff} percent are considered as present and receive a value of 1. 
+##' 	If \code{retainSmallRanges = FALSE}, then species whose ranges are so small that no 
+##' 	cell registers as present will be dropped. If \code{retainSmallRanges = TRUE}, then the 
+##' 	cells that the small polygon is found in will be considered as present, even if it's a 
+##' 	small percent of the cell.
 ##' 
 ##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 ##' 	that will be dropped are those that are outside of the requested extent (which in that
@@ -59,7 +62,7 @@
 ##' 
 ##' @export
 
-rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE) {
+rasterStackFromPolyList <- function(polyList, resolution = 50000, coverCutoff = 0.1, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE) {
 	
 	if (is.list(polyList)) {
 		if (inherits(polyList[[1]], c('SpatialPolygons', 'SpatialPolygonsDataFrame'))) {
@@ -74,6 +77,10 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 
 	if (is.null(names(polyList))) {
 		stop('List must be named with species names.')
+	}
+	
+	if (coverCutoff > 1) {
+		stop('coverCutoff is a fraction.')
 	}
 
 	# test that all have same CRS
@@ -153,8 +160,12 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	#create template raster
 	ras <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(resolution, 2), crs = proj$proj4string)
 	
-	rasList <- pbapply::pblapply(polyList, function(x) fasterize::fasterize(x, ras, fun = 'sum'))
-		
+	# create high res raster to calculate percent cover
+	highResRas <- raster::raster(ras)
+	raster::res(highResRas) <- raster::res(ras) / 10
+	
+	rasList <- pbapply::pblapply(polyList, function(x) poly2Raster(x, highResRas, coverCutoff, ras))	
+			
 	# force non-NA values to be 1
 	for (i in 1:length(rasList)) {
 		raster::values(rasList[[i]])[!is.na(raster::values(rasList[[i]]))] <- 1
@@ -171,18 +182,20 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 	smallSp <- which(is.na(valCheck))
 
 	# if user wants to retain species that would otherwise be dropped
-	# we will use the getCover argument in raster::rasterize to find cells that are at all covered by polygon
+	# we will identify cells that have any amount of the species range in them.
 	if (retainSmallRanges) {
 				
 		if (length(smallSp) > 0) {
 			for (i in 1:length(smallSp)) {
 				
-				cover <- raster::rasterize(polyList[[smallSp[i]]], ras, getCover = TRUE)
-				presenceCells <- which(raster::values(cover) > 0)
-
-				if (length(presenceCells) > 0) {
-					ret[[smallSp[i]]][presenceCells] <- 1
-				}
+				xx <- fasterize::fasterize(polyList[[smallSp[i]]], highResRas, fun = 'last')
+				pts <- raster::xyFromCell(xx, cell = which(!is.na(raster::values(xx))))
+				ptCells <- raster::cellFromXY(ras, pts)
+				ptCounts <- table(ptCells)
+				keepCells <- as.numeric(names(ptCounts)[which(ptCounts >= 0)])
+				if (length(keepCells) > 0) {
+					ret[[smallSp[i]]][keepCells] <- 1
+				}				
 			}
 		}
 
@@ -199,11 +212,8 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 		badEntriesInd <- badEntries
 		badEntries <- sort(names(ret)[badEntries])
 		if (length(badEntries) > 0) {
-			message('The following rasters have no non-NA cells:\n\n')
-			for (i in 1:length(badEntries)) {
-				message('\t', badEntries[i], '\n')
-			}
-			
+			msg <- paste0('The following rasters have no non-NA cells:\n\t', paste(badEntries, collapse='\n\t'))
+			message(msg)			
 			# drop empty rasters
 			ret <- ret[[setdiff(1:raster::nlayers(ret), badEntriesInd)]]
 		}		
@@ -216,3 +226,19 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, retainSmallRan
 
 	return(ret)
 }	
+
+
+
+poly2Raster <- function(poly, highResRas, coverCutoff, ras) {
+
+	# by rasterizing on a raster 10x the resolution, we can count the number of high res cells within each normal cell and get percent cover
+	xx <- fasterize::fasterize(poly, highResRas, fun = 'last')
+	pts <- raster::xyFromCell(xx, cell = which(!is.na(raster::values(xx))))
+	cellCount <- raster::cellFromXY(ras, pts)
+	ptCounts <- table(cellCount)
+	keepCells <- as.numeric(names(ptCounts)[which(ptCounts >= coverCutoff * 100)])
+	ras2 <- ras
+	ras2[keepCells] <- 1
+	return(ras2)
+}
+
