@@ -7,7 +7,7 @@
 \method{plot}{speciesRaster}(x, log = FALSE, colorRampRange = NULL,
   legend = TRUE, col = c("blue", "yellow", "red"),
   includeWorldMap = TRUE, box = TRUE, axes = TRUE,
-  location = "right", singleSpCol = gray(0.9), ...)
+  location = "right", add = FALSE, singleSpCol = gray(0.9), ...)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -30,6 +30,8 @@ function that takes an integer (see for example \code{\link{colorRampPalette}})}
 \item{axes}{boolean; should axes be included?}
 
 \item{location}{location of legend, if included. See \code{\link{addRasterLegend}}.}
+
+\item{add}{Logical. Wether to add to current plot}
 
 \item{singleSpCol}{color for single-species cells. See details.}
 

@@ -14,6 +14,7 @@
 ##' @param box boolean; should box be drawn around plot?
 ##' @param axes boolean; should axes be included?
 ##' @param location location of legend, if included. See \code{\link{addRasterLegend}}.
+##' @param add Logical. Wether to add to current plot
 ##' @param singleSpCol color for single-species cells. See details.
 ##' @param ... additional parameters will be passed to the \code{\link{addRasterLegend}} function.
 ##'
@@ -48,7 +49,7 @@
 ##' @aliases plot.speciesRaster
 ##' @export
 
-plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', singleSpCol = gray(0.9), ...) {
+plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', add = FALSE, singleSpCol = gray(0.9), ...) {
 	
 	if (!inherits(x, 'speciesRaster')) {
 		stop('Object must be of class speciesRaster')
@@ -56,7 +57,7 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	
 	# if x is a speciesRaster that represents a metric that only makes sense for communities with multiple species, 
 	# then single species cells have a value of zero, and we will plot those cells as gray.
-	if (raster::labels(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV')) {
+	if (raster::labels(x[[1]]) %in% c('range', 'mean_NN_dist', 'min_NN_dist', 'variance', 'disparity', 'rangePCA', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'PSV')) {
 		# determine which cells have just 1 species
 		singleSpCells <- singleSpCellIndex(x)
 		x[[1]][singleSpCells] <- NA
@@ -88,9 +89,9 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	}	
 	
 	if (!log) {
-		raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)		
+		raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, add = add, legend = FALSE, zlim = colorRampRange)		
 	} else {
-		raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, legend = FALSE, zlim = colorRampRange)			
+		raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, add = add, legend = FALSE, zlim = colorRampRange)			
 	}
 	
 	if (plotSingleCells) {
