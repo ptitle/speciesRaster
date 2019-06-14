@@ -80,6 +80,11 @@ extractFromSpeciesRaster <- function(x, spatial, collapse=TRUE) {
 		if (inherits(spatial, 'sfc_POINT')) {
 			spatial <- sf::st_coordinates(spatial)
 		}
+
+		if (inherits(spatial, 'sfc_MULTIPOINT')) {
+			spatial <- sf::st_coordinates(spatial)[, 1:2]
+		}
+
 	}
 	
 	if (inherits(spatial, 'sfc_POLYGON')) {
