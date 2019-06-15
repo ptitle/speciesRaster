@@ -186,10 +186,17 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, coverCutoff = 
 	if (retainSmallRanges) {
 				
 		if (length(smallSp) > 0) {
+			message('\tProcessing ', length(smallSp), ' small-ranged species that would otherwise be dropped...')
 			for (i in 1:length(smallSp)) {
 				
+				message('\t\t', i)
 				xx <- fasterize::fasterize(polyList[[smallSp[i]]], highResRas, fun = 'last')
 				pts <- raster::xyFromCell(xx, cell = which(!is.na(raster::values(xx))))
+				# if range is too small to register, sample points within the polygon
+				if (nrow(pts) == 0) {
+					pts <- sf::st_sample(polyList[[smallSp[i]]], size = 100)
+					pts <- sf::st_coordinates(pts)
+				}
 				ptCells <- raster::cellFromXY(ras, pts)
 				ptCounts <- table(ptCells)
 				keepCells <- as.numeric(names(ptCounts)[which(ptCounts >= 0)])
