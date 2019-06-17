@@ -8,6 +8,8 @@
 ##' @param resolution vertical and horizontal size of raster cell, in units 
 ##'		of the polygons' projection.
 ##'
+##' @param method approach used for rasterizing. See details below.
+##'
 ##' @param coverCutoff the percent that a species range must cover a grid cell to be considered present.
 ##'
 ##' @param retainSmallRanges boolean; should small ranged species be dropped or preserved.
@@ -25,12 +27,14 @@
 ##'
 ##'
 ##' @details 
-##' 	In the rasterization process, all cells that are covered by the polygon by at least
-##' 	\code{coverCutoff} percent are considered as present and receive a value of 1. 
+##' 	In the rasterization process, two approaches are implemented. For \code{method = 'midpoint'}, 
+##'		a range polygon registers in a cell if the polygon overlaps with the cell midpoint. 
+##' 	For \code{method = 'gridcell'}, a range polygon registers in a cell if it covers that cell by 
+##' 	at least all cells that are covered by the polygon by at least \code{coverCutoff} fraction of the cell.
 ##' 	If \code{retainSmallRanges = FALSE}, then species whose ranges are so small that no 
 ##' 	cell registers as present will be dropped. If \code{retainSmallRanges = TRUE}, then the 
 ##' 	cells that the small polygon is found in will be considered as present, even if it's a 
-##' 	small percent of the cell.
+##' 	small percent of the cell. \code{retainSmallRanges} only applies to \code{method = 'gridcell'}. 
 ##' 
 ##'		If \code{dropEmptyRasters = TRUE} and \code{retainSmallRanges = TRUE}, then the species 
 ##' 	that will be dropped are those that are outside of the requested extent (which in that
@@ -62,7 +66,7 @@
 ##' 
 ##' @export
 
-rasterStackFromPolyList <- function(polyList, resolution = 50000, coverCutoff = 0.1, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE) {
+rasterStackFromPolyList <- function(polyList, resolution = 50000, method = 'midpoint', coverCutoff = 0.1, retainSmallRanges = TRUE, extent = 'auto', dropEmptyRasters = TRUE) {
 	
 	if (is.list(polyList)) {
 		if (inherits(polyList[[1]], c('SpatialPolygons', 'SpatialPolygonsDataFrame'))) {
@@ -160,11 +164,21 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, coverCutoff = 
 	#create template raster
 	ras <- raster::raster(xmn = masterExtent$minLong, xmx = masterExtent$maxLong, ymn = masterExtent$minLat, ymx = masterExtent$maxLat, resolution = rep(resolution, 2), crs = proj$proj4string)
 	
-	# create high res raster to calculate percent cover
-	highResRas <- raster::raster(ras)
-	raster::res(highResRas) <- raster::res(ras) / 10
-	
-	rasList <- pbapply::pblapply(polyList, function(x) poly2Raster(x, highResRas, coverCutoff, ras))	
+	if (method == 'midpoint') {
+
+		rasList <- pbapply::pblapply(polyList, function(x) fasterize::fasterize(x, ras, fun = 'last'))
+		
+	} else if (method == 'gridcell') {
+		
+		# create high res raster to calculate percent cover
+		highResRas <- raster::raster(ras)
+		raster::res(highResRas) <- raster::res(ras) / 10
+		
+		rasList <- pbapply::pblapply(polyList, function(x) poly2Raster(x, highResRas, coverCutoff, ras))	
+		
+	} else {
+		stop('method argument not recognized.')
+	}
 			
 	# force non-NA values to be 1
 	for (i in 1:length(rasList)) {
@@ -183,7 +197,7 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, coverCutoff = 
 
 	# if user wants to retain species that would otherwise be dropped
 	# we will identify cells that have any amount of the species range in them.
-	if (retainSmallRanges) {
+	if (retainSmallRanges & method == 'gridcell') {
 				
 		if (length(smallSp) > 0) {
 			message('\tProcessing ', length(smallSp), ' small-ranged species that would otherwise be dropped...')
