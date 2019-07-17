@@ -39,6 +39,7 @@ Univariate morphological metrics
 		\item{variance}
 		\item{arithmeticWeightedMean} (see below)
 		\item{geometricWeightedMean} (see below)
+		\item{phylosignal:} {Blomberg's K for phylogenetic signal}
 	}
 	Multivariate morphological metrics
 	\itemize{
@@ -47,11 +48,14 @@ Univariate morphological metrics
 		\item{rangePCA}
 		\item{mean_NN_dist:} {mean nearest neighbor distance}
 		\item{min_NN_dist:} {minimum nearest neighbor distance}
+		\item{phylosignal:} {Blomberg's K for phylogenetic signal, as implemented in geomorph::physignal}
 	}
 	Phylogenetic metrics
 	\itemize{
+		\item{pd:} {Faith's phylogenetic diversity, including the root}
 		\item{meanPatristic}
-		\item{patristicNN:} {mean nearest neighbor in patristic distance}
+		\item{meanPatristicNN:} {mean nearest neighbor in patristic distance}
+		\item{minPatristicNN:} {minimum nearest neighbor in patristic distance}
 		\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 		\item{PSV:} {Phylogenetic Species Variability}
 	}

@@ -29,6 +29,7 @@
 ##' 		\item{variance}
 ##' 		\item{arithmeticWeightedMean} (see below)
 ##' 		\item{geometricWeightedMean} (see below)
+##'			\item{phylosignal:} {Blomberg's K for phylogenetic signal}
 ##' 	}
 ##' 	Multivariate morphological metrics
 ##'		\itemize{
@@ -37,11 +38,14 @@
 ##' 		\item{rangePCA}
 ##' 		\item{mean_NN_dist:} {mean nearest neighbor distance}
 ##'			\item{min_NN_dist:} {minimum nearest neighbor distance}
+##' 		\item{phylosignal:} {Blomberg's K for phylogenetic signal, as implemented in geomorph::physignal}
 ##' 	}
 ##' 	Phylogenetic metrics
 ##' 	\itemize{
+##'			\item{pd:} {Faith's phylogenetic diversity, including the root}
 ##'			\item{meanPatristic}
-##'			\item{patristicNN:} {mean nearest neighbor in patristic distance}
+##'			\item{meanPatristicNN:} {mean nearest neighbor in patristic distance}
+##'			\item{minPatristicNN:} {minimum nearest neighbor in patristic distance}
 ##'			\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 ##'			\item{PSV:} {Phylogenetic Species Variability}
 ##' 	}
@@ -92,7 +96,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		stop('You can only specify one metric.')
 	}
 	
-	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism'))
+	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'pd', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'PSV', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism', 'phylosignal'))
 	
 	pairwise <- FALSE
 	
@@ -164,8 +168,20 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		}
 	}
 	
+	# For metrics that require both trait and phylogenetic data, prune the data and tree to the shared taxon set
+	if (metric == 'phylosignal') {
+		if (is.vector(x[['data']])) {
+			sharedTaxa <- intersect(names(x[['data']]), x[['phylo']]$tip.label)
+			x[['data']] <- x[['data']][sharedTaxa]
+		} else {
+			sharedTaxa <- intersect(rownames(x[['data']]), x[['phylo']]$tip.label)
+			x[['data']] <- x[['data']][sharedTaxa,]
+		}
+		x[['phylo']] <- ape::keep.tip(x[['phylo']], sharedTaxa)
+	}
+	
 	# Prune species list according to metric of interest
-	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'mean_NN_dist', 'min_NN_dist')) {
+	if (metric %in% c('mean', 'median', 'disparity', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'mean_NN_dist', 'min_NN_dist', 'phylosignal')) {
 		
 		if (verbose) message('\t...dropping species that are not in trait data...\n')
 		# check that there is data in speciesRaster object
@@ -180,7 +196,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			x[['speciesList']] <- intersectList(x[['speciesList']], rownames(x[['data']]))
 		}
 		
-	 } else if (metric %in% c('meanPatristic', 'patristicNN','phyloDisparity', 'phyloWeightedEndemism', 'PSV')) {
+	 } else if (metric %in% c('pd', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'phyloWeightedEndemism', 'PSV')) {
 	 	
 	 	# check that there is a phylogeny in speciesRaster object
 		if (is.null(x[['phylo']])) {
@@ -262,6 +278,13 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			resVal[ind] <- 0
 		}
 	}
+	
+	if (metric == 'phylosignal' & metricType == 'uniVar') {
+		if (verbose & metricType == 'uniVar') message('\t...calculating univariate metric: ', metric, '...\n')
+		resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		ind <- which(lengths(uniqueComm) > 1)
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) geomorph::physignal(x[['data']][y], phy = ape::keep.tip(x$phylo, y), iter = 999, print.progress = FALSE)$phy.signal)	
+	}
 
 	## MULTIVARIATE
 	
@@ -315,14 +338,32 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) min(nnDist(x[['data']][y, ], Nrep = nreps)$mean_dist))
 	}
 	
+	if (metric == 'phylosignal' & metricType == 'multiVar') {
+		if (verbose & metricType == 'multiVar') message('\t...calculating multivariate metric: ', metric, '...\n')
+		resVal <- rep(NA, length(uniqueComm)) # set up with NA
+		ind <- which(lengths(uniqueComm) > 1)
+		resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) geomorph::physignal(x[['data']][y, ], phy = ape::keep.tip(x$phylo, y), iter = 999, print.progress = FALSE)$phy.signal)	
+	}
+	
 	## ----------------------------------
 	## PHYLOGENY-RELATED METRICS
 	
-	if (metric %in% c('meanPatristic', 'patristicNN', 'phyloDisparity', 'PSV')) {
+	if (metric %in% c('pd', 'meanPatristic', 'minPatristicNN', 'meanPatristicNN', 'phyloDisparity', 'PSV')) {
 		
 		# calculate pairwise patristic distance
 		patdist <- cophenetic(x[['phylo']])
 		diag(patdist) <- NA
+		
+		if (metric == 'pd') {
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
+			mat <- matrix(0, nrow = length(uniqueComm), ncol = length(x$phylo$tip.label))
+			colnames(mat) <- x$phylo$tip.label
+			for (i in 1:length(uniqueComm)) {
+				mat[i, colnames(mat) %in% uniqueComm[[i]]] <- 1
+			}
+			resVal <- picante::pd(mat, x$phylo, include.root = TRUE)$PD
+			resVal[sapply(uniqueComm, anyNA)] <- NA
+		}
 		
 		if (metric == 'meanPatristic') {
 			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
@@ -333,7 +374,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			resVal[sapply(uniqueComm, anyNA)] <- NA
 		}
 		
-		if (metric == 'patristicNN') {
+		if (metric == 'meanPatristicNN') {
 			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
 			# the mean of the minimum patristic distance for each species present
 			resVal <- numeric(length = length(uniqueComm)) # set up with zeros
@@ -341,6 +382,17 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			ind <- which(sapply(uniqueComm, length) > 1)
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
 				return(mean(apply(patdist[y, y], MARGIN = 1, min, na.rm = TRUE)))
+			})
+		}
+
+		if (metric == 'minPatristicNN') {
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
+			# the minimum of the minimum patristic distance for each species present
+			resVal <- numeric(length = length(uniqueComm)) # set up with zeros
+			resVal[sapply(uniqueComm, anyNA)] <- NA
+			ind <- which(sapply(uniqueComm, length) > 1)
+			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) {
+				return(min(apply(patdist[y, y], MARGIN = 1, min, na.rm = TRUE)))
 			})
 		}
 
