@@ -89,7 +89,7 @@ A number of predefined locations exist in this function to make it easy to
 	where the legend is placed. \code{adj} is defined as a percentage of the 
 	figure width or height, left to right, or bottom to top, respectively. For 
 	example, if the legend is at the bottom, \code{adj = 0.8} will place the
-	legend 80% of the distance from the top of the figure, horizontally centered.  
+	legend 80\% of the distance from the top of the figure, horizontally centered.  
 
 See examples.
 }

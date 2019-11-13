@@ -109,6 +109,8 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	if (includeWorldMap) {
 		# add map for context
 		wrld <- sf::st_transform(worldmap, crs = sf::st_crs(x[[1]]))
+		grXY <- graphics::par("usr")
+		graphics::clip(grXY[1], grXY[2], grXY[3], grXY[4]) # this ensures that world map is constrained to plot region
 		graphics::plot(wrld, add = TRUE, lwd = 0.5)
 	}
 }
