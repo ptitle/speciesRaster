@@ -14,7 +14,18 @@ A list with a polygon, and its WKT string
 }
 \description{
 Given a list of polygons, sets up an interactive plot
-	to allow the user to draw the desired extent.
+	to allow the user to draw the desired extent. This can be used to
+	define the extent in \link{rasterStackFromPolyList}.
+}
+\examples{
+\dontrun{
+ex <- interactiveExtent(tamiasPolyList)
+
+# You can use this as the extent in createSpeciesRaster
+ranges <- rasterStackFromPolyList(tamiasPolyList, resolution = 20000, extent = ex$wkt)
+spRas <- createSpeciesRaster(ranges = ranges)
+
+}
 }
 \author{
 Pascal Title

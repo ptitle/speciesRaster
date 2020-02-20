@@ -23,7 +23,7 @@ Given a list of species in each cell, all components of the
 }
 \details{
 This function is used internally by \code{\link{dropFromSpeciesRaster}} and 
-	by \code{link{coarsenSpeciesRaster}}.
+	by \code{\link{coarsen_speciesRaster}}.
 }
 \author{
 Pascal Title

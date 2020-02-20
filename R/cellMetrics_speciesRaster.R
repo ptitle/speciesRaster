@@ -19,7 +19,7 @@
 ##' 	calculations of the metric at every cell. 
 ##' 
 ##' @details 
-##' 	Univariate morphological metrics
+##' 	Univariate trait metrics
 ##' 	\itemize{
 ##' 		\item{mean}
 ##' 		\item{median}
@@ -31,7 +31,7 @@
 ##' 		\item{geometricWeightedMean} (see below)
 ##'			\item{phylosignal:} {Blomberg's K for phylogenetic signal}
 ##' 	}
-##' 	Multivariate morphological metrics
+##' 	Multivariate trait metrics
 ##'		\itemize{
 ##'			\item{disparity} 
 ##' 		\item{range}
@@ -56,7 +56,7 @@
 ##'			\item{phyloWeightedEndemism:}
 ##' 	}
 ##'
-##'		If data slot contains a pairwise matrix, var is ignored.
+##'		If data slot contains a pairwise matrix, \code{var} is ignored.
 ##'		Weighted mean options are available where, for each cell, a weighting scheme 
 ##' 	(inverse of species range sizes) is applied such that small-ranged species are 
 ##' 	up-weighted, and broadly distributed species are down-weighted. 

@@ -9,7 +9,7 @@
 ##' 	characteristics than the one in \code{x}.
 ##'
 ##' @details This function is used internally by \code{\link{dropFromSpeciesRaster}} and 
-##' 	by \code{link{coarsenSpeciesRaster}}. 
+##' 	by \code{\link{coarsen_speciesRaster}}. 
 ##'
 ##' @return new \code{speciesRaster} object.
 ##'

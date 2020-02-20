@@ -91,6 +91,8 @@ extractFromSpeciesRaster <- function(x, spatial, collapse=TRUE) {
 		cells <- raster::cellFromPolygon(x[[1]], p = as(spatial, 'Spatial'))[[1]]
 	} else if (inherits(spatial, c('matrix', 'data.frame', 'SpatialPoints', 'SpatialPointsDataFrame'))) {
 		cells <- raster::cellFromXY(x[[1]], spatial)
+	} else if (is.numeric(spatial)) {
+		cells <- raster::cellFromXY(x[[1]], matrix(spatial, ncol = 2))
 	} else {
 		stop('format of spatial not recognized.')
 	}

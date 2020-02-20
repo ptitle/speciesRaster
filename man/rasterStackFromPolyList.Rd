@@ -4,9 +4,15 @@
 \alias{rasterStackFromPolyList}
 \title{Polygon List to rasterStack}
 \usage{
-rasterStackFromPolyList(polyList, resolution = 50000,
-  method = "midpoint", coverCutoff = 0.1, retainSmallRanges = TRUE,
-  extent = "auto", dropEmptyRasters = TRUE)
+rasterStackFromPolyList(
+  polyList,
+  resolution = 50000,
+  method = "midpoint",
+  coverCutoff = 0.1,
+  retainSmallRanges = TRUE,
+  extent = "auto",
+  dropEmptyRasters = TRUE
+)
 }
 \arguments{
 \item{polyList}{a list of polygons objects (sf or sp), named with taxon names.}
@@ -42,7 +48,7 @@ Takes a list of polygons and creates a rasterStack.
 In the rasterization process, two approaches are implemented. For \code{method = 'midpoint'}, 
 	a range polygon registers in a cell if the polygon overlaps with the cell midpoint. 
 	For \code{method = 'gridcell'}, a range polygon registers in a cell if it covers that cell by 
-	at least all cells that are covered by the polygon by at least \code{coverCutoff} fraction of the cell.
+	at least \code{coverCutoff} fraction of the cell.
 	If \code{retainSmallRanges = FALSE}, then species whose ranges are so small that no 
 	cell registers as present will be dropped. If \code{retainSmallRanges = TRUE}, then the 
 	cells that the small polygon is found in will be considered as present, even if it's a 

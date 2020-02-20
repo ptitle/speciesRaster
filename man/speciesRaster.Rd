@@ -3,7 +3,6 @@
 \docType{package}
 \name{speciesRaster}
 \alias{speciesRaster}
-\alias{speciesRaster-package}
 \title{speciesRaster}
 \description{
 An R package that facilitates the aggregation of species'

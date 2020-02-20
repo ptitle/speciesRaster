@@ -5,12 +5,13 @@
 ##' class \code{speciesRaster}.
 ##' 
 ##' 
-##' @param ranges Either a RasterStack, RasterBrick, or species by cell matrix. If 
-##' 	raster objects, cell values can either be binary presence/absence, or probabilities.
+##' @param ranges Either a RasterStack, RasterBrick, or species by cell matrix. Any non-NA 
+##' 	values in rasters are considered presences. 
 ##'
 ##' @param rasterTemplate If input is a species x cell matrix, then a rasterTemplate 
-##' must be provided. Cells with a value of 1 will be processed, cells with a value 
-##' of 0 will be ommitted. Therefore, all cells must have a value of 0/1.
+##' 	must be provided, where the number of cells = the number of columns in the matrix. 
+##' 	Cells with a value of 1 will be processed, cells with a value 
+##' 	of 0 will be . Therefore, all cells must have a value of 0/1.
 ##'
 ##' @param verbose Primarily intended for debugging, print progress to the console.
 ##'

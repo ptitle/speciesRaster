@@ -1,6 +1,6 @@
 ##' @title addRasterLegend
 ##'
-##' @description Adds a legend to an existing raster plot, with some additional manual
+##' @description Adds a legend to an existing raster plot, with some additional manual controls.
 
 ##'	@param r the \code{rasterLayer} or \code{speciesRaster} object that has been plotted
 
@@ -122,6 +122,10 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 
 	if (!isInteger %in% c('auto', TRUE, FALSE)) {
 		stop('isInteger must be "auto", TRUE or FALSE.')
+	}
+	
+	if (is.numeric(location)) {
+		adj <- NULL
 	}
 	
 	if(!methods::hasArg('ramp')) {

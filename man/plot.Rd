@@ -4,10 +4,20 @@
 \alias{plot.speciesRaster}
 \title{Plot speciesRaster}
 \usage{
-\method{plot}{speciesRaster}(x, log = FALSE, colorRampRange = NULL,
-  legend = TRUE, col = c("blue", "yellow", "red"),
-  includeWorldMap = TRUE, box = TRUE, axes = TRUE,
-  location = "right", add = FALSE, singleSpCol = gray(0.9), ...)
+\method{plot}{speciesRaster}(
+  x,
+  log = FALSE,
+  colorRampRange = NULL,
+  legend = TRUE,
+  col = c("blue", "yellow", "red"),
+  includeWorldMap = TRUE,
+  box = TRUE,
+  axes = TRUE,
+  location = "right",
+  add = FALSE,
+  singleSpCol = gray(0.9),
+  ...
+)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}

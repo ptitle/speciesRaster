@@ -4,11 +4,28 @@
 \alias{addRasterLegend}
 \title{addRasterLegend}
 \usage{
-addRasterLegend(r, direction, side, location = "right", nTicks = 2,
-  adj = NULL, shortFrac = 0.02, longFrac = 0.3, axisOffset = 0,
-  border = TRUE, ramp = "terrain", isInteger = "auto",
-  ncolors = 64, breaks = NULL, minmax = NULL, locs = NULL,
-  cex.axis = 0.8, labelDist = 0.7, minDigits = 2, ...)
+addRasterLegend(
+  r,
+  direction,
+  side,
+  location = "right",
+  nTicks = 2,
+  adj = NULL,
+  shortFrac = 0.02,
+  longFrac = 0.3,
+  axisOffset = 0,
+  border = TRUE,
+  ramp = "terrain",
+  isInteger = "auto",
+  ncolors = 64,
+  breaks = NULL,
+  minmax = NULL,
+  locs = NULL,
+  cex.axis = 0.8,
+  labelDist = 0.7,
+  minDigits = 2,
+  ...
+)
 }
 \arguments{
 \item{r}{the \code{rasterLayer} or \code{speciesRaster} object that has been plotted}
@@ -74,7 +91,7 @@ Invisibly returns a list with the following components.
 }
 }
 \description{
-Adds a legend to an existing raster plot, with some additional manual
+Adds a legend to an existing raster plot, with some additional manual controls.
 }
 \details{
 A number of predefined locations exist in this function to make it easy to 

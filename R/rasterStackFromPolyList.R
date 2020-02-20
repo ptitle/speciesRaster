@@ -30,7 +30,7 @@
 ##' 	In the rasterization process, two approaches are implemented. For \code{method = 'midpoint'}, 
 ##'		a range polygon registers in a cell if the polygon overlaps with the cell midpoint. 
 ##' 	For \code{method = 'gridcell'}, a range polygon registers in a cell if it covers that cell by 
-##' 	at least all cells that are covered by the polygon by at least \code{coverCutoff} fraction of the cell.
+##' 	at least \code{coverCutoff} fraction of the cell.
 ##' 	If \code{retainSmallRanges = FALSE}, then species whose ranges are so small that no 
 ##' 	cell registers as present will be dropped. If \code{retainSmallRanges = TRUE}, then the 
 ##' 	cells that the small polygon is found in will be considered as present, even if it's a 
@@ -186,6 +186,10 @@ rasterStackFromPolyList <- function(polyList, resolution = 50000, method = 'midp
 	}
 	
 	ret <- raster::stack(rasList)
+	
+	if (raster::nlayers(ret) == 0) {
+		stop('Empty raster layers.')
+	}
 		
 	# if extent was polygon, then mask rasterStack
 	if (inherits(extent, c('sf', 'sfc'))) {

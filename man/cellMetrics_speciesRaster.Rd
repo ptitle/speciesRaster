@@ -4,8 +4,7 @@
 \alias{cellMetrics_speciesRaster}
 \title{Cell Metrics}
 \usage{
-cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20,
-  verbose = FALSE)
+cellMetrics_speciesRaster(x, metric, var = NULL, nreps = 20, verbose = FALSE)
 }
 \arguments{
 \item{x}{object of class \code{speciesRaster}}
@@ -29,7 +28,7 @@ Calculate various morphological and phylogenetic community
 metrics for every cell in a \code{speciesRaster} object.
 }
 \details{
-Univariate morphological metrics
+Univariate trait metrics
 	\itemize{
 		\item{mean}
 		\item{median}
@@ -41,7 +40,7 @@ Univariate morphological metrics
 		\item{geometricWeightedMean} (see below)
 		\item{phylosignal:} {Blomberg's K for phylogenetic signal}
 	}
-	Multivariate morphological metrics
+	Multivariate trait metrics
 	\itemize{
 		\item{disparity} 
 		\item{range}
@@ -66,7 +65,7 @@ Univariate morphological metrics
 		\item{phyloWeightedEndemism:}
 	}
 
-	If data slot contains a pairwise matrix, var is ignored.
+	If data slot contains a pairwise matrix, \code{var} is ignored.
 	Weighted mean options are available where, for each cell, a weighting scheme 
 	(inverse of species range sizes) is applied such that small-ranged species are 
 	up-weighted, and broadly distributed species are down-weighted. 
