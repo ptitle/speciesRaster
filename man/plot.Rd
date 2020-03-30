@@ -10,7 +10,7 @@
   colorRampRange = NULL,
   legend = TRUE,
   col = c("blue", "yellow", "red"),
-  includeWorldMap = TRUE,
+  basemap = "worldmap",
   box = TRUE,
   axes = TRUE,
   location = "right",
@@ -26,14 +26,16 @@
 
 \item{colorRampRange}{numeric vector of min and max value for scaling the color
 ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
-plots are desired on the same scale. See \code{\link{getMultiMapRamp}}.}
+plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not intended to leaflet option.}
 
 \item{legend}{boolean; should legend be included?}
 
 \item{col}{either a vector of color names that will be interpolated, or a color ramp
 function that takes an integer (see for example \code{\link{colorRampPalette}})}
 
-\item{includeWorldMap}{boolean; should a world map be plotted?}
+\item{basemap}{if \code{NULL}, then only the raster is plotted. 
+If \code{'worldmap'}, then vector map is plotted.
+If \code{'leaflet'}, then the \code{leaflet} package is used.}
 
 \item{box}{boolean; should box be drawn around plot?}
 
@@ -75,6 +77,11 @@ minmax <- getMultiMapRamp(list(spRas1, spRas2))
 par(mfrow = c(1,2))
 plot(spRas1, colorRampRange = log(minmax), log = TRUE, location='right')
 plot(spRas2, colorRampRange = log(minmax), log = TRUE, location='left')
+
+\donttest{
+# use leaflet for plotting
+plot(tamiasSpRas, basemap = 'leaflet')
+}
 
 }
 \author{

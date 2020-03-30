@@ -6,11 +6,13 @@
 ##' @param log boolean; should the cell values be logged?
 ##' @param colorRampRange numeric vector of min and max value for scaling the color
 ##' 	ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
-##' 	plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. 
+##' 	plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not intended to leaflet option.
 ##' @param legend boolean; should legend be included?
 ##' @param col either a vector of color names that will be interpolated, or a color ramp
 ##' 	function that takes an integer (see for example \code{\link{colorRampPalette}})
-##'	@param includeWorldMap boolean; should a world map be plotted?
+##'	@param basemap if \code{NULL}, then only the raster is plotted. 
+##'		If \code{'worldmap'}, then vector map is plotted.
+##' 	If \code{'leaflet'}, then the \code{leaflet} package is used.
 ##' @param box boolean; should box be drawn around plot?
 ##' @param axes boolean; should axes be included?
 ##' @param location location of legend, if included. See \code{\link{addRasterLegend}}.
@@ -44,15 +46,25 @@
 ##' par(mfrow = c(1,2))
 ##' plot(spRas1, colorRampRange = log(minmax), log = TRUE, location='right')
 ##' plot(spRas2, colorRampRange = log(minmax), log = TRUE, location='left')
-##' 
+##'
+##' \donttest{
+##' # use leaflet for plotting
+##' plot(tamiasSpRas, basemap = 'leaflet')
+##' }
+##'
 ##' @rdname plot
 ##' @aliases plot.speciesRaster
 ##' @export
+##' @importFrom magrittr %>%
 
-plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), includeWorldMap = TRUE, box=TRUE, axes=TRUE, location = 'right', add = FALSE, singleSpCol = gray(0.9), ...) {
+plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = TRUE, col = c('blue', 'yellow', 'red'), basemap = 'worldmap', box=TRUE, axes=TRUE, location = 'right', add = FALSE, singleSpCol = gray(0.9), ...) {
 	
 	if (!inherits(x, 'speciesRaster')) {
 		stop('Object must be of class speciesRaster')
+	}
+	
+	if (!is.null(basemap) & !basemap %in% c('worldmap', 'leaflet')) {
+		stop("basemap argument must be NULL, 'worldmap' or 'leaflet'.")
 	}
 	
 	# if x is a speciesRaster that represents a metric that only makes sense for communities with multiple species, 
@@ -80,37 +92,70 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 		}	
 	}
 	
-	if (class(col) == 'function') {
-		colramp <- col
-	} else {
-		if (class(col) == 'character') {
-			colramp <- grDevices::colorRampPalette(col)
-		}
-	}	
+	if (basemap != 'leaflet') {
 	
-	if (!log) {
-		raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, add = add, legend = FALSE, zlim = colorRampRange)		
-	} else {
-		raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, add = add, legend = FALSE, zlim = colorRampRange)			
-	}
-	
-	if (plotSingleCells) {
-		raster::plot(singleSpRas, col = singleSpCol, box = FALSE, axes = FALSE, legend = FALSE, add = TRUE)
-	}
-	
-	if (legend) {
-		if (!log) {
-			addRasterLegend(x[[1]], location = location, ramp = colramp, ncolors = 100, minmax = colorRampRange, ...)
+		if (class(col) == 'function') {
+			colramp <- col
 		} else {
-			addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, minmax = colorRampRange, ...)
+			if (class(col) == 'character') {
+				colramp <- grDevices::colorRampPalette(col)
+			}
+		}	
+		
+		if (!log) {
+			raster::plot(x[[1]], col = colramp(100), box = box, axes = axes, add = add, legend = FALSE, zlim = colorRampRange)		
+		} else {
+			raster::plot(log(x[[1]]), col = colramp(100), box = box, axes = axes, add = add, legend = FALSE, zlim = colorRampRange)			
+		}
+		
+		if (plotSingleCells) {
+			raster::plot(singleSpRas, col = singleSpCol, box = FALSE, axes = FALSE, legend = FALSE, add = TRUE)
+		}
+		
+		if (legend) {
+			if (!log) {
+				addRasterLegend(x[[1]], location = location, ramp = colramp, ncolors = 100, minmax = colorRampRange, ...)
+			} else {
+				addRasterLegend(log(x[[1]]), location = location, ramp = colramp, ncolors=100, minmax = colorRampRange, ...)
+			}		
+		}
+	
+		if (basemap == 'worldmap') {
+			# add map for context
+			wrld <- sf::st_transform(worldmap, crs = sf::st_crs(x[[1]]))
+			grXY <- graphics::par("usr")
+			graphics::clip(grXY[1], grXY[2], grXY[3], grXY[4]) # this ensures that world map is constrained to plot region
+			graphics::plot(wrld, add = TRUE, lwd = 0.5)
+		}
+	} else {
+		
+		colramp2 <- leaflet::colorNumeric(col, domain = NULL, na.color = "#00000000")
+		
+		m = leaflet::leaflet() %>% leaflet::addTiles()
+		
+		if (plotSingleCells) {
+			if (!log) {
+				m %>% leaflet::addRasterImage(x[[1]], opacity = 0.5, colors = colramp2) %>% leaflet::addLegend(position = 'bottomright', pal = colramp2, values = raster::values(x[[1]]), title = raster::labels(x[[1]]))	%>% leaflet::addRasterImage(singleSpRas, opacity = 0.5, colors = gray(0.5))		
+			} else {
+				m %>% leaflet::addRasterImage(log(x[[1]]), opacity = 0.5, colors = colramp2) %>% leaflet::addLegend(position = 'bottomright', pal = colramp2, values = log(raster::values(x[[1]])), title = raster::labels(x[[1]]))	%>% leaflet::addRasterImage(singleSpRas, opacity = 0.5, colors = gray(0.5))			
+			}
+		} else {
+			if (!log) {
+				m %>% leaflet::addRasterImage(x[[1]], opacity = 0.5, colors = colramp2) %>% leaflet::addLegend(position = 'bottomright', pal = colramp2, values = raster::values(x[[1]]), title = raster::labels(x[[1]]))		
+			} else {
+				m %>% leaflet::addRasterImage(log(x[[1]]), opacity = 0.5, colors = colramp2) %>% leaflet::addLegend(position = 'bottomright', pal = colramp2, values = raster::values(x[[1]]), title = raster::labels(x[[1]]))			
+			}			
 		}		
 	}
-
-	if (includeWorldMap) {
-		# add map for context
-		wrld <- sf::st_transform(worldmap, crs = sf::st_crs(x[[1]]))
-		grXY <- graphics::par("usr")
-		graphics::clip(grXY[1], grXY[2], grXY[3], grXY[4]) # this ensures that world map is constrained to plot region
-		graphics::plot(wrld, add = TRUE, lwd = 0.5)
-	}
 }
+
+
+
+
+
+
+
+
+
+
+
