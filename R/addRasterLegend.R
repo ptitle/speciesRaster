@@ -407,6 +407,15 @@ addRasterLegend <- function(r, direction, side, location = 'right', nTicks = 2, 
 	} else if (isInteger) {
 		tx <- round(tx, 0)
 	}
+
+	# if integer, it's possible that there are too few unique values. Adjust.
+	if (length(unique(tx)) < length(tx)) {
+		tx <- trunc(seq(from = 1, to = nrow(x), length.out = length(unique(tx))))
+		tickLocs <- x[tx,1]
+		tx <- z[tx,1]
+		tickLocs[length(tickLocs)] <- max(x[,2])
+		tx[length(tx)] <- max(z[,2])				
+	}
 	
 	#plot bar
 	if (direction == 'horizontal') {
