@@ -6,7 +6,7 @@
 ##' @param log boolean; should the cell values be logged?
 ##' @param colorRampRange numeric vector of min and max value for scaling the color
 ##' 	ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
-##' 	plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not intended to leaflet option.
+##' 	plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not intended for leaflet option.
 ##' @param legend boolean; should legend be included?
 ##' @param col either a vector of color names that will be interpolated, or a color ramp
 ##' 	function that takes an integer (see for example \code{\link{colorRampPalette}})
@@ -122,7 +122,7 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 	
 		if (basemap == 'worldmap') {
 			# add map for context
-			wrld <- sf::st_transform(worldmap, crs = sf::st_crs(x[[1]]))
+			wrld <- sf::st_transform(worldmap, crs = sf::st_crs(raster::crs(x[[1]], asText = TRUE)))
 			grXY <- graphics::par("usr")
 			graphics::clip(grXY[1], grXY[2], grXY[3], grXY[4]) # this ensures that world map is constrained to plot region
 			graphics::plot(wrld, add = TRUE, lwd = 0.5)

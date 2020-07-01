@@ -49,7 +49,7 @@ summary.speciesRaster <- function(object, ...) {
 	ncells <- raster::ncell(object[[1]])
 	rasterExtent <- raster::extent(object[[1]])
 	resolution <- raster::res(object[[1]])
-	proj <- sf::st_crs(object[[1]])
+	proj <- raster::crs(object[[1]])
 	lengthUniqueSp <- length(object[['geogSpecies']])
 	minSp <- min(sapply(object[[2]], length))
 	maxSp <- max(sapply(object[[2]], length))
@@ -58,7 +58,7 @@ summary.speciesRaster <- function(object, ...) {
 	cat('\tMetric:', metric, '\n')
 	cat('\tnumber of raster cells:', ncells, '\n')
 	cat('\traster resolution:', resolution[1], 'by', resolution[2], '\n')
-	cat('\traster projection:', proj$proj4string, '\n\n')
+	cat('\traster crs:', proj@projargs, '\n\n')
 	cat(paste0('\tnumber of unique species: ', lengthUniqueSp, ' (richness range: ', minSp, ' - ', maxSp, ')'), '\n')
 	cat('\tdata present:', ifelse(is.na(data), 'No', 'Yes'), '\n')
 	if (!is.na(data)) {

@@ -28,7 +28,7 @@ print.speciesRaster <- function(x, ...) {
 	ncells <- raster::ncell(x[[1]])
 	rasterExtent <- raster::extent(x[[1]])
 	resolution <- raster::res(x[[1]])
-	proj <- sf::st_crs(x[[1]])
+	proj <- raster::crs(x[[1]])
 	lengthUniqueSp <- length(x[['geogSpecies']])
 	minSp <- min(sapply(x[['speciesList']], length))
 	maxSp <- max(sapply(x[['speciesList']], length))
@@ -37,7 +37,7 @@ print.speciesRaster <- function(x, ...) {
 	cat('\tMetric:', metric, '\n')
 	cat('\tnumber of raster cells:', ncells, '\n')
 	cat('\traster resolution:', resolution[1], 'by', resolution[2], '\n')
-	cat('\traster projection:', proj$proj4string, '\n\n')
+	cat('\traster crs:', proj@projargs, '\n\n')
 	cat(paste0('\tnumber of unique species: ', lengthUniqueSp, ' (richness range: ', minSp, ' - ', maxSp, ')'), '\n')
 	cat('\tdata present:', ifelse(is.na(data), 'No', 'Yes'), '\n')
 	if (!is.na(data)) {

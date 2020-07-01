@@ -26,7 +26,7 @@
 
 \item{colorRampRange}{numeric vector of min and max value for scaling the color
 ramp. Automatically inferred if set to \code{NULL}. This is relevant if multiple
-plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not intended to leaflet option.}
+plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not intended for leaflet option.}
 
 \item{legend}{boolean; should legend be included?}
 
