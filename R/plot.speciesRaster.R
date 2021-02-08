@@ -10,7 +10,7 @@
 ##' @param legend boolean; should legend be included?
 ##' @param col either a vector of color names that will be interpolated, or a color ramp
 ##' 	function that takes an integer (see for example \code{\link{colorRampPalette}})
-##'	@param basemap if \code{NULL}, then only the raster is plotted. 
+##'	@param basemap if \code{none}, then only the raster is plotted. 
 ##'		If \code{'worldmap'}, then vector map is plotted.
 ##' 	If \code{'leaflet'}, then the \code{leaflet} package is used.
 ##' @param box boolean; should box be drawn around plot?
@@ -63,8 +63,8 @@ plot.speciesRaster <- function(x, log = FALSE, colorRampRange = NULL, legend = T
 		stop('Object must be of class speciesRaster')
 	}
 	
-	if (!is.null(basemap) & !basemap %in% c('worldmap', 'leaflet')) {
-		stop("basemap argument must be NULL, 'worldmap' or 'leaflet'.")
+	if (!basemap %in% c('worldmap', 'leaflet', 'none')) {
+		stop("basemap argument must be 'none', 'worldmap' or 'leaflet'.")
 	}
 	
 	# if x is a speciesRaster that represents a metric that only makes sense for communities with multiple species, 

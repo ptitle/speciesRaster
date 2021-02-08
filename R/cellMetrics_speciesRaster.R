@@ -48,6 +48,7 @@
 ##'			\item{minPatristicNN:} {minimum nearest neighbor in patristic distance}
 ##'			\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 ##'			\item{PSV:} {Phylogenetic Species Variability}
+##'			\item{DR:} {non-parametric estimate of speciation rates}
 ##' 	}
 ##' 	Range-weighted metrics
 ##' 	\itemize{
@@ -96,7 +97,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 		stop('You can only specify one metric.')
 	}
 	
-	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'pd', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'PSV', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism', 'phylosignal'))
+	metric <- match.arg(metric, choices = c('mean', 'median', 'range', 'variance', 'arithmeticWeightedMean', 'geometricWeightedMean', 'rangePCA', 'disparity', 'mean_NN_dist', 'min_NN_dist', 'pd', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'PSV', 'DR', 'weightedEndemism', 'correctedWeightedEndemism', 'phyloWeightedEndemism', 'phylosignal'))
 	
 	pairwise <- FALSE
 	
@@ -196,7 +197,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			x[['speciesList']] <- intersectList(x[['speciesList']], rownames(x[['data']]))
 		}
 		
-	 } else if (metric %in% c('pd', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'phyloWeightedEndemism', 'PSV')) {
+	 } else if (metric %in% c('pd', 'meanPatristic', 'meanPatristicNN', 'minPatristicNN', 'phyloDisparity', 'phyloWeightedEndemism', 'PSV', 'DR')) {
 	 	
 	 	# check that there is a phylogeny in speciesRaster object
 		if (is.null(x[['phylo']])) {
@@ -348,7 +349,7 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 	## ----------------------------------
 	## PHYLOGENY-RELATED METRICS
 	
-	if (metric %in% c('pd', 'meanPatristic', 'minPatristicNN', 'meanPatristicNN', 'phyloDisparity', 'PSV')) {
+	if (metric %in% c('pd', 'meanPatristic', 'minPatristicNN', 'meanPatristicNN', 'phyloDisparity', 'PSV', 'DR')) {
 		
 		# calculate pairwise patristic distance
 		patdist <- cophenetic(x[['phylo']])
@@ -421,6 +422,14 @@ cellMetrics_speciesRaster <- function(x, metric, var = NULL, nreps = 20, verbose
 			ind <- which(sapply(uniqueComm, length) > 1)
 			
 			resVal[ind] <- pbapply::pbsapply(uniqueComm[ind], function(y) (length(y) * sum(diag(vmat[y,y])) - sum(vmat[y,y]))/(length(y) * (length(y) - 1)))
+		}
+		
+		if (metric == 'DR') {
+			if (verbose) message('\t...calculating phylo metric: ', metric, '...\n')
+			# DR statistic for speciation rates
+			
+			tipDR <- DRstat(x[['phylo']])			
+			resVal <- pbapply::pbsapply(uniqueComm, function(y) mean(tipDR[y]))
 		}
 	}
 	

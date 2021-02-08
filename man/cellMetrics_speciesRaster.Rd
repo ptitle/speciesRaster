@@ -57,6 +57,7 @@ Univariate trait metrics
 		\item{minPatristicNN:} {minimum nearest neighbor in patristic distance}
 		\item{phyloDisparity:} {sum of squared deviations in patristic distance}
 		\item{PSV:} {Phylogenetic Species Variability}
+		\item{DR:} {non-parametric estimate of speciation rates}
 	}
 	Range-weighted metrics
 	\itemize{

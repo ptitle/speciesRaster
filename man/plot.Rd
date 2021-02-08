@@ -33,7 +33,7 @@ plots are desired on the same scale. See \code{\link{getMultiMapRamp}}. Not inte
 \item{col}{either a vector of color names that will be interpolated, or a color ramp
 function that takes an integer (see for example \code{\link{colorRampPalette}})}
 
-\item{basemap}{if \code{NULL}, then only the raster is plotted. 
+\item{basemap}{if \code{none}, then only the raster is plotted. 
 If \code{'worldmap'}, then vector map is plotted.
 If \code{'leaflet'}, then the \code{leaflet} package is used.}
 
