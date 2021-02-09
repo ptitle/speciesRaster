@@ -24,7 +24,8 @@ DRstat <- function(tree) {
 	# We will drop the first node so that each listed node is the tip-side node of each branch
 	spEdges <- ape::nodepath(tree)
 	spEdges <- lapply(spEdges, function(x) rev(x[- 1]))
-	spEdges <- lapply(spEdges, function(x) sapply(x, function(y) tree$edge.length[tree$edge[, 2] == y]))
+	# spEdges <- lapply(spEdges, function(x) sapply(x, function(y) tree$edge.length[tree$edge[, 2] == y]))
+	spEdges <- lapply(spEdges, function(x) rev(tree$edge.length[tree$edge[, 2] %in% x]))
 
 	rates <- sapply(spEdges, function(x) sum(sapply(1:length(x), function(y) x[y] * (1 / (2 ^ (y - 1))))))
 	rates <- rates ^ (-1)
