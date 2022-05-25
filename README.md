@@ -1,7 +1,7 @@
 speciesRaster
 =============
 
-R package under development.
+This is a precursor to the [epm R package](https://github.com/ptitle/epm). 
 
 To install using ```devtools```:
 
